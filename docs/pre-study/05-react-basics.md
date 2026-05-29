@@ -118,9 +118,13 @@ function useUsers() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetch('/api/users')
-            .then(res => res.json())
-            .then(data => { setUsers(data); setLoading(false); });
+        async function fetchUsers() {
+            const response = await fetch('/api/users');
+            const data = await response.json();
+            setUsers(data);
+            setLoading(false);
+        }
+        fetchUsers();
     }, []);
 
     return { users, loading };
@@ -135,7 +139,33 @@ function UserList() {
 
 ---
 
-## 4. Handling Events
+## 4. Controlled vs Uncontrolled Components
+
+React form inputs come in two flavors:
+
+```tsx
+// Controlled — React manages the value (RECOMMENDED)
+function ControlledInput() {
+    const [value, setValue] = useState('');
+    return <input value={value} onChange={e => setValue(e.target.value)} />;
+}
+// React is the "single source of truth"
+
+// Uncontrolled — DOM manages the value (use sparingly)
+function UncontrolledInput() {
+    const ref = useRef<HTMLInputElement>(null);
+    const handleSubmit = () => {
+        console.log(ref.current?.value); // Read value directly from DOM
+    };
+    return <input ref={ref} />;
+}
+```
+
+**Rule of thumb:** Use controlled components for forms. Use uncontrolled (refs) for file inputs or integration with non-React libraries.
+
+---
+
+## 5. Handling Events
 
 ```tsx
 function LoginForm() {
@@ -174,7 +204,68 @@ function LoginForm() {
 
 ---
 
-## 5. Conditional Rendering
+## 6. React Router — Multi-Page Apps
+
+Real apps have multiple pages. React Router handles navigation without full-page reloads:
+
+```bash
+# Install
+npm install react-router-dom
+```
+
+```tsx
+// main.tsx — wrap the app with BrowserRouter
+import { BrowserRouter } from 'react-router-dom';
+
+root.render(
+    <BrowserRouter>
+        <App />
+    </BrowserRouter>
+);
+
+// App.tsx — define routes
+import { Routes, Route, Link } from 'react-router-dom';
+
+function App() {
+    return (
+        <>
+            <nav>
+                <Link to="/">Home</Link>
+                <Link to="/users">Users</Link>
+            </nav>
+            <Routes>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/users" element={<UserList />} />
+                <Route path="/users/:id" element={<UserDetail />} />
+                <Route path="*" element={<NotFound />} />
+            </Routes>
+        </>
+    );
+}
+
+// Reading URL parameters
+import { useParams } from 'react-router-dom';
+
+function UserDetail() {
+    const { id } = useParams<{ id: string }>();  // /users/5 → id = "5"
+    // Fetch user with this ID...
+}
+
+// Programmatic navigation
+import { useNavigate } from 'react-router-dom';
+
+function LoginForm() {
+    const navigate = useNavigate();
+    const handleLogin = async () => {
+        await login();
+        navigate('/dashboard');  // Redirect after login
+    };
+}
+```
+
+---
+
+## 7. Conditional Rendering
 
 ```tsx
 function UserProfile({ user }: { user: User | null }) {

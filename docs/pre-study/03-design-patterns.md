@@ -120,21 +120,35 @@ public interface ISortStrategy
 {
     List<User> Sort(List<User> users);
 }
-public class SortByName : ISortStrategy { /* ... */ }
-public class SortByAge : ISortStrategy { /* ... */ }
+public class SortByName : ISortStrategy
+{
+    public List<User> Sort(List<User> users) => users.OrderBy(u => u.Name).ToList();
+}
+public class SortByAge : ISortStrategy
+{
+    public List<User> Sort(List<User> users) => users.OrderBy(u => u.Age).ToList();
+}
 
-// Controller picks strategy based on query parameter
+// Register all strategies in DI
+builder.Services.AddScoped<SortByName>();
+builder.Services.AddScoped<SortByAge>();
+
+// Controller receives all strategies via DI
 [HttpGet]
-public IActionResult GetUsers([FromQuery] string sort = "name")
+public IActionResult GetUsers(
+    [FromQuery] string sort = "name",
+    [FromServices] IEnumerable<ISortStrategy> strategies)
 {
     ISortStrategy strategy = sort switch
     {
-        "age"  => new SortByAge(),
-        _      => new SortByName()
+        "age"  => strategies.OfType<SortByAge>().First(),
+        _      => strategies.OfType<SortByName>().First()
     };
     return Ok(strategy.Sort(users));
 }
 ```
+
+> **Note:** In practice, a simple `switch` with `new` is fine for small apps. DI is preferred when strategies have their own dependencies (e.g., database access).
 
 ---
 

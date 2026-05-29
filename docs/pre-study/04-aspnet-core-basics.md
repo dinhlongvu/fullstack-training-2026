@@ -75,7 +75,42 @@ app.Run();
 
 ---
 
-## 4. Entity Framework Core (EF Core)
+## 4. Model Binding — How Parameters Get Their Values
+
+ASP.NET Core automatically maps HTTP request data to your action parameters:
+
+```csharp
+[HttpGet("api/users/{id}")]
+public IActionResult GetUser(
+    int id,                              // ← From route: /api/users/5
+    [FromQuery] string? sort = null)     // ← From query string: ?sort=name
+{ ... }
+
+[HttpPost("api/users")]
+public IActionResult Create(
+    [FromBody] CreateUserDto dto)        // ← From JSON request body
+{ ... }
+
+[HttpPost("api/users/{id}/avatar")]
+public IActionResult UploadAvatar(
+    int id,                              // ← From route
+    [FromForm] IFormFile file)           // ← From form data (file upload)
+{ ... }
+```
+
+| Attribute | Source | Example |
+|-----------|--------|---------|
+| `[FromRoute]` | URL path | `/api/users/{id}` |
+| `[FromQuery]` | Query string | `?sort=name&page=1` |
+| `[FromBody]` | Request body (JSON) | `{"name": "Alice"}` |
+| `[FromForm]` | Form data | File uploads, HTML forms |
+| `[FromHeader]` | HTTP header | `Authorization` token |
+
+> The `[ApiController]` attribute applies automatic inference: simple types (int, string, bool) default to `[FromRoute]` or `[FromQuery]`, complex types default to `[FromBody]`. But it's clearer to be explicit.
+
+---
+
+## 5. Entity Framework Core (EF Core)
 
 EF Core is the ORM (Object-Relational Mapper) — it maps C# classes to database tables.
 
@@ -105,7 +140,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 ---
 
-## 5. HTTP Status Codes
+## 6. HTTP Status Codes
 
 Return the right status code for each situation:
 
@@ -136,6 +171,62 @@ public async Task<ActionResult<UserDto>> Create(CreateUserDto dto)
     return CreatedAtAction(nameof(GetById), new { id = user.Id }, user); // 201
 }
 ```
+
+---
+
+## 7. Configuration & appsettings.json
+
+ASP.NET Core reads settings from `appsettings.json` (and `appsettings.Development.json` for local dev):
+
+```json
+// appsettings.json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Data Source=app.db"
+  },
+  "Jwt": {
+    "Key": "your-secret-key-here",
+    "Issuer": "training-api"
+  }
+}
+```
+
+```csharp
+// Inject IConfiguration to read settings
+public class UserService
+{
+    private readonly IConfiguration _config;
+    public UserService(IConfiguration config) => _config = config;
+
+    public string GetConnectionString()
+        => _config.GetConnectionString("DefaultConnection");
+
+    public string GetJwtKey()
+        => _config["Jwt:Key"];  // Colon accesses nested keys
+}
+```
+
+---
+
+## 8. Swagger / OpenAPI
+
+Swagger provides an automatic, interactive API documentation page. Almost every .NET API project uses it:
+
+```csharp
+// Program.cs — add Swagger
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+var app = builder.Build();
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();           // http://localhost:5001/swagger
+    app.UseSwaggerUI();         // http://localhost:5001/swagger/index.html
+}
+```
+
+**Why it matters for QA (Phúc):** Swagger shows every endpoint, its parameters, and lets you test them directly in the browser — no Postman needed for quick tests.
 
 ---
 

@@ -35,21 +35,21 @@ Before jumping into the project, you need a solid foundation in the concepts bel
 
 ---
 
-## Mini-Check (End of Week 0)
+---
 
-After reading all files, complete a small assignment:
+## Prerequisites
 
-### Dev (Học & Bảo)
-1. Create branch `hoc/pre-study-check` or `bao/pre-study-check`
-2. Build 1 API endpoint: `GET /api/hello?name=YourName` → `{"message": "Hello, YourName!"}`
-3. Build 1 React component: `HelloCard` showing a greeting
-4. Push + open a PR (no need to merge)
+Before starting, install these tools:
 
-### QA (Phúc)
-1. Create branch `phuc/pre-study-check`
-2. Write 5 test cases for the `/api/hello` endpoint (save in `qa/test-cases/hello-api.md`)
-3. Write 1 sample bug report (use template at `qa/bug-reports/TEMPLATE.md`)
-4. Push + open a PR
+| Tool | Version | Download |
+|------|---------|----------|
+| .NET SDK | 8.0 | [dotnet.microsoft.com](https://dotnet.microsoft.com/download) |
+| Node.js | 20 LTS | [nodejs.org](https://nodejs.org/) |
+| Git | Latest | [git-scm.com](https://git-scm.com/) |
+| VS Code | Latest | [code.visualstudio.com](https://code.visualstudio.com/) |
+| Postman | Latest | [postman.com](https://www.postman.com/downloads/) |
+
+**VS Code Extensions:** C# Dev Kit, ES7+ React Snippets, Prettier
 
 ---
 

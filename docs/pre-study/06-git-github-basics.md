@@ -46,7 +46,13 @@ git push                                   # Subsequent pushes
 git checkout main
 git pull origin main
 git checkout hoc/task-01-user-api
-git merge main                    # Bring main's changes into your branch
+
+# Option A: Merge (simpler, preserves full history)
+git merge main
+
+# Option B: Rebase (cleaner history, preferred by most teams)
+git rebase main
+# If conflicts during rebase: resolve → git add → git rebase --continue
 ```
 
 ---

@@ -28,6 +28,17 @@ public class UserRepository { /* data access only */ }
 public class EmailService { /* email sending only */ }
 public class UserService // orchestrates
 {
+    private readonly IUserValidator _validator;
+    private readonly IUserRepository _repository;
+    private readonly IEmailService _emailService;
+
+    public UserService(IUserValidator validator, IUserRepository repository, IEmailService emailService)
+    {
+        _validator = validator;
+        _repository = repository;
+        _emailService = emailService;
+    }
+
     public void Register(User user)
     {
         _validator.Validate(user);
@@ -93,7 +104,11 @@ public class Square : Rectangle
         set { base.Width = base.Height = value; }
     }
 }
-// Bug: Square.Area = 25 when Width=5, Height=10 → WRONG!
+// Bug: Square overrides setters to keep Width == Height.
+// When you do: square.Width = 5; square.Height = 10;
+// After Width=5: both Width and Height = 5, Area = 25
+// After Height=10: both Width and Height = 10, Area = 100
+// But you EXPECTED Area = 50 (5 × 10). Square violates Rectangle's contract!
 
 // ✅ Good: use interfaces instead of inappropriate inheritance
 public interface IShape { int Area { get; } }

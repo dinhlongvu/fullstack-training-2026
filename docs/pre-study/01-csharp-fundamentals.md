@@ -23,7 +23,9 @@ user2.Name = "Bob";     // user1.Name is now "Bob" too!
 ```
 
 **Value Types:** `int`, `double`, `bool`, `char`, `DateTime`, `struct`, `enum`
-**Reference Types:** `string`, `class`, `interface`, `delegate`, `array`, `List<T>`
+**Reference Types:** `string` (special — see below), `class`, `interface`, `delegate`, `array`, `List<T>`
+
+> **Why is `string` a reference type but behaves like a value type?** Strings are **immutable** — every "modification" creates a new string object. `string a = "Hello"; a += " World";` doesn't modify the original string; it creates a new one. This is why `string` often *feels* like a value type even though it's stored on the heap. The same goes for `DateTime` (which is actually a value type — a `struct`).
 
 ---
 
@@ -138,6 +140,33 @@ public class User
     }
 }
 ```
+
+---
+
+## 6. Nullable Reference Types (NRT)
+
+C# 8+ enables nullable reference types by default in new projects. This helps catch null-reference bugs at compile time:
+
+```csharp
+// With NRT enabled (<Nullable>enable</Nullable> in .csproj):
+public class User
+{
+    public string Name { get; set; }       // ⚠️ Warning: non-nullable, must be initialized
+    public string? Nickname { get; set; }  // ✅ May be null — the '?' tells the compiler
+}
+
+// Working with nullable types safely:
+public string GetDisplayName(User user)
+{
+    // Null-coalescing operator
+    return user.Nickname ?? user.Name;
+}
+
+// Null-conditional operator
+int? length = user.Nickname?.Length;  // null if Nickname is null
+```
+
+**Rule of thumb:** Use `?` for anything that can legitimately be null. Don't use `?` for required fields.
 
 ---
 

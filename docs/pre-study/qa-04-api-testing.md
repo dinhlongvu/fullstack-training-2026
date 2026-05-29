@@ -30,7 +30,7 @@ Most features in this project are backend APIs. Testing APIs means sending HTTP 
 | `401 Unauthorized` | Not logged in | `GET /api/users` without auth token → 401 |
 | `404 Not Found` | ID doesn't exist | `GET /api/users/99999` → 404 |
 | `409 Conflict` | Duplicate | `POST /api/users` with existing email → 409 |
-| `422 Unprocessable` | Validation failed | `POST /api/users` with age=-5 → 422 |
+| `400 Bad Request` | Validation failed | `POST /api/users` with age=-5 → 400 |
 | `500 Internal Error` | Server crash | Trigger unexpected error → 500 (should NOT expose stack trace) |
 
 ---
