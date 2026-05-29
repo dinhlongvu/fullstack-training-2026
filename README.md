@@ -8,9 +8,9 @@ Chương trình đào tạo intern 2026 — 2 Fullstack Developers + 1 QA. Học
 
 | Role | GitHub Label | Intern | Mentor |
 |------|-------------|--------|--------|
-| Fullstack Dev | `hoc` | **Triệu Quang Học** | CEO (Kaito) + AI Agent (Ella) |
-| Fullstack Dev | `bao` | **Đinh Lâm Gia Bảo** | CEO (Kaito) + AI Agent (Ella) |
-| QA | `phuc` | **Nguyễn Thị Hoàng Phúc** | QA Senior + AI Agent (Ella) |
+| Fullstack Dev | `hoc` | **Triệu Quang Học** | CEO (Kaito)|
+| Fullstack Dev | `bao` | **Đinh Lâm Gia Bảo** | CEO (Kaito)
+| QA | `phuc` | **Nguyễn Thị Hoàng Phúc** | QA Senior|
 
 ## Architecture
 
@@ -18,19 +18,41 @@ Chương trình đào tạo intern 2026 — 2 Fullstack Developers + 1 QA. Học
 fullstack-training-2026/
 ├── backend/                          # .NET 8 — Clean Architecture + CQRS
 │   ├── Modules/                      # Carter modules (1 file = 1 resource group)
-│   │   ├── AuthModule.cs
-│   │   ├── ProjectsModule.cs
-│   │   ├── TasksModule.cs
-│   │   ├── CommentsModule.cs
-│   │   └── DashboardModule.cs
-│   ├── Commands/                     # CQRS Commands + Handlers (write operations)
-│   │   ├── CreateTask.cs             #   Command DTO + Handler in single file
-│   │   ├── UpdateTask.cs
-│   │   └── DeleteTask.cs
-│   ├── Queries/                      # CQRS Queries + Handlers (read operations)
-│   │   ├── GetTasks.cs
-│   │   ├── GetTaskDetail.cs
-│   │   └── GetDashboardStats.cs
+│   │   ├── AuthModule.cs            # POST register, POST login, GET me
+│   │   ├── ProjectsModule.cs        # GET/POST/PUT/DELETE projects + members
+│   │   ├── TasksModule.cs           # GET/POST/PUT/PATCH/DELETE tasks
+│   │   ├── CommentsModule.cs        # GET/POST comments
+│   │   └── DashboardModule.cs       # GET dashboard stats
+│   ├── Commands/                     # CQRS Commands (write) — 1 file = 1 operation
+│   │   ├── Auth/
+│   │   │   ├── Register.cs           #   RegisterCommand + Handler + Validator
+│   │   │   └── Login.cs              #   LoginCommand + Handler
+│   │   ├── Projects/
+│   │   │   ├── CreateProject.cs
+│   │   │   ├── UpdateProject.cs
+│   │   │   ├── DeleteProject.cs
+│   │   │   └── AddMember.cs
+│   │   ├── Tasks/
+│   │   │   ├── CreateTask.cs
+│   │   │   ├── UpdateTask.cs
+│   │   │   ├── UpdateTaskStatus.cs
+│   │   │   ├── AssignTask.cs
+│   │   │   └── DeleteTask.cs
+│   │   └── Comments/
+│   │       └── AddComment.cs
+│   ├── Queries/                      # CQRS Queries (read) — 1 file = 1 operation
+│   │   ├── Auth/
+│   │   │   └── GetMe.cs
+│   │   ├── Projects/
+│   │   │   ├── GetProjects.cs
+│   │   │   └── GetProjectDetail.cs
+│   │   ├── Tasks/
+│   │   │   ├── GetTasks.cs
+│   │   │   └── GetTaskDetail.cs
+│   │   ├── Comments/
+│   │   │   └── GetComments.cs
+│   │   └── Dashboard/
+│   │       └── GetMyStats.cs
 │   ├── Domain/                       # Entity classes (User, Project, TaskItem, Comment)
 │   ├── DTOs/                         # Data Transfer Objects (TaskDto, ProjectDto...)
 │   ├── Infrastructure/               # DbContext, EF Core config, migrations
