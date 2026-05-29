@@ -1,0 +1,185 @@
+# 03 — Design Patterns
+
+Design patterns are proven solutions to common software design problems. You don't need to memorize them all — just know **when to use which pattern**.
+
+---
+
+## 1. Repository Pattern
+
+> Separates data access logic from business logic.
+
+```csharp
+// Interface (abstraction)
+public interface IUserRepository
+{
+    Task<User?> GetByIdAsync(int id);
+    Task<List<User>> GetAllAsync();
+    Task<User> AddAsync(User user);
+    Task SaveChangesAsync();
+}
+
+// Implementation (concrete)
+public class UserRepository : IUserRepository
+{
+    private readonly AppDbContext _db;
+    public UserRepository(AppDbContext db) => _db = db;
+
+    public async Task<User?> GetByIdAsync(int id)
+        => await _db.Users.FindAsync(id);
+
+    public async Task<List<User>> GetAllAsync()
+        => await _db.Users.ToListAsync();
+
+    public async Task<User> AddAsync(User user)
+    {
+        _db.Users.Add(user);
+        await _db.SaveChangesAsync();
+        return user;
+    }
+}
+
+// Usage in a Service
+public class UserService
+{
+    private readonly IUserRepository _repo;
+    public UserService(IUserRepository repo) => _repo = repo;
+    // ...
+}
+```
+
+**Why:**
+- Swap databases (SQL → Mongo) by creating a new class that implements the same interface
+- Easy to test: mock `IUserRepository`
+- Business logic doesn't know where data comes from
+
+---
+
+## 2. Dependency Injection (DI)
+
+> The framework automatically injects dependencies — no `new` needed.
+
+```csharp
+// Program.cs — register services
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IUserService, UserService>();
+
+// Controller — automatically receives dependencies via constructor
+[ApiController]
+[Route("api/[controller]")]
+public class UsersController : ControllerBase
+{
+    private readonly IUserService _service;
+    public UsersController(IUserService service) => _service = service;
+    // _service is injected automatically — no manual instantiation
+}
+```
+
+**Lifetimes:**
+
+| Lifetime | Created | Use for |
+|----------|---------|---------|
+| `AddTransient` | Every request | Lightweight, stateless services |
+| `AddScoped` | Once per HTTP request | DbContext (most common) |
+| `AddSingleton` | Once, shared | Cache, configuration |
+
+---
+
+## 3. Factory Pattern
+
+> Creates objects without exposing the instantiation logic.
+
+```csharp
+public interface IPaymentProcessor
+{
+    Task<PaymentResult> ProcessAsync(decimal amount);
+}
+
+public class VnPayProcessor : IPaymentProcessor { /* ... */ }
+public class MomoProcessor : IPaymentProcessor { /* ... */ }
+
+public class PaymentProcessorFactory
+{
+    public IPaymentProcessor Create(string method) => method switch
+    {
+        "vnpay" => new VnPayProcessor(),
+        "momo"  => new MomoProcessor(),
+        _       => throw new ArgumentException("Unknown payment method")
+    };
+}
+```
+
+---
+
+## 4. Strategy Pattern
+
+> Select an algorithm at runtime — similar to Factory but focused on **behavior**.
+
+```csharp
+// Already seen in SOLID — Open/Closed Principle
+public interface ISortStrategy
+{
+    List<User> Sort(List<User> users);
+}
+public class SortByName : ISortStrategy { /* ... */ }
+public class SortByAge : ISortStrategy { /* ... */ }
+
+// Controller picks strategy based on query parameter
+[HttpGet]
+public IActionResult GetUsers([FromQuery] string sort = "name")
+{
+    ISortStrategy strategy = sort switch
+    {
+        "age"  => new SortByAge(),
+        _      => new SortByName()
+    };
+    return Ok(strategy.Sort(users));
+}
+```
+
+---
+
+## 5. DTO (Data Transfer Object)
+
+> Separates database entities from API response models.
+
+```csharp
+// ❌ Bad: exposing entity directly (leaks password hash, internal fields)
+[HttpGet("{id}")]
+public async Task<ActionResult<User>> GetUser(int id)
+{
+    return await _db.Users.FindAsync(id);
+}
+
+// ✅ Good: use DTO
+public class UserDto
+{
+    public int Id { get; set; }
+    public string Name { get; set; }
+    public string Email { get; set; }
+    // No PasswordHash, no InternalNotes...
+}
+
+[HttpGet("{id}")]
+public async Task<ActionResult<UserDto>> GetUser(int id)
+{
+    var user = await _db.Users.FindAsync(id);
+    return new UserDto
+    {
+        Id = user.Id,
+        Name = user.Name,
+        Email = user.Email
+    };
+}
+```
+
+---
+
+## 📚 Further Reading
+
+- [Refactoring Guru — Design Patterns](https://refactoring.guru/design-patterns)
+- [Design Patterns in C# (YouTube — Nick Chapsas)](https://www.youtube.com/@nickchapsas)
+- [Repository Pattern — Microsoft Docs](https://learn.microsoft.com/en-us/dotnet/architecture/microservices/microservice-ddd-cqrs-patterns/infrastructure-persistence-layer-design)
+
+---
+
+> **Tip:** Don't force design patterns everywhere. Use them when code becomes complex and hard to change. "Premature optimization is the root of all evil."
