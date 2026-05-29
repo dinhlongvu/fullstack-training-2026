@@ -1,6 +1,6 @@
 # Fullstack Training 2026
 
-Chương trình đào tạo intern 2026 — 2 Fullstack Developers + 1 QA. Học qua dự án thực tế: xây dựng ứng dụng **TaskBoard** (Kanban board đơn giản) trong 4 tuần.
+Intern training program 2026 — 2 Fullstack Developers + 1 QA. Learning through a real project: building a **TaskBoard** app (simple Kanban board) in 4 weeks.
 
 **Stack:** .NET 8 (Carter + MediatR + CQRS) + React 18 (TypeScript) + SQL Server + Docker
 
@@ -29,38 +29,38 @@ fullstack-training-2026/
 │   │   └── TaskDto.cs                #   TaskDto (full) + TaskSummaryDto (list)
 │   ├── Modules/                      # Carter modules (1 file = 1 resource group)
 │   │   └── TasksModule.cs            #   GET/POST/PATCH/DELETE /api/tasks 🔧
-│   │   ··· AuthModule.cs             #   (intern sẽ tạo)
+│   │   ··· AuthModule.cs             #   (intern will create)
 │   │   ··· ProjectsModule.cs
 │   │   ··· CommentsModule.cs
 │   │   ··· DashboardModule.cs
 │   ├── Commands/                     # CQRS Commands (write) — 1 file = 1 operation
 │   │   └── Tasks/
-│   │       ├── CreateTask.cs         #   Command + Handler ✅ (sample hoàn chỉnh)
-│   │       ├── UpdateTaskStatusCommand.cs  #   Command record 🔧 (handler còn trống)
-│   │       └── DeleteTaskCommand.cs  #   Command record 🔧 (handler còn trống)
-│   │   ··· Auth/                     #   (intern sẽ tạo)
+│   │       ├── CreateTask.cs         #   Command + Handler ✅ (complete sample)
+│   │       ├── UpdateTaskStatusCommand.cs  #   Command record 🔧 (handler stub)
+│   │       └── DeleteTaskCommand.cs  #   Command record 🔧 (handler stub)
+│   │   ··· Auth/                     #   (intern will create)
 │   │   ··· Projects/
 │   │   ··· Comments/
 │   ├── Queries/                      # CQRS Queries (read) — 1 file = 1 operation
 │   │   └── Tasks/
-│   │       └── GetTasks.cs           #   Query + Handler + filters ✅ (sample hoàn chỉnh)
-│   │   ··· Auth/, Projects/, Comments/, Dashboard/  # (intern sẽ tạo)
+│   │       └── GetTasks.cs           #   Query + Handler + filters ✅ (complete sample)
+│   │   ··· Auth/, Projects/, Comments/, Dashboard/  # (intern will create)
 │   ├── Infrastructure/Data/          # EF Core = Repository + Unit of Work
-│   │   ├── AppDbContext.cs            #   DbContext + DbSet<T> (không cần repo wrapper)
+│   │   ├── AppDbContext.cs            #   DbContext + DbSet<T> (no extra repo wrapper)
 │   │   └── Configurations/
-│   │       └── TaskConfiguration.cs  #   Fluent API (khóa, index, relationship, enum mapping)
-│   │       ··· UserConfiguration.cs  #   (intern sẽ tạo)
+│   │       └── TaskConfiguration.cs  #   Fluent API (keys, indexes, relationships, enums)
+│   │       ··· UserConfiguration.cs  #   (intern will create)
 │   ├── Validation/                   # FluentValidation + MediatR pipeline
-│   │   ├── CreateTaskCommandValidator.cs  #   RuleFor — chạy tự động trước handler
-│   │   └── ValidationBehavior.cs      #   IPipelineBehavior — auto-validate mọi request
+│   │   ├── CreateTaskCommandValidator.cs  #   RuleFor — auto-runs before handler
+│   │   └── ValidationBehavior.cs      #   IPipelineBehavior — auto-validates all requests
 │   ├── Mapping/                      # AutoMapper profiles
 │   │   └── TaskMappingProfile.cs      #   Entity ↔ DTO, Command → Entity
 │   └── Middleware/                    # ASP.NET middleware
-│       └── ExceptionHandlingMiddleware.cs  #   Bắt lỗi toàn cục → JSON response
+│       └── ExceptionHandlingMiddleware.cs  #   Global error handler → JSON response
 │
-│   ✅ = sample hoàn chỉnh (code thật, chạy được)
-│   🔧 = stub (khai báo, cần intern hoàn thiện)
-│   ··· = folder trống (intern sẽ tạo khi làm feature)
+│   ✅ = complete sample (real code, compiles)
+│   🔧 = stub (declared, intern completes handler)
+│   ··· = empty folder (intern creates when building feature)
 │
 ├── frontend/                         # React 18 + TypeScript + Vite
 │   ├── src/
