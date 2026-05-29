@@ -8,62 +8,59 @@ Chương trình đào tạo intern 2026 — 2 Fullstack Developers + 1 QA. Học
 
 | Role | GitHub Label | Intern | Mentor |
 |------|-------------|--------|--------|
-| Fullstack Dev | `hoc` | **Triệu Quang Học** | CEO (Kaito)|
-| Fullstack Dev | `bao` | **Đinh Lâm Gia Bảo** | CEO (Kaito)
-| QA | `phuc` | **Nguyễn Thị Hoàng Phúc** | QA Senior|
+| Fullstack Dev | `hoc` | **Triệu Quang Học** | CEO (Kaito) + AI Agent (Ella) |
+| Fullstack Dev | `bao` | **Đinh Lâm Gia Bảo** | CEO (Kaito) + AI Agent (Ella) |
+| QA | `phuc` | **Nguyễn Thị Hoàng Phúc** | QA Senior + AI Agent (Ella) |
 
 ## Architecture
 
 ```
 fullstack-training-2026/
 ├── backend/                          # .NET 8 — Clean Architecture + CQRS
+│   ├── Backend.csproj                # Project file + NuGet references
+│   ├── Program.cs                    # Entry point + DI registration
+│   ├── Domain/                       # Entity classes (maps to DB tables)
+│   │   ├── User.cs                   #   Id, Email, FullName, PasswordHash
+│   │   ├── Project.cs                #   Id, Name, CreatedBy (FK → User)
+│   │   ├── ProjectMember.cs          #   Join table: Project ↔ User
+│   │   ├── TaskItem.cs               #   Title, Status (enum), Priority (enum), Assignee
+│   │   └── Comment.cs                #   Content, Author, Task (FK)
+│   ├── DTOs/                         # Data Transfer Objects (what API returns)
+│   │   └── TaskDto.cs                #   TaskDto (full) + TaskSummaryDto (list)
 │   ├── Modules/                      # Carter modules (1 file = 1 resource group)
-│   │   ├── AuthModule.cs            # POST register, POST login, GET me
-│   │   ├── ProjectsModule.cs        # GET/POST/PUT/DELETE projects + members
-│   │   ├── TasksModule.cs           # GET/POST/PUT/PATCH/DELETE tasks
-│   │   ├── CommentsModule.cs        # GET/POST comments
-│   │   └── DashboardModule.cs       # GET dashboard stats
+│   │   └── TasksModule.cs            #   GET/POST/PATCH/DELETE /api/tasks 🔧
+│   │   ··· AuthModule.cs             #   (intern sẽ tạo)
+│   │   ··· ProjectsModule.cs
+│   │   ··· CommentsModule.cs
+│   │   ··· DashboardModule.cs
 │   ├── Commands/                     # CQRS Commands (write) — 1 file = 1 operation
-│   │   ├── Auth/
-│   │   │   ├── Register.cs           #   RegisterCommand + Handler + Validator
-│   │   │   └── Login.cs              #   LoginCommand + Handler
-│   │   ├── Projects/
-│   │   │   ├── CreateProject.cs
-│   │   │   ├── UpdateProject.cs
-│   │   │   ├── DeleteProject.cs
-│   │   │   └── AddMember.cs
-│   │   ├── Tasks/
-│   │   │   ├── CreateTask.cs
-│   │   │   ├── UpdateTask.cs
-│   │   │   ├── UpdateTaskStatus.cs
-│   │   │   ├── AssignTask.cs
-│   │   │   └── DeleteTask.cs
-│   │   └── Comments/
-│   │       └── AddComment.cs
+│   │   └── Tasks/
+│   │       ├── CreateTask.cs         #   Command + Handler ✅ (sample hoàn chỉnh)
+│   │       ├── UpdateTaskStatusCommand.cs  #   Command record 🔧 (handler còn trống)
+│   │       └── DeleteTaskCommand.cs  #   Command record 🔧 (handler còn trống)
+│   │   ··· Auth/                     #   (intern sẽ tạo)
+│   │   ··· Projects/
+│   │   ··· Comments/
 │   ├── Queries/                      # CQRS Queries (read) — 1 file = 1 operation
-│   │   ├── Auth/
-│   │   │   └── GetMe.cs
-│   │   ├── Projects/
-│   │   │   ├── GetProjects.cs
-│   │   │   └── GetProjectDetail.cs
-│   │   ├── Tasks/
-│   │   │   ├── GetTasks.cs
-│   │   │   └── GetTaskDetail.cs
-│   │   ├── Comments/
-│   │   │   └── GetComments.cs
-│   │   └── Dashboard/
-│   │       └── GetMyStats.cs
-│   ├── Domain/                       # Entity classes (User, Project, TaskItem, Comment)
-│   ├── DTOs/                         # Data Transfer Objects (TaskDto, ProjectDto...)
-│   ├── Infrastructure/               # Data access (EF Core = Repository + Unit of Work)
-│   │   ├── Data/
-│   │   │   ├── AppDbContext.cs        #   DbContext + DbSet<T> (chính là repository)
-│   │   │   ├── Configurations/        #   Entity config (Fluent API, không dùng Data Annotations)
-│   │   │   └── Migrations/            #   EF Core migrations
-│   ├── Validation/                   # FluentValidation validators
+│   │   └── Tasks/
+│   │       └── GetTasks.cs           #   Query + Handler + filters ✅ (sample hoàn chỉnh)
+│   │   ··· Auth/, Projects/, Comments/, Dashboard/  # (intern sẽ tạo)
+│   ├── Infrastructure/Data/          # EF Core = Repository + Unit of Work
+│   │   ├── AppDbContext.cs            #   DbContext + DbSet<T> (không cần repo wrapper)
+│   │   └── Configurations/
+│   │       └── TaskConfiguration.cs  #   Fluent API (khóa, index, relationship, enum mapping)
+│   │       ··· UserConfiguration.cs  #   (intern sẽ tạo)
+│   ├── Validation/                   # FluentValidation + MediatR pipeline
+│   │   ├── CreateTaskCommandValidator.cs  #   RuleFor — chạy tự động trước handler
+│   │   └── ValidationBehavior.cs      #   IPipelineBehavior — auto-validate mọi request
 │   ├── Mapping/                      # AutoMapper profiles
-│   ├── Middleware/                    # JWT auth, error handling
-│   └── Program.cs                    # App entry point + service registration
+│   │   └── TaskMappingProfile.cs      #   Entity ↔ DTO, Command → Entity
+│   └── Middleware/                    # ASP.NET middleware
+│       └── ExceptionHandlingMiddleware.cs  #   Bắt lỗi toàn cục → JSON response
+│
+│   ✅ = sample hoàn chỉnh (code thật, chạy được)
+│   🔧 = stub (khai báo, cần intern hoàn thiện)
+│   ··· = folder trống (intern sẽ tạo khi làm feature)
 │
 ├── frontend/                         # React 18 + TypeScript + Vite
 │   ├── src/
