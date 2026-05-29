@@ -6,11 +6,11 @@ Chương trình đào tạo cho intern 2026 — 2 Fullstack Developers + 1 QA.
 
 ## Team
 
-| Role | Intern | Mentor |
-|------|--------|--------|
-| Fullstack Dev | Intern A | CEO (Kaito) + AI Agent (Ella) |
-| Fullstack Dev | Intern B | CEO (Kaito) + AI Agent (Ella) |
-| QA | Intern C | QA Senior (kiến thức nền) + AI Agent (Ella) |
+| Role | GitHub Label | Intern | Mentor |
+|------|-------------|--------|--------|
+| Fullstack Dev | `hoc` | **Triệu Quang Học** | CEO (Kaito) + AI Agent (Ella) |
+| Fullstack Dev | `bao` | **Đinh Lâm Gia Bảo** | CEO (Kaito) + AI Agent (Ella) |
+| QA | `phuc` | **Nguyễn Thị Hoàng Phúc** | QA Senior + AI Agent (Ella) |
 
 ## Architecture
 
