@@ -1,0 +1,107 @@
+# ============================================
+# .NET / C#
+# ============================================
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.userprefs
+.vs/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Bb]uild/
+*.db
+*.db-shm
+*.db-wal
+
+# NuGet
+packages/
+*.nupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+
+# ============================================
+# Node.js / React
+# ============================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+dist/
+build/
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.tsbuildinfo
+.next/
+.nuxt/
+.cache/
+
+# ============================================
+# macOS
+# ============================================
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# ============================================
+# IDE / Editor
+# ============================================
+.idea/
+*.swp
+*.swo
+*~
+.vscode/settings.json
+.vscode/tasks.json
+.vscode/launch.json
+.vscode/extensions.json
+*.code-workspace
+
+# ============================================
+# Secrets & Environment
+# ============================================
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets.json
+appsettings.*.json
+!appsettings.json
+!appsettings.Development.json
+
+# ============================================
+# Logs & Temp
+# ============================================
+*.log
+logs/
+temp/
+tmp/
+*.tmp
+*.temp
+
+# ============================================
+# OS generated files
+# ============================================
+Desktop.ini
+$RECYCLE.BIN/
+
+# ============================================
+# Coverage & Test Results
+# ============================================
+coverage/
+*.coverage
+*.coveragexml
+TestResults/
+*.trx
