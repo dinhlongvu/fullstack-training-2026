@@ -1,4 +1,4 @@
-# 10 — SQL Server & Entity Framework Core
+# 09 — SQL Server & Entity Framework Core
 
 ## Concept
 

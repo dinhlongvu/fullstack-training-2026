@@ -1,4 +1,4 @@
-# 08 — Docker & Container Basics
+# 10 — Docker & Container Basics
 
 ## Concept
 

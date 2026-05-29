@@ -2,33 +2,30 @@
 
 Welcome to the Fullstack Training 2026 program!
 
-Before jumping into the project, you need a solid foundation in the concepts below. The pre-study is split across **2 weeks**:
-
-- **Week 0: Core Programming Concepts** — the fundamentals every dev/QA must know
-- **Week 1: Tech Stack Deep Dive** — specific tools & patterns used in our projects
-
-Each file is designed to be read in **5-10 minutes** — it provides an overview + examples + links for deeper learning.
+Before jumping into the project, you need a solid foundation in the concepts below. The pre-study is split across **2 weeks**, ordered by **logical prerequisites** — each file builds on the ones before it.
 
 **Rules:**
-- 📖 Read in order (top to bottom)
+- 📖 Read in order (top to bottom) — the sequence matters
 - 🔗 Click external links to dive deeper
 - ❓ Have a question? Create a GitHub Issue with the `question` label
 - ⏰ Deadline: **end of Week 1** (confirm with your mentor)
 
 ---
 
-## 📅 Week 0 — Core Programming Concepts
+## 📅 Week 0 — Backend & API Foundations
+
+Build a solid backend foundation, from C# language basics to designing and building APIs.
 
 ### Dev Track (Học & Bảo)
 
-| # | File | Read Time | Topic |
-|---|------|:---:|--------|
-| 01 | [C# Fundamentals](01-csharp-fundamentals.md) | 10 min | Types, LINQ, async/await, exception handling |
-| 02 | [SOLID Principles](02-solid-principles.md) | 10 min | 5 design principles every dev should know |
-| 03 | [Design Patterns](03-design-patterns.md) | 15 min | Repository, DI, Factory, Strategy, DTO |
-| 04 | [ASP.NET Core Basics](04-aspnet-core-basics.md) | 10 min | Controller, Routing, Middleware, EF Core |
-| 05 | [React Basics](05-react-basics.md) | 10 min | Components, Props/State, Hooks, Events |
-| 06 | [Git & GitHub](06-git-github-basics.md) | 10 min | Clone, branch, commit, PR, merge conflicts |
+| # | File | Read Time | Topic | Prerequisite |
+|---|------|:---:|--------|-------------|
+| 01 | [C# Fundamentals](01-csharp-fundamentals.md) | 10 min | Types, LINQ, async/await, nullable reference types | None |
+| 02 | [SOLID Principles](02-solid-principles.md) | 10 min | 5 design principles with C# examples | 01 |
+| 03 | [Design Patterns](03-design-patterns.md) | 15 min | Repository, DI, Factory, Strategy, DTO | 02 |
+| 04 | [REST API Design](04-rest-api-design.md) | 10 min | Resources, HTTP methods, status codes, pagination | 01 |
+| 05 | [ASP.NET Core + Carter](05-aspnet-core-carter.md) | 10 min | Minimal API, Carter modules, middleware, MediatR integration | 03, 04 |
+| 06 | [Git & GitHub](06-git-github-basics.md) | 10 min | Clone, branch, commit, PR, merge conflicts | None |
 
 ### QA Track (Phúc)
 
@@ -42,23 +39,25 @@ Each file is designed to be read in **5-10 minutes** — it provides an overview
 
 ---
 
-## 📅 Week 1 — Tech Stack Deep Dive
+## 📅 Week 1 — Frontend & Infrastructure
+
+Frontend development with TypeScript and React, plus the infrastructure tools that power the project.
 
 ### Dev Track (Học & Bảo)
 
-| # | File | Read Time | Topic |
-|---|------|:---:|--------|
-| 07 | [TypeScript Fundamentals](07-typescript-fundamentals.md) | 10 min | Types, interfaces, generics, strict mode |
-| 08 | [Docker & Container Basics](08-docker-container-basics.md) | 10 min | Images, containers, docker-compose, volumes |
-| 09 | [REST API Design](09-rest-api-design.md) | 10 min | Resources, HTTP methods, status codes, pagination |
-| 10 | [SQL Server & EF Core](10-sql-server-efcore.md) | 10 min | Tables, relationships, migrations, LINQ queries |
+| # | File | Read Time | Topic | Prerequisite |
+|---|------|:---:|--------|-------------|
+| 07 | [TypeScript Fundamentals](07-typescript-fundamentals.md) | 10 min | Types, interfaces, generics, React + TS patterns | 01 (C# concepts transfer) |
+| 08 | [React Basics](08-react-basics.md) | 10 min | Components, props/state, hooks, React Router | **07** ⚠️ |
+| 09 | [SQL Server & EF Core](09-sql-server-efcore.md) | 10 min | Entities, DbContext, LINQ queries, migrations, N+1 | 05 |
+| 10 | [Docker & Containers](10-docker-container-basics.md) | 10 min | Images, containers, docker-compose, volumes | None |
 
 ### QA Track (Phúc)
 
 | # | File | Read Time | Topic |
 |---|------|:---:|--------|
 | QA-06 | [Postman Advanced](qa-06-postman-advanced.md) | 10 min | Collections, environments, test scripts |
-| QA-07 | [API Automation Basics](qa-07-api-automation-basics.md) | 10 min | Introduction to automated API testing tools |
+| QA-07 | [API Automation Basics](qa-07-api-automation-basics.md) | 10 min | Arrange→Act→Assert, test pyramid, xUnit intro |
 
 ---
 
@@ -87,6 +86,7 @@ Before starting, install these tools:
 |--------|------|
 | C# | [Microsoft Learn — C#](https://learn.microsoft.com/en-us/dotnet/csharp/) |
 | ASP.NET Core | [Microsoft Learn — ASP.NET](https://learn.microsoft.com/en-us/aspnet/core/) |
+| Carter | [Carter GitHub](https://github.com/CarterCommunity/Carter) |
 | React | [React.dev](https://react.dev/learn) |
 | TypeScript | [TypeScript Handbook](https://www.typescriptlang.org/docs/handbook/) |
 | SOLID | [Refactoring Guru — SOLID](https://refactoring.guru/design-patterns/solid) |
@@ -101,12 +101,12 @@ Before starting, install these tools:
 
 ## Mini-Check Assignments
 
-At the end of each week, your mentor will give you a short assignment to verify your understanding. These are NOT pre-defined — they are designed by the CEO based on actual reading progress.
+At the end of each week, your mentor will give you a short assignment to verify your understanding:
 
-- **Week 0 Mini-Check**: Covers files 01–06 (dev) or QA-01–QA-05 (QA)
-- **Week 1 Mini-Check**: Covers files 07–10 (dev) or QA-06–QA-07 (QA)
+- **Week 0 Mini-Check**: Covers backend + API concepts (files 01–06)
+- **Week 1 Mini-Check**: Covers frontend + infrastructure (files 07–10)
 
-> **Note:** Don't try to "study for the test." Focus on understanding — the mini-check is just a checkpoint.
+> **Note:** The mini-checks are designed by the CEO at the end of each week — not pre-defined. Focus on understanding the concepts, not "studying for the test."
 
 ---
 

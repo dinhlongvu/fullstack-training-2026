@@ -1,6 +1,8 @@
-# 05 — React Basics
+# 08 — React Basics
 
 React is a JavaScript library for building user interfaces. It's component-based, declarative, and the most popular frontend library in 2026. This project uses React with TypeScript.
+
+> **Prerequisite:** You should have read [07 — TypeScript Fundamentals](07-typescript-fundamentals.md) first. This file uses TypeScript syntax throughout — types, interfaces, generics. If the `interface UserCardProps` or `useState<User[]>` syntax looks unfamiliar, go back and review 07.
 
 ---
 
