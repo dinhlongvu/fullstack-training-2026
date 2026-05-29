@@ -55,7 +55,11 @@ fullstack-training-2026/
 │   │       └── GetMyStats.cs
 │   ├── Domain/                       # Entity classes (User, Project, TaskItem, Comment)
 │   ├── DTOs/                         # Data Transfer Objects (TaskDto, ProjectDto...)
-│   ├── Infrastructure/               # DbContext, EF Core config, migrations
+│   ├── Infrastructure/               # Data access (EF Core = Repository + Unit of Work)
+│   │   ├── Data/
+│   │   │   ├── AppDbContext.cs        #   DbContext + DbSet<T> (chính là repository)
+│   │   │   ├── Configurations/        #   Entity config (Fluent API, không dùng Data Annotations)
+│   │   │   └── Migrations/            #   EF Core migrations
 │   ├── Validation/                   # FluentValidation validators
 │   ├── Mapping/                      # AutoMapper profiles
 │   ├── Middleware/                    # JWT auth, error handling
