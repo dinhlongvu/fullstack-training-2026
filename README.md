@@ -1,8 +1,8 @@
 # Fullstack Training 2026
 
-Chương trình đào tạo cho intern 2026 — 2 Fullstack Developers + 1 QA.
+Chương trình đào tạo intern 2026 — 2 Fullstack Developers + 1 QA. Học qua dự án thực tế: xây dựng ứng dụng **TaskBoard** (Kanban board đơn giản) trong 4 tuần.
 
-**Stack:** C# ASP.NET Core (backend) + React (frontend) + Manual/Automated Testing (QA)
+**Stack:** .NET 8 (Carter + MediatR + CQRS) + React 18 (TypeScript) + SQL Server + Docker
 
 ## Team
 
@@ -16,54 +16,120 @@ Chương trình đào tạo cho intern 2026 — 2 Fullstack Developers + 1 QA.
 
 ```
 fullstack-training-2026/
-├── backend/                # ASP.NET Core Web API
-│   ├── Controllers/        # API endpoints
-│   ├── Services/           # Business logic
-│   ├── Models/             # Data models / DTOs
-│   ├── Data/               # DbContext, migrations
-│   └── Program.cs          # App entry point
-├── frontend/               # React SPA (Vite)
+├── backend/                          # .NET 8 — Clean Architecture + CQRS
+│   ├── Modules/                      # Carter modules (1 file = 1 resource group)
+│   │   ├── AuthModule.cs
+│   │   ├── ProjectsModule.cs
+│   │   ├── TasksModule.cs
+│   │   ├── CommentsModule.cs
+│   │   └── DashboardModule.cs
+│   ├── Commands/                     # CQRS Commands + Handlers (write operations)
+│   │   ├── CreateTask.cs             #   Command DTO + Handler in single file
+│   │   ├── UpdateTask.cs
+│   │   └── DeleteTask.cs
+│   ├── Queries/                      # CQRS Queries + Handlers (read operations)
+│   │   ├── GetTasks.cs
+│   │   ├── GetTaskDetail.cs
+│   │   └── GetDashboardStats.cs
+│   ├── Domain/                       # Entity classes (User, Project, TaskItem, Comment)
+│   ├── DTOs/                         # Data Transfer Objects (TaskDto, ProjectDto...)
+│   ├── Infrastructure/               # DbContext, EF Core config, migrations
+│   ├── Validation/                   # FluentValidation validators
+│   ├── Mapping/                      # AutoMapper profiles
+│   ├── Middleware/                    # JWT auth, error handling
+│   └── Program.cs                    # App entry point + service registration
+│
+├── frontend/                         # React 18 + TypeScript + Vite
 │   ├── src/
-│   │   ├── components/     # Reusable UI components
-│   │   ├── pages/          # Page-level components
-│   │   ├── services/       # API client functions
-│   │   └── App.tsx
-│   └── package.json
-├── qa/                     # QA workspace
-│   ├── test-plans/         # Test plans cho từng feature
-│   ├── test-cases/         # Test cases chi tiết
-│   ├── bug-reports/        # Bug report templates
-│   └── automated/          # Automated tests (Playwright)
-├── .github/workflows/      # CI/CD pipeline
-├── README.md               # This file
-├── SETUP.md                # Local environment setup
-└── CONVENTIONS.md           # Coding standards
+│   │   ├── components/               # Shared components
+│   │   │   └── ui/                   # shadcn/ui components (Button, Dialog, Table...)
+│   │   ├── features/                 # Feature-based modules
+│   │   │   ├── auth/                 #   LoginPage, RegisterPage, AuthGuard
+│   │   │   ├── projects/             #   ProjectList, ProjectCard, CreateProjectDialog
+│   │   │   ├── tasks/                #   KanbanBoard, TaskCard, CreateTaskDialog
+│   │   │   ├── comments/             #   CommentList, CommentForm
+│   │   │   └── dashboard/            #   StatsCards, UpcomingDeadlines
+│   │   ├── stores/                   # Zustand stores (auth, UI)
+│   │   ├── hooks/                    # Custom hooks
+│   │   ├── api/                      # API client (axios/fetch + React Query)
+│   │   ├── lib/                      # Utilities, constants, types
+│   │   └── App.tsx                   # Router + Layout
+│   ├── package.json
+│   └── vite.config.ts
+│
+├── docs/
+│   ├── mini-project.md               # TaskBoard specification
+│   └── pre-study/                    # 15 dev + 7 QA pre-study files
+│
+├── qa/                               # QA workspace
+│   ├── test-plans/                   # Test plans for each feature
+│   ├── test-cases/                   # Detailed test cases
+│   ├── bug-reports/                  # Bug report templates
+│   └── postman/                      # Postman collections + environments
+│
+├── docker-compose.yml                # SQL Server container
+├── .github/workflows/                # CI/CD (lint + build on PR)
+├── .github/PULL_REQUEST_TEMPLATE.md
+├── README.md                         # This file
+├── SETUP.md                          # Local environment setup
+└── CONVENTIONS.md                    # Coding standards
 ```
 
 ## Tech Stack
 
+### Backend
+
 | Layer | Technology |
 |-------|-----------|
-| Backend | ASP.NET Core 8, Entity Framework Core, SQLite (local) / SQL Server |
-| Frontend | React 18+, TypeScript, Vite, CSS Modules |
-| QA | Manual testing, Test case design, Playwright (automation) |
-| CI/CD | GitHub Actions |
+| Framework | .NET 8 |
+| API | Carter (Minimal API) |
+| Architecture | Clean Architecture, CQRS with MediatR |
+| ORM | Entity Framework Core 8 + SQL Server |
+| Validation | FluentValidation |
+| Mapping | AutoMapper |
+| Auth | JWT (JSON Web Tokens) |
+| Logging | Serilog |
+
+### Frontend
+
+| Layer | Technology |
+|-------|-----------|
+| Framework | React 18 + TypeScript |
+| Build Tool | Vite |
+| Routing | React Router v6 |
+| Server State | React Query (TanStack Query) |
+| Client State | Zustand |
+| Forms | React Hook Form + Zod |
+| UI Components | shadcn/ui |
+| Styling | Tailwind CSS |
+
+### Infrastructure & QA
+
+| Layer | Technology |
+|-------|-----------|
+| Database | SQL Server 2022 (Docker) |
+| CI/CD | GitHub Actions (lint + build) |
+| Manual Testing | Test cases, exploratory testing |
+| API Testing | Postman (collections + test scripts) |
+| Bug Tracking | GitHub Issues |
 
 ## Workflow
 
 ### Dev Flow
-1. Pick a dev task from GitHub Issues
-2. Create a branch: `intern-X/task-XX-short-desc`
-3. Code → Push → Open Pull Request
-4. CI checks must pass (lint + build)
+
+1. Pick a task from GitHub Issues → assign yourself
+2. Branch from `main`: `hoc/task-XX-desc` or `bao/task-XX-desc`
+3. Code → Commit → Push → Open Pull Request to `main`
+4. CI must pass (lint + build)
 5. AI review (first pass) → CEO review (final)
-6. Merge into `training/` branch
+6. CEO merges into `main`
 
 ### QA Flow
-1. Dev feature merged into `training/`
+
+1. Dev feature merged into `main`
 2. QA writes test cases → saves in `qa/test-cases/`
-3. QA performs manual testing
-4. Found a bug? → Create GitHub Issue with label `bug`
+3. QA performs manual testing + API testing with Postman
+4. Found a bug? → Create GitHub Issue with label `bug`, assign to dev
 5. Dev fixes bug → QA verifies → Close bug
 6. All tests passed? → Feature ready for CEO final approval
 
@@ -78,21 +144,26 @@ Dev builds → QA tests → Bug found? ──YES──→ Dev fixes → QA verif
 ## Learning Objectives
 
 ### Dev Interns
-- Build RESTful APIs with ASP.NET Core
-- Design and interact with databases using Entity Framework
-- Build responsive UIs with React + TypeScript
-- Use Git/GitHub for professional collaboration
-- Write clean, maintainable, and testable code
-- Understand CI/CD and automated testing
+
+- **Backend**: Build RESTful APIs with Carter + MediatR + CQRS pattern
+- **Database**: Design schemas, write LINQ queries, manage migrations with EF Core
+- **Auth**: Implement JWT authentication + protected routes
+- **Frontend**: Build SPA with React 18 + TypeScript + React Router
+- **State**: Manage server state (React Query) and client state (Zustand)
+- **Forms**: Build validated forms with React Hook Form + Zod
+- **UI**: Style with Tailwind CSS, use shadcn/ui component library
+- **Git**: Professional branching, PR workflow, code review
+- **CI/CD**: Automated lint + build on every PR
 
 ### QA Intern
-- Design test plans and test cases
+
+- Design test plans and test cases for REST APIs
 - Perform manual testing: functional, UI, regression
-- Write clear, actionable bug reports
+- API testing with Postman (collections, environments, test scripts)
+- Write clear, actionable bug reports on GitHub Issues
 - Verify bug fixes and track bug lifecycle
-- Understand Dev-QA collaboration in Agile
-- Basic automated testing with Playwright
+- Understand Dev-QA collaboration in Agile workflow
 
 ---
 
-*Program duration: 1.5–2 months*
+*Program duration: 12 weeks (2 weeks pre-study + 4 weeks mini project + 6 weeks real project)*
