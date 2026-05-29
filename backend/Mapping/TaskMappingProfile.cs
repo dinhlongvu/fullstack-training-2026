@@ -29,6 +29,6 @@ public class TaskMappingProfile : Profile
         // Command → Entity
         CreateMap<CreateTaskCommand, TaskItem>()
             .ForMember(d => d.CreatedAt, o => o.MapFrom(_ => DateTime.UtcNow))
-            .ForMember(d => d.Status, o => o.MapFrom(_ => TaskStatus.Todo));
+            .ForMember(d => d.Status, o => o.MapFrom(_ => Domain.TaskStatus.Todo));
     }
 }
