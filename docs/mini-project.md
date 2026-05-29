@@ -20,40 +20,23 @@ Think of it as "Trello, but simpler" — just enough to learn the full stack wit
 
 ---
 
-## 2. What We Intentionally LEFT OUT
+## 2. Core Features
 
-To keep this beginner-friendly, we deliberately **skip** these advanced topics (you'll learn them in Phase 3 — real project):
-
-| Skipped | Why | Learn Later In |
-|---------|-----|---------------|
-| Elasticsearch | Too complex for first project | Real project |
-| Redis caching | Premature optimization | Real project |
-| Hangfire background jobs | Adds unnecessary complexity | Real project |
-| IdentityServer | Overkill for 3 users | Real project |
-| File uploads | Scope creep | Real project |
-| Drag-and-drop | Nice-to-have, not core | Stretch goal |
-
-**Focus:** Master the fundamentals — CRUD, CQRS, relationships, forms, state management.
-
----
-
-## 3. Core Features
-
-### 3.1 Authentication (Simple JWT)
+### 2.1 Authentication (Simple JWT)
 
 - Register with email + password
 - Login → get a JWT token
 - Protected pages: redirect to login if not authenticated
 - No roles yet — everyone is equal (add roles in stretch goals)
 
-### 3.2 Project Management
+### 2.2 Project Management
 
 - Create a project (name + description)
 - See list of your projects
 - Add other users to your project
 - Edit/delete your own projects
 
-### 3.3 Task Board (Kanban)
+### 2.3 Task Board (Kanban)
 
 - 3 columns: **Todo** | **In Progress** | **Done**
 - Create a task: title, description, priority (Low/Medium/High), due date (optional)
@@ -61,13 +44,13 @@ To keep this beginner-friendly, we deliberately **skip** these advanced topics (
 - Filter tasks by priority or assignee
 - Assign task to a project member
 
-### 3.4 Comments
+### 2.4 Comments
 
 - Add comment on any task
 - See all comments on a task
 - Simple — no edit/delete for now
 
-### 3.5 Simple Dashboard
+### 2.5 Simple Dashboard
 
 - "My Tasks" count by status
 - Upcoming deadlines (due within 3 days)
@@ -75,7 +58,7 @@ To keep this beginner-friendly, we deliberately **skip** these advanced topics (
 
 ---
 
-## 4. Database — Just 5 Tables
+## 3. Database — Just 5 Tables
 
 ```
 ┌──────────┐     ┌────────────────┐     ┌──────────┐
@@ -112,7 +95,7 @@ Comments: Id, TaskId (FK), AuthorId (FK → Users), Content, CreatedAt
 
 ---
 
-## 5. API Endpoints (Carter + MediatR + CQRS)
+## 4. API Endpoints (Carter + MediatR + CQRS)
 
 ### Auth
 ```
@@ -157,7 +140,7 @@ GET    /api/dashboard/my-stats        ← My task counts by status, upcoming dea
 
 ---
 
-## 6. CQRS Pattern — But Kept Simple
+## 5. CQRS Pattern — But Kept Simple
 
 We use MediatR for clean separation, but keep handlers simple:
 
@@ -191,7 +174,7 @@ public class GetTasksHandler : IRequestHandler<GetTasksQuery, List<TaskDto>>
 
 ---
 
-## 7. Frontend — 6 Pages
+## 6. Frontend — 6 Pages
 
 ```
 /login          — Email + password form
@@ -230,7 +213,7 @@ App
 
 ---
 
-## 8. Task Breakdown — Complementary
+## 7. Task Breakdown — Complementary
 
 ### Stream A — Học (Backend-Heavy)
 
@@ -261,7 +244,7 @@ App
 
 ---
 
-## 9. Infrastructure — Simple Docker
+## 8. Infrastructure — Simple Docker
 
 ```yaml
 # docker-compose.yml — just ONE service!
@@ -284,7 +267,7 @@ That's it. No Redis, no Elasticsearch, no Kibana. One command: `docker compose u
 
 ---
 
-## 10. Definition of Done (Per Task)
+## 9. Definition of Done (Per Task)
 
 Every GitHub Issue must satisfy:
 
@@ -301,7 +284,7 @@ Every GitHub Issue must satisfy:
 
 ---
 
-## 11. Success Criteria
+## 10. Success Criteria
 
 By end of Week 5, interns should have:
 
@@ -315,7 +298,7 @@ By end of Week 5, interns should have:
 
 ---
 
-## 12. Stretch Goals (Only If Time Permits)
+## 11. Stretch Goals (Only If Time Permits)
 
 - 🟡 **Roles:** Admin can delete any project, Member can only edit own tasks
 - 🟡 **Task search:** Simple text search with EF Core `LIKE` query
@@ -324,7 +307,7 @@ By end of Week 5, interns should have:
 
 ---
 
-## 13. What Interns Will Learn
+## 12. What Interns Will Learn
 
 | Skill | How |
 |-------|-----|
