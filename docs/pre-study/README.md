@@ -1,18 +1,25 @@
-# Pre-Study — Learning Roadmap
+# Pre-Study — Learning Roadmap (2 Weeks)
 
 Welcome to the Fullstack Training 2026 program!
 
-Before jumping into the project, you need a solid foundation in the concepts below. Each file is designed to be read in **5-10 minutes** — it provides an overview + examples + links for deeper learning.
+Before jumping into the project, you need a solid foundation in the concepts below. The pre-study is split across **2 weeks**:
+
+- **Week 0: Core Programming Concepts** — the fundamentals every dev/QA must know
+- **Week 1: Tech Stack Deep Dive** — specific tools & patterns used in our projects
+
+Each file is designed to be read in **5-10 minutes** — it provides an overview + examples + links for deeper learning.
 
 **Rules:**
 - 📖 Read in order (top to bottom)
 - 🔗 Click external links to dive deeper
 - ❓ Have a question? Create a GitHub Issue with the `question` label
-- ⏰ Deadline: **end of Week 0** (confirm with your mentor)
+- ⏰ Deadline: **end of Week 1** (confirm with your mentor)
 
 ---
 
-## Dev Track (Học & Bảo)
+## 📅 Week 0 — Core Programming Concepts
+
+### Dev Track (Học & Bảo)
 
 | # | File | Read Time | Topic |
 |---|------|:---:|--------|
@@ -23,7 +30,7 @@ Before jumping into the project, you need a solid foundation in the concepts bel
 | 05 | [React Basics](05-react-basics.md) | 10 min | Components, Props/State, Hooks, Events |
 | 06 | [Git & GitHub](06-git-github-basics.md) | 10 min | Clone, branch, commit, PR, merge conflicts |
 
-## QA Track (Phúc)
+### QA Track (Phúc)
 
 | # | File | Read Time | Topic |
 |---|------|:---:|--------|
@@ -34,6 +41,24 @@ Before jumping into the project, you need a solid foundation in the concepts bel
 | QA-05 | [Test Planning](qa-05-test-plan.md) | 10 min | Test plan structure, test summary |
 
 ---
+
+## 📅 Week 1 — Tech Stack Deep Dive
+
+### Dev Track (Học & Bảo)
+
+| # | File | Read Time | Topic |
+|---|------|:---:|--------|
+| 07 | [TypeScript Fundamentals](07-typescript-fundamentals.md) | 10 min | Types, interfaces, generics, strict mode |
+| 08 | [Docker & Container Basics](08-docker-container-basics.md) | 10 min | Images, containers, docker-compose, volumes |
+| 09 | [REST API Design](09-rest-api-design.md) | 10 min | Resources, HTTP methods, status codes, pagination |
+| 10 | [SQL Server & EF Core](10-sql-server-efcore.md) | 10 min | Tables, relationships, migrations, LINQ queries |
+
+### QA Track (Phúc)
+
+| # | File | Read Time | Topic |
+|---|------|:---:|--------|
+| QA-06 | [Postman Advanced](qa-06-postman-advanced.md) | 10 min | Collections, environments, test scripts |
+| QA-07 | [API Automation Basics](qa-07-api-automation-basics.md) | 10 min | Introduction to automated API testing tools |
 
 ---
 
@@ -47,9 +72,12 @@ Before starting, install these tools:
 | Node.js | 20 LTS | [nodejs.org](https://nodejs.org/) |
 | Git | Latest | [git-scm.com](https://git-scm.com/) |
 | VS Code | Latest | [code.visualstudio.com](https://code.visualstudio.com/) |
+| Visual Studio 2022 | Community | [visualstudio.com](https://visualstudio.microsoft.com/) |
 | Postman | Latest | [postman.com](https://www.postman.com/downloads/) |
+| Docker Desktop | Latest | [docker.com](https://www.docker.com/products/docker-desktop/) |
+| SSMS | Latest | [SSMS download](https://learn.microsoft.com/en-us/sql/ssms/download-sql-server-management-studio-ssms) |
 
-**VS Code Extensions:** C# Dev Kit, ES7+ React Snippets, Prettier
+**VS Code Extensions:** C# Dev Kit, ES7+ React Snippets, Prettier, Docker, Thunder Client
 
 ---
 
@@ -60,10 +88,25 @@ Before starting, install these tools:
 | C# | [Microsoft Learn — C#](https://learn.microsoft.com/en-us/dotnet/csharp/) |
 | ASP.NET Core | [Microsoft Learn — ASP.NET](https://learn.microsoft.com/en-us/aspnet/core/) |
 | React | [React.dev](https://react.dev/learn) |
+| TypeScript | [TypeScript Handbook](https://www.typescriptlang.org/docs/handbook/) |
 | SOLID | [Refactoring Guru — SOLID](https://refactoring.guru/design-patterns/solid) |
+| Docker | [Docker Docs](https://docs.docker.com/get-started/) |
+| REST API | [REST API Tutorial](https://restfulapi.net/) |
+| SQL | [SQLBolt](https://sqlbolt.com/) |
 | Git | [Oh Shit, Git!?!](https://ohshitgit.com/) |
 | Testing | [Ministry of Testing](https://www.ministryoftesting.com/) |
 | Postman | [Postman Learning Center](https://learning.postman.com/) |
+
+---
+
+## Mini-Check Assignments
+
+At the end of each week, your mentor will give you a short assignment to verify your understanding. These are NOT pre-defined — they are designed by the CEO based on actual reading progress.
+
+- **Week 0 Mini-Check**: Covers files 01–06 (dev) or QA-01–QA-05 (QA)
+- **Week 1 Mini-Check**: Covers files 07–10 (dev) or QA-06–QA-07 (QA)
+
+> **Note:** Don't try to "study for the test." Focus on understanding — the mini-check is just a checkpoint.
 
 ---
 
