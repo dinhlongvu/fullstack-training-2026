@@ -49,8 +49,13 @@ Frontend development with TypeScript and React, plus the infrastructure tools th
 |---|------|:---:|--------|-------------|
 | 07 | [TypeScript Fundamentals](07-typescript-fundamentals.md) | 10 min | Types, interfaces, generics, React + TS patterns | 01 (C# concepts transfer) |
 | 08 | [React Basics](08-react-basics.md) | 10 min | Components, props/state, hooks, React Router | **07** ⚠️ |
-| 09 | [SQL Server & EF Core](09-sql-server-efcore.md) | 10 min | Entities, DbContext, LINQ queries, migrations, N+1 | 05 |
-| 10 | [Docker & Containers](10-docker-container-basics.md) | 10 min | Images, containers, docker-compose, volumes | None |
+| 09 | [React Query](09-react-query.md) 🆕 | 10 min | Server state: useQuery, useMutation, cache, auto-refetch | 08 |
+| 10 | [Zustand](10-zustand.md) 🆕 | 10 min | Client state: create, set, selectors, no prop drilling | 08 |
+| 11 | [Forms & UI](11-forms-and-ui.md) 🆕 | 10 min | React Hook Form, Zod, Tailwind CSS, shadcn/ui | 08, 09 |
+| 12 | [SQL Server & EF Core](12-sql-server-efcore.md) | 10 min | Entities, DbContext, LINQ queries, migrations, N+1 | 05 |
+| 13 | [Docker & Containers](13-docker-container-basics.md) | 10 min | Images, containers, docker-compose, volumes | None |
+| 14 | [JWT Authentication](14-jwt-authentication.md) 🆕 | 10 min | Token generation, validation, [Authorize], frontend auth flow | 05, 10 |
+| 15 | [Validation & Mapping](15-validation-mapping.md) 🆕 | 10 min | FluentValidation, AutoMapper, pipeline behaviors | 05 |
 
 ### QA Track (Phúc)
 
@@ -104,7 +109,7 @@ Before starting, install these tools:
 At the end of each week, your mentor will give you a short assignment to verify your understanding:
 
 - **Week 0 Mini-Check**: Covers backend + API concepts (files 01–06)
-- **Week 1 Mini-Check**: Covers frontend + infrastructure (files 07–10)
+- **Week 1 Mini-Check**: Covers frontend + infrastructure (files 07–15)
 
 > **Note:** The mini-checks are designed by the CEO at the end of each week — not pre-defined. Focus on understanding the concepts, not "studying for the test."
 
