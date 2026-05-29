@@ -1,450 +1,345 @@
-# Mini Project: TeamCollab — Team Collaboration Platform
+# Mini Project: TaskBoard — Simple Task Management
 
-> **Duration:** 4 weeks (Week 5–8)  
+> **Duration:** 4 weeks (Week 2–5, right after pre-study)  
 > **Team:** 2 Fullstack Devs + 1 QA  
-> **Tech Stack:** .NET 8 + React 18 (TypeScript) + Docker + Azure
+> **Tech Stack:** .NET 8 (Carter + MediatR + EF Core) + React 18 (TypeScript) + SQL Server + Docker  
+> **Difficulty:** Beginner-Friendly 🟢
 
 ---
 
-## 1. Project Overview
+## 1. What Is TaskBoard?
 
-TeamCollab is an internal team collaboration and task management platform. It allows teams to create projects, manage tasks on a Kanban board, assign members, track progress via dashboards, and receive notifications.
+A simple Kanban-style task board where team members can:
 
-### Why This Project
+- 📋 Create projects and add members
+- 📝 Create tasks and move them across columns (Todo → In Progress → Done)
+- 💬 Comment on tasks
+- 📊 See a basic dashboard with task stats
 
-This mini project is designed to touch **every technology** in the training curriculum:
-
-| Tech | Where It's Used |
-|------|-----------------|
-| .NET 8 + Carter | REST API endpoints (minimal API) |
-| MediatR + CQRS | Separating commands & queries |
-| EF Core + SQL Server | Data persistence, migrations |
-| FluentValidation | Request validation |
-| AutoMapper | DTO ↔ Entity mapping |
-| IdentityServer + JWT | Authentication & role-based authorization |
-| Serilog | Structured logging → Elasticsearch sink |
-| xUnit | Unit + integration tests |
-| React 18 + TypeScript + Vite | SPA frontend |
-| React Query (TanStack Query) | Server state management |
-| Zustand | Client state (auth, UI, filters) |
-| React Router v6 | Client-side routing |
-| React Hook Form + Zod | Form management & validation |
-| shadcn/ui + Tailwind CSS | UI components |
-| Axios | HTTP client with interceptors |
-| Redis | Response caching |
-| Hangfire | Background job processing (notifications) |
-| Elasticsearch + Kibana | Log aggregation + task search/read-model |
-| Docker Compose | Local dev infrastructure |
-| Azure App Service | Cloud deployment |
+Think of it as "Trello, but simpler" — just enough to learn the full stack without getting overwhelmed.
 
 ---
 
-## 2. Core Features
+## 2. What We Intentionally LEFT OUT
 
-### 2.1 Authentication & Authorization
+To keep this beginner-friendly, we deliberately **skip** these advanced topics (you'll learn them in Phase 3 — real project):
 
-- User registration & login (JWT access token + refresh token)
-- Role-based access control: **Admin**, **Project Manager**, **Member**
-- Protected routes on both frontend (React Router guards) and backend (Authorization policies)
-- Token refresh mechanism via Axios interceptors
+| Skipped | Why | Learn Later In |
+|---------|-----|---------------|
+| Elasticsearch | Too complex for first project | Real project |
+| Redis caching | Premature optimization | Real project |
+| Hangfire background jobs | Adds unnecessary complexity | Real project |
+| IdentityServer | Overkill for 3 users | Real project |
+| File uploads | Scope creep | Real project |
+| Drag-and-drop | Nice-to-have, not core | Stretch goal |
 
-### 2.2 Project Management
-
-- **CRUD for projects**: name, description, status (Active/Archived)
-- **Member management**: add/remove members, assign roles per project
-- Each user sees only projects they belong to
-- Project dashboard: task count by status, member workload overview
-
-### 2.3 Task Management (CQRS)
-
-- **CRUD for tasks** with Commands (create, update, delete, assign) and Queries (list, filter, search)
-- **Task properties**: title, description, status, priority, assignee, due date, tags
-- **Status workflow**: Backlog → To Do → In Progress → In Review → Done
-- **Kanban board view**: drag-and-drop (or click-to-move) between status columns
-- **List view**: sortable/filterable table
-- **Task detail page**: full info, comments, activity history
-- **Search**: full-text search via Elasticsearch read-model (synced from SQL Server)
-
-### 2.4 Comments & Activity Log
-
-- **Comments**: add/edit/delete on tasks (soft delete)
-- **Activity log**: auto-recorded events — task created, status changed, assignee changed, comment added
-- Displayed on task detail page as a timeline
-
-### 2.5 Notifications (Background Jobs)
-
-- **Email notifications** (simulated via Hangfire job logging in dev):
-  - Task assigned to you
-  - Task status changed
-  - New comment on your task
-- **In-app notification bell** (polled from API, cached in Redis)
-- Hangfire dashboard for monitoring job execution
-
-### 2.6 Dashboard & Analytics
-
-- **Personal dashboard**: my tasks by status, upcoming deadlines, recent activity
-- **Project dashboard**: burndown-like stats, tasks created vs completed per week
-- **Cached with Redis** (TTL: 5 minutes) to demonstrate caching patterns
+**Focus:** Master the fundamentals — CRUD, CQRS, relationships, forms, state management.
 
 ---
 
-## 3. Architecture
+## 3. Core Features
+
+### 3.1 Authentication (Simple JWT)
+
+- Register with email + password
+- Login → get a JWT token
+- Protected pages: redirect to login if not authenticated
+- No roles yet — everyone is equal (add roles in stretch goals)
+
+### 3.2 Project Management
+
+- Create a project (name + description)
+- See list of your projects
+- Add other users to your project
+- Edit/delete your own projects
+
+### 3.3 Task Board (Kanban)
+
+- 3 columns: **Todo** | **In Progress** | **Done**
+- Create a task: title, description, priority (Low/Medium/High), due date (optional)
+- Click to move task between columns
+- Filter tasks by priority or assignee
+- Assign task to a project member
+
+### 3.4 Comments
+
+- Add comment on any task
+- See all comments on a task
+- Simple — no edit/delete for now
+
+### 3.5 Simple Dashboard
+
+- "My Tasks" count by status
+- Upcoming deadlines (due within 3 days)
+- Project overview: total tasks, completed tasks
+
+---
+
+## 4. Database — Just 5 Tables
 
 ```
-┌──────────────────────────────────────────────────────┐
-│                    Frontend (React)                    │
-│  ┌──────────┐ ┌──────────┐ ┌──────────────────────┐  │
-│  │ Zustand  │ │React Query│ │ shadcn/ui + Tailwind │  │
-│  │(auth/UI) │ │ (server)  │ │  + Hook Form + Zod   │  │
-│  └──────────┘ └──────────┘ └──────────────────────┘  │
-│                        │                               │
-│                   Axios + HTTPS                        │
-└────────────────────────┼──────────────────────────────┘
-                         │
-┌────────────────────────┼──────────────────────────────┐
-│                 Backend (.NET 8)                        │
-│  ┌─────────────────────┼───────────────────────────┐  │
-│  │              Carter (Minimal API)                 │  │
-│  │  ┌──────────┐  ┌──────────┐  ┌───────────────┐  │  │
-│  │  │ Commands │  │  Queries  │  │  Validators   │  │  │
-│  │  │(MediatR) │  │ (MediatR) │  │(FluentVali.)  │  │  │
-│  │  └────┬─────┘  └────┬─────┘  └───────────────┘  │  │
-│  │       │              │                            │  │
-│  │  ┌────┴──────────────┴────┐  ┌────────────────┐  │  │
-│  │  │    Application Layer   │  │  IdentityServer │  │  │
-│  │  │  (Handlers + Services) │  │    + JWT Auth   │  │  │
-│  │  └───────────┬────────────┘  └────────────────┘  │  │
-│  │              │                                     │  │
-│  │  ┌───────────┴────────────┐                       │  │
-│  │  │   Domain Layer         │                       │  │
-│  │  │  (Entities + VOs)      │                       │  │
-│  │  └───────────┬────────────┘                       │  │
-│  │              │                                     │  │
-│  │  ┌───────────┴────────────┐                       │  │
-│  │  │  Infrastructure        │                       │  │
-│  │  │  EF Core + Repositories│                       │  │
-│  │  └────────────────────────┘                       │  │
-│  └───────────────────────────────────────────────────┘  │
-│                                                          │
-│  ┌─────────┐ ┌─────────┐ ┌──────────┐ ┌─────────────┐  │
-│  │ Hangfire│ │  Redis  │ │Serilog→ES│ │   xUnit     │  │
-│  │ (Jobs)  │ │ (Cache) │ │  + Kibana│ │  (Tests)    │  │
-│  └─────────┘ └─────────┘ └──────────┘ └─────────────┘  │
-└──────────────────────────────────────────────────────────┘
-                         │
-┌────────────────────────┼──────────────────────────────┐
-│            Infrastructure (Docker)                      │
-│  ┌──────────┐ ┌──────────┐ ┌───────────────┐          │
-│  │SQL Server│ │  Redis   │ │Elasticsearch  │          │
-│  │  (1433)  │ │ (6379)   │ │  + Kibana     │          │
-│  └──────────┘ └──────────┘ └───────────────┘          │
-└──────────────────────────────────────────────────────────┘
+┌──────────┐     ┌────────────────┐     ┌──────────┐
+│  Users   │────<│ ProjectMembers │>────│ Projects │
+└──────────┘     └────────────────┘     └──────────┘
+     │                                        │
+     │         ┌──────────┐                   │
+     ├────────<│  Tasks   │>──────────────────┘
+     │         └──────────┘
+     │               │
+     │         ┌──────────┐
+     └────────<│ Comments │
+               └──────────┘
 ```
-
----
-
-## 4. Database Schema
-
-### 4.1 Tables
 
 ```sql
--- Users (extends Identity)
-Users: Id, Email, FullName, AvatarUrl, CreatedAt
+-- Users
+Users: Id, Email, FullName, PasswordHash, CreatedAt
 
--- Projects
-Projects: Id, Name, Description, Status, CreatedAt, CreatedById
+-- Projects  
+Projects: Id, Name, Description, CreatedAt, CreatedById (FK → Users)
 
--- Project Members
-ProjectMembers: Id, ProjectId, UserId, Role (Admin|Manager|Member), JoinedAt
+-- Project Members (who's in which project)
+ProjectMembers: Id, ProjectId (FK), UserId (FK), JoinedAt
 
 -- Tasks
-Tasks: Id, ProjectId, Title, Description, Status, Priority, 
-       AssigneeId, DueDate, CreatedById, CreatedAt, UpdatedAt
-
--- Tags
-Tags: Id, Name, Color
-TaskTags: TaskId, TagId
+Tasks: Id, ProjectId (FK), Title, Description, 
+       Status (Todo|InProgress|Done), Priority (Low|Medium|High),
+       AssigneeId (FK → Users, nullable), DueDate (nullable), CreatedAt
 
 -- Comments
-Comments: Id, TaskId, AuthorId, Content, CreatedAt, UpdatedAt, IsDeleted
-
--- ActivityLog
-ActivityLogs: Id, TaskId, UserId, Action, OldValue, NewValue, CreatedAt
-
--- Notifications
-Notifications: Id, UserId, Message, Type, ReferenceId, IsRead, CreatedAt
-```
-
-### 4.2 Entity Relationships
-
-```
-User ───< ProjectMember >─── Project
-User ───< Task (Assignee)
-User ───< Task (Creator)
-User ───< Comment
-User ───< ActivityLog
-User ───< Notification
-Project ───< Task
-Task ───< Comment
-Task ───< ActivityLog
-Task ───< TaskTag >─── Tag
+Comments: Id, TaskId (FK), AuthorId (FK → Users), Content, CreatedAt
 ```
 
 ---
 
-## 5. API Design
+## 5. API Endpoints (Carter + MediatR + CQRS)
 
-### 5.1 Endpoints
-
+### Auth
 ```
-Auth:
-  POST   /api/auth/register
-  POST   /api/auth/login
-  POST   /api/auth/refresh
-  GET    /api/auth/me
-
-Projects:
-  GET    /api/projects                    # List my projects
-  POST   /api/projects                    # Create project
-  GET    /api/projects/{id}               # Get project detail
-  PUT    /api/projects/{id}               # Update project
-  DELETE /api/projects/{id}               # Archive project
-  GET    /api/projects/{id}/members       # List members
-  POST   /api/projects/{id}/members       # Add member
-  DELETE /api/projects/{id}/members/{uid} # Remove member
-
-Tasks:
-  GET    /api/projects/{id}/tasks         # List tasks (with filters)
-  POST   /api/projects/{id}/tasks         # Create task
-  GET    /api/tasks/{id}                  # Get task detail
-  PUT    /api/tasks/{id}                  # Update task
-  DELETE /api/tasks/{id}                  # Delete task
-  PATCH  /api/tasks/{id}/status           # Change status
-  PATCH  /api/tasks/{id}/assign           # Assign task
-  GET    /api/tasks/search?q=...          # Full-text search (ES)
-
-Comments:
-  GET    /api/tasks/{id}/comments         # List comments
-  POST   /api/tasks/{id}/comments         # Add comment
-  PUT    /api/comments/{id}               # Edit comment
-  DELETE /api/comments/{id}               # Soft delete
-
-Dashboard:
-  GET    /api/dashboard/personal          # My stats (cached)
-  GET    /api/dashboard/projects/{id}     # Project stats (cached)
-
-Notifications:
-  GET    /api/notifications               # My notifications
-  PATCH  /api/notifications/{id}/read     # Mark as read
+POST /api/auth/register     ← { email, fullName, password }
+POST /api/auth/login        ← { email, password } → { token }
+GET  /api/auth/me           ← Get current user info (requires token)
 ```
 
-### 5.2 CQRS Pattern Example
+### Projects
+```
+GET    /api/projects                  ← My projects
+POST   /api/projects                  ← Create { name, description }
+GET    /api/projects/{id}             ← Project detail + members
+PUT    /api/projects/{id}             ← Update (owner only)
+DELETE /api/projects/{id}             ← Delete (owner only)
+POST   /api/projects/{id}/members     ← Add member { userId }
+```
+
+### Tasks
+```
+GET    /api/projects/{id}/tasks                ← Tasks in project (?status=&priority=&assignee=)
+POST   /api/projects/{id}/tasks                ← Create { title, description, priority, dueDate? }
+GET    /api/tasks/{id}                         ← Task detail + comments
+PUT    /api/tasks/{id}                         ← Update task
+PATCH  /api/tasks/{id}/status                  ← Move: { status: "InProgress" }
+PATCH  /api/tasks/{id}/assign                  ← Assign: { assigneeId: 3 }
+DELETE /api/tasks/{id}                         ← Delete task
+```
+
+### Comments
+```
+GET    /api/tasks/{id}/comments      ← All comments for a task
+POST   /api/tasks/{id}/comments      ← Add { content }
+```
+
+### Dashboard
+```
+GET    /api/dashboard/my-stats        ← My task counts by status, upcoming deadlines
+```
+
+**Total: 17 endpoints** — small enough to build in 4 weeks.
+
+---
+
+## 6. CQRS Pattern — But Kept Simple
+
+We use MediatR for clean separation, but keep handlers simple:
+
+```csharp
+// Command — Create a task
+public record CreateTaskCommand(int ProjectId, string Title, string Description, 
+    Priority Priority, DateTime? DueDate) : IRequest<TaskDto>;
+
+public class CreateTaskHandler : IRequestHandler<CreateTaskCommand, TaskDto>
+{
+    // 1. Validate input (FluentValidation)
+    // 2. Create entity
+    // 3. Save to DB (EF Core)
+    // 4. Map to DTO (AutoMapper)
+    // 5. Return DTO
+}
+
+// Query — Get tasks in a project
+public record GetTasksQuery(int ProjectId, string? Status, string? Priority) 
+    : IRequest<List<TaskDto>>;
+
+public class GetTasksHandler : IRequestHandler<GetTasksQuery, List<TaskDto>>
+{
+    // 1. Query DB with filters (EF Core + LINQ)
+    // 2. Map to DTOs (AutoMapper)
+    // 3. Return list
+}
+```
+
+**The key learning:** Commands change data, Queries read data. Separate handlers = clean, testable code.
+
+---
+
+## 7. Frontend — 6 Pages
 
 ```
-// Command
-POST /api/projects/{id}/tasks
-→ CreateTaskCommand { ProjectId, Title, Description, Priority }
-→ CreateTaskCommandHandler
-  → Validate (FluentValidation)
-  → Map to Task entity (AutoMapper)
-  → Save (EF Core)
-  → Log activity
-  → Enqueue notification job (Hangfire)
-  → Return TaskDto
+/login          — Email + password form
+/register       — Registration form
+/projects       — List of my projects + "Create" button
+/projects/:id   — Kanban board (3 columns) + "New Task" button
+/tasks/:id      — Task detail + comments
+/dashboard      — My stats (task counts, deadlines)
+```
 
-// Query
-GET /api/projects/{id}/tasks?status=InProgress&assignee=me
-→ GetTasksQuery { ProjectId, Status, AssigneeId }
-→ GetTasksQueryHandler
-  → Check Redis cache
-  → If miss: Query DB with EF Core (filtered + paginated)
-  → Cache result in Redis (TTL 2 min)
-  → Return List<TaskDto>
+### State Management (Simple)
+
+- **React Query (TanStack Query):** all server data — projects, tasks, comments
+- **Zustand:** only auth token + current user (1 small store)
+
+### Component Tree
+
+```
+App
+├── AuthGuard (redirect to /login if no token)
+│   ├── Layout (sidebar + header)
+│   │   ├── ProjectsPage → ProjectCard[]
+│   │   ├── ProjectDetailPage
+│   │   │   ├── KanbanBoard
+│   │   │   │   ├── Column (Todo)
+│   │   │   │   │   └── TaskCard[]
+│   │   │   │   ├── Column (InProgress)
+│   │   │   │   └── Column (Done)
+│   │   │   └── CreateTaskDialog
+│   │   ├── TaskDetailPage
+│   │   │   ├── TaskInfo
+│   │   │   └── CommentList → CommentItem[]
+│   │   └── DashboardPage → StatsCards
+│   └── LoginPage / RegisterPage
 ```
 
 ---
 
-## 6. Frontend Structure
+## 8. Task Breakdown — Complementary
 
-```
-frontend/src/
-├── api/                    # Axios instance + API client functions
-│   ├── client.ts           # Axios with interceptors (token refresh)
-│   ├── auth.ts
-│   ├── projects.ts
-│   ├── tasks.ts
-│   └── comments.ts
-├── components/
-│   ├── ui/                 # shadcn/ui components
-│   ├── layout/             # AppShell, Sidebar, Header
-│   ├── auth/               # LoginForm, RegisterForm
-│   ├── projects/           # ProjectCard, ProjectList, MemberList
-│   ├── tasks/              # TaskCard, KanbanBoard, TaskTable, TaskDetail
-│   ├── comments/           # CommentList, CommentForm
-│   ├── dashboard/          # StatsCards, BurndownChart
-│   └── notifications/      # NotificationBell, NotificationList
-├── hooks/                  # Custom hooks
-│   ├── useAuth.ts
-│   ├── useProjects.ts
-│   ├── useTasks.ts
-│   └── useNotifications.ts
-├── stores/                 # Zustand stores
-│   ├── authStore.ts
-│   └── uiStore.ts
-├── pages/                  # Route pages
-│   ├── LoginPage.tsx
-│   ├── RegisterPage.tsx
-│   ├── DashboardPage.tsx
-│   ├── ProjectsPage.tsx
-│   ├── ProjectDetailPage.tsx
-│   ├── KanbanBoardPage.tsx
-│   └── TaskDetailPage.tsx
-├── lib/                    # Utilities
-│   └── utils.ts
-├── types/                  # TypeScript types
-│   └── index.ts
-├── App.tsx                 # Router setup
-└── main.tsx                # Entry point
-```
+### Stream A — Học (Backend-Heavy)
+
+| Week | What to Build | Skills |
+|------|--------------|--------|
+| 2 | **Project CRUD API** — Carter module + EF Core + MediatR commands/queries | Carter, EF Core, CQRS basics |
+| 3 | **Task CRUD API** — commands, queries, status transitions, filtering | FluentValidation, AutoMapper, LINQ |
+| 4 | **Comments + Auth API** — JWT generation, comment endpoints, authorization | JWT, middleware, auth policies |
+| 5 | **Integration + Polish** — connect frontend, fix bugs, code review | Git workflow, debugging |
+
+### Stream B — Bảo (Frontend-Heavy)
+
+| Week | What to Build | Skills |
+|------|--------------|--------|
+| 2 | **Auth UI + Router** — Login, Register, Zustand store, protected routes | React Router, Zustand, forms |
+| 3 | **Projects UI** — Project list, create dialog, member management | React Query (mutations), shadcn/ui |
+| 4 | **Kanban Board** — 3 columns, TaskCard, "New Task" form, status toggle | React Query (queries), component design |
+| 5 | **Dashboard + Polish** — Stats cards, upcoming deadlines, connect real API | Data visualization, UX polish |
+
+### Stream C — Phúc (QA)
+
+| Week | What to Do | Skills |
+|------|-----------|--------|
+| 2 | Write test cases for Auth + Project APIs (8-10 cases) | Test case design |
+| 3 | Manual test Project CRUD + Task CRUD; report bugs | Bug reporting, Postman |
+| 4 | Test full Kanban flow + comments; create Postman collection | API testing, collections |
+| 5 | Regression test, verify all bug fixes, final test report | Test summary, automation intro |
 
 ---
 
-## 7. Task Breakdown Strategy (Complementary)
-
-### Stream A — Intern Học: Backend-Heavy Features
-
-| Week | Task | Backend | Frontend |
-|------|------|---------|----------|
-| 5 | Task CRUD API (CQRS) | Commands, Queries, Validators, EF Core | — |
-| 6 | Project Management API | Project CRUD, Members | — |
-| 7 | Kanban Board UI | Status change endpoint | KanbanBoard, TaskCard, Drag-drop |
-| 8 | Search & Dashboard | Elasticsearch sync, Dashboard queries | SearchBar, StatsCards |
-
-### Stream B — Intern Bảo: Frontend-Heavy Features
-
-| Week | Task | Backend | Frontend |
-|------|------|---------|----------|
-| 5 | Auth System | IdentityServer config, JWT | Login/Register pages, Auth store |
-| 6 | Comments & Activity | Comments CRUD, ActivityLog | CommentList, CommentForm, Timeline |
-| 7 | Task List + Detail UI | — | TaskTable, TaskDetail, Filters |
-| 8 | Notifications + Polish | Hangfire jobs, Notification API | NotificationBell, Polish UI |
-
-### Stream C — Intern Phúc: QA
-
-| Week | Task |
-|------|------|
-| 5 | Write test cases for Auth + User API |
-| 6 | Manual test Project CRUD + Member management |
-| 7 | Manual test Task workflow + Kanban board |
-| 8 | Full test cycle: regression, bug reports, API testing with Postman |
-
----
-
-## 8. Infrastructure (Docker Compose)
+## 9. Infrastructure — Simple Docker
 
 ```yaml
-# docker-compose.yml
+# docker-compose.yml — just ONE service!
 services:
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
     environment:
       SA_PASSWORD: "YourStrong!Passw0rd"
       ACCEPT_EULA: "Y"
-    ports: ["1433:1433"]
-    volumes: [sqlserver_data:/var/opt/mssql]
-
-  elasticsearch:
-    image: elasticsearch:8.12.0
-    environment:
-      discovery.type: single-node
-      xpack.security.enabled: false
-    ports: ["9200:9200"]
-    volumes: [es_data:/usr/share/elasticsearch/data]
-
-  kibana:
-    image: kibana:8.12.0
-    ports: ["5601:5601"]
-    environment:
-      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
-
-  redis:
-    image: redis:7-alpine
-    ports: ["6379:6379"]
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqldata:/var/opt/mssql
 
 volumes:
-  sqlserver_data:
-  es_data:
+  sqldata:
 ```
+
+That's it. No Redis, no Elasticsearch, no Kibana. One command: `docker compose up -d`.
 
 ---
 
-## 9. Definition of Done (Per Task)
+## 10. Definition of Done (Per Task)
 
-Every task issue must satisfy:
+Every GitHub Issue must satisfy:
 
 ```markdown
-- [ ] Code compiles: `dotnet build` (backend) / `npm run build` (frontend)
-- [ ] CI pipeline passes (lint + build)
-- [ ] Unit tests written for new logic (backend: xUnit, frontend: Vitest)
+- [ ] Code builds: `dotnet build` (backend) / `npm run build` (frontend)
+- [ ] CI passes (lint + build on PR)
 - [ ] At least 2 manual test cases documented in PR description
-- [ ] No hardcoded secrets or connection strings
-- [ ] API endpoints documented with Swagger (if backend)
-- [ ] UI screenshots attached (if frontend)
+- [ ] API endpoint tested with Swagger or Postman (if backend)
+- [ ] UI screenshot attached (if frontend)
+- [ ] No hardcoded strings — use appsettings.json or .env
 - [ ] Code follows CONVENTIONS.md
-- [ ] PR reviewed and approved by CEO
-- [ ] No unresolved review comments
+- [ ] PR reviewed and approved
 ```
 
 ---
 
-## 10. Success Criteria
+## 11. Success Criteria
 
-By end of Week 8, the team should have:
+By end of Week 5, interns should have:
 
-- ✅ A fully functional TeamCollab app deployed to Azure
-- ✅ Users can register, login, and manage projects
-- ✅ Tasks move through the full Kanban workflow
-- ✅ Search works via Elasticsearch
-- ✅ Notifications fire via Hangfire background jobs
-- ✅ Dashboard shows real-time stats (cached in Redis)
-- ✅ All APIs have Swagger documentation
-- ✅ Backend test coverage ≥ 60%
-- ✅ QA has executed full test cycle with documented results
-- ✅ All critical bugs fixed, minor bugs tracked in GitHub Issues
+- ✅ A working TaskBoard app running locally (Docker + `dotnet run` + `npm run dev`)
+- ✅ Can register, login, create projects, add tasks, comment
+- ✅ Tasks move through Todo → In Progress → Done
+- ✅ Dashboard shows real stats from the database
+- ✅ 17 API endpoints documented in Swagger
+- ✅ All CI checks green on GitHub
+- ✅ QA has completed 1 full test cycle with documented results
 
 ---
 
-## 11. Stretch Goals (If Time Permits)
+## 12. Stretch Goals (Only If Time Permits)
 
-- File attachments on tasks (Azure Blob Storage)
-- Real-time updates via SignalR (instead of polling)
-- Email notifications via SendGrid (real, not simulated)
-- Dark mode toggle
-- Mobile-responsive layout
-- Export tasks to CSV/Excel
+- 🟡 **Roles:** Admin can delete any project, Member can only edit own tasks
+- 🟡 **Task search:** Simple text search with EF Core `LIKE` query
+- 🟡 **Dark mode:** Toggle with Tailwind dark class
+- 🟡 **Drag-and-drop:** Move task cards between columns with mouse
 
 ---
 
-## 12. Learning Outcomes
+## 13. What Interns Will Learn
 
-After completing this mini project, interns will have hands-on experience with:
+| Skill | How |
+|-------|-----|
+| **Carter Minimal API** | Building all 17 endpoints |
+| **MediatR + CQRS** | Commands & queries with separate handlers |
+| **EF Core + SQL Server** | Entities, migrations, LINQ queries, Include/ThenInclude |
+| **JWT Authentication** | Token generation, validation, protected routes |
+| **React + TypeScript** | Components, hooks, forms, routing |
+| **React Query** | useQuery, useMutation, cache invalidation |
+| **Zustand** | Simple client state (auth token) |
+| **shadcn/ui + Tailwind** | Pre-built components, utility-first CSS |
+| **Docker** | Running SQL Server in a container |
+| **Git + PR workflow** | Branching, committing, PR description, code review |
+| **Testing mindset** | Writing test cases, manual testing, bug reporting |
 
-| Skill | How Learned |
-|-------|-------------|
-| CQRS + MediatR | Building commands & queries with separate handlers |
-| EF Core Migrations | Creating and applying database migrations |
-| Clean Architecture | Separating Domain, Application, Infrastructure layers |
-| JWT Authentication | Implementing auth flow with IdentityServer |
-| Redis Caching | Caching dashboard queries with cache invalidation |
-| Background Jobs | Enqueuing and processing jobs with Hangfire |
-| Elasticsearch | Setting up read-model sync + Kibana log viewing |
-| React Query | Server state management with cache, refetch, mutations |
-| Zustand | Client-only state management (auth tokens, UI state) |
-| TypeScript | Type-safe frontend development |
-| Form Validation | Zod schemas + React Hook Form |
-| shadcn/ui + Tailwind | Modern component library + utility-first CSS |
-| Docker Compose | Multi-service local development |
-| Azure Deployment | Publishing apps to cloud |
-| Test-Driven Mindset | Writing tests alongside code |
-| Code Review | Giving and receiving constructive feedback |
-| Git Collaboration | Branching, PRs, conflict resolution |
+---
+
+> **Golden rule:** It's better to have a simple app that WORKS than a fancy app that's broken. Focus on completing the core flow first, then polish.
