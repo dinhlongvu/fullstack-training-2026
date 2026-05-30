@@ -10,12 +10,14 @@ Docker lets you run applications in isolated **containers** — lightweight envi
 
 ## Why Docker in This Project
 
-Our project needs multiple services running simultaneously:
-- SQL Server (database)
-- Redis (cache)
-- Elasticsearch (search engine)
+The project uses SQLite by default (file-based, no Docker needed). Docker is an **optional advanced topic** — you can complete the entire training without it.
 
-Docker Compose starts all of them with ONE command.
+When would you use Docker?
+- Running SQL Server instead of SQLite (production-like setup)
+- Containerizing the backend and frontend for deployment
+- Running integration tests in CI/CD
+
+The `docker-compose.yml` in the repo shows a commented-out SQL Server service you can use if you want to experiment.
 
 ## Code Examples
 
@@ -34,15 +36,13 @@ FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
 COPY --from=build /out ./
 EXPOSE 8080
-ENTRYPOINT ["dotnet", "TeamCollab.Api.dll"]
+ENTRYPOINT ["dotnet", "Backend.dll"]
 ```
 
 ### Docker Compose — Orchestrate Services
 
 ```yaml
-# docker-compose.yml
-version: "3.8"
-
+# docker-compose.yml — optional SQL Server for advanced usage
 services:
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
@@ -54,22 +54,11 @@ services:
     volumes:
       - sqldata:/var/opt/mssql
 
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-
-  elasticsearch:
-    image: elasticsearch:8.12.0
-    environment:
-      discovery.type: single-node
-      xpack.security.enabled: false
-    ports:
-      - "9200:9200"
-
 volumes:
   sqldata:
 ```
+
+> **Note:** The project uses SQLite by default — you do NOT need Docker to complete the training. This docker-compose is here for reference if you want to try SQL Server later.
 
 ### Daily Commands
 

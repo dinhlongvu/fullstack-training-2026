@@ -78,8 +78,9 @@ Before starting, install these tools:
 | VS Code | Latest | [code.visualstudio.com](https://code.visualstudio.com/) |
 | Visual Studio 2022 | Community | [visualstudio.com](https://visualstudio.microsoft.com/) |
 | Postman | Latest | [postman.com](https://www.postman.com/downloads/) |
-| Docker Desktop | Latest | [docker.com](https://www.docker.com/products/docker-desktop/) |
+| Docker Desktop | Latest (optional) | [docker.com](https://www.docker.com/products/docker-desktop/) |
 | SSMS | Latest | [SSMS download](https://learn.microsoft.com/en-us/sql/ssms/download-sql-server-management-studio-ssms) |
+| DB Browser for SQLite | Latest | [sqlitebrowser.org](https://sqlitebrowser.org/) |
 
 **VS Code Extensions:** C# Dev Kit, ES7+ React Snippets, Prettier, Docker, Thunder Client
 

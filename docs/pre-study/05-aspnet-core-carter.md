@@ -87,8 +87,9 @@ Request → [Logger] → [Auth] → [CORS] → [Carter Routes] → Response
 // Program.cs — ORDER MATTERS
 var app = builder.Build();
 
-app.UseHttpsRedirection();      // Force HTTPS
-app.UseCors("AllowAll");        // Cross-Origin
+app.UseMiddleware<ExceptionHandlingMiddleware>(); // Must be FIRST — catches all errors
+app.UseSwagger();
+app.UseSwaggerUI();
 app.UseAuthentication();        // Who are you?
 app.UseAuthorization();         // What can you do?
 app.MapCarter();               // Route to Carter modules ← MUST be after auth
@@ -96,7 +97,7 @@ app.MapCarter();               // Route to Carter modules ← MUST be after auth
 app.Run();
 ```
 
-> **Rule:** `UseAuthentication` must come before `UseAuthorization`. `MapCarter` comes after both.
+> **Rule:** `UseAuthentication` must come before `UseAuthorization`. `MapCarter` comes after both. `ExceptionHandlingMiddleware` should be the first middleware to catch exceptions from everything downstream.
 
 ---
 

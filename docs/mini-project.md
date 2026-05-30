@@ -1,8 +1,8 @@
 # Mini Project: TaskBoard — Simple Task Management
 
-> **Duration:** 4 weeks (Week 2–5, right after pre-study)  
+> **Duration:** 6 weeks (Week 3–8, right after pre-study)  
 > **Team:** 2 Fullstack Devs + 1 QA  
-> **Tech Stack:** .NET 8 (Carter + MediatR + EF Core) + React 18 (TypeScript) + SQL Server + Docker  
+> **Tech Stack:** .NET 8 (Carter + MediatR + EF Core) + React 18 (TypeScript) + SQLite + Docker (optional)  
 > **Difficulty:** Beginner-Friendly 🟢
 
 ---
@@ -219,51 +219,53 @@ App
 
 | Week | What to Build | Skills |
 |------|--------------|--------|
-| 2 | **Project CRUD API** — Carter module + EF Core + MediatR commands/queries | Carter, EF Core, CQRS basics |
-| 3 | **Task CRUD API** — commands, queries, status transitions, filtering | FluentValidation, AutoMapper, LINQ |
-| 4 | **Comments + Auth API** — JWT generation, comment endpoints, authorization | JWT, middleware, auth policies |
-| 5 | **Integration + Polish** — connect frontend, fix bugs, code review | Git workflow, debugging |
+| 3 | **Project CRUD API** — Carter module + EF Core + MediatR commands/queries | Carter, EF Core, CQRS basics |
+| 4 | **Task CRUD API** — commands, queries, status transitions, filtering | FluentValidation, AutoMapper, LINQ |
+| 5 | **Task CRUD continued + Comments API** — complete task endpoints, nested comments | API design, nested resources |
+| 6 | **Auth API** — JWT generation, validation, protected routes | JWT, middleware, auth policies |
+| 7 | **Dashboard API + Integration** — stats endpoint, connect with frontend | Aggregation queries, CORS |
+| 8 | **Polish + Bug Fixes** — code review, error handling, edge cases | Git workflow, debugging |
 
 ### Stream B — Bảo (Frontend-Heavy)
 
 | Week | What to Build | Skills |
 |------|--------------|--------|
-| 2 | **Auth UI + Router** — Login, Register, Zustand store, protected routes | React Router, Zustand, forms |
-| 3 | **Projects UI** — Project list, create dialog, member management | React Query (mutations), shadcn/ui |
-| 4 | **Kanban Board** — 3 columns, TaskCard, "New Task" form, status toggle | React Query (queries), component design |
-| 5 | **Dashboard + Polish** — Stats cards, upcoming deadlines, connect real API | Data visualization, UX polish |
+| 3 | **Auth UI + Router** — Login, Register, Zustand store, protected routes | React Router, Zustand, forms |
+| 4 | **Projects UI** — Project list, create dialog, member management | React Query (mutations), shadcn/ui |
+| 5 | **Kanban Board (Part 1)** — 3-column layout, TaskCard component | Component design, props/state |
+| 6 | **Kanban Board (Part 2)** — "New Task" form, status toggle, filtering | React Query (queries), forms |
+| 7 | **Task Detail + Comments** — Task detail page, comment list, comment form | Nested routes, useParams |
+| 8 | **Dashboard + Polish** — Stats cards, upcoming deadlines, UX polish | Data visualization, final polish |
 
 ### Stream C — Phúc (QA)
 
 | Week | What to Do | Skills |
 |------|-----------|--------|
-| 2 | Write test cases for Auth + Project APIs (8-10 cases) | Test case design |
-| 3 | Manual test Project CRUD + Task CRUD; report bugs | Bug reporting, Postman |
-| 4 | Test full Kanban flow + comments; create Postman collection | API testing, collections |
-| 5 | Regression test, verify all bug fixes, final test report | Test summary, automation intro |
+| 3 | Write test cases from spec + practice Postman with public APIs | Test case design, Postman basics |
+| 4 | Manual test Project CRUD; report bugs | Bug reporting, Postman |
+| 5 | Manual test Task CRUD + comments; start Postman collection | API testing, collections |
+| 6 | Test Auth flow + protected endpoints | Auth testing, token handling |
+| 7 | Test full Kanban flow; complete Postman collection | Integration testing |
+| 8 | Regression test, verify all bug fixes, final test report | Test summary, QA sign-off |
 
 ---
 
-## 8. Infrastructure — Simple Docker
+## 8. Infrastructure — Simple SQLite
 
-```yaml
-# docker-compose.yml — just ONE service!
-services:
-  sqlserver:
-    image: mcr.microsoft.com/mssql/server:2022-latest
-    environment:
-      SA_PASSWORD: "YourStrong!Passw0rd"
-      ACCEPT_EULA: "Y"
-    ports:
-      - "1433:1433"
-    volumes:
-      - sqldata:/var/opt/mssql
+The project uses **SQLite** — a file-based database. No Docker, no server setup needed.
 
-volumes:
-  sqldata:
+```json
+// backend/appsettings.Development.json
+{
+  "ConnectionStrings": {
+    "Default": "Data Source=TaskBoard.db"
+  }
+}
 ```
 
-That's it. No Redis, no Elasticsearch, no Kibana. One command: `docker compose up -d`.
+That's it. Run `dotnet ef database update` once, and the database file is created. No Redis, no Elasticsearch, no Docker required.
+
+> **Optional:** To use SQL Server instead (for production-like setup), see the commented-out services in `docker-compose.yml`.
 
 ---
 
@@ -286,7 +288,7 @@ Every GitHub Issue must satisfy:
 
 ## 10. Success Criteria
 
-By end of Week 5, interns should have:
+By end of Week 8, interns should have:
 
 - ✅ A working TaskBoard app running locally (Docker + `dotnet run` + `npm run dev`)
 - ✅ Can register, login, create projects, add tasks, comment
@@ -313,13 +315,12 @@ By end of Week 5, interns should have:
 |-------|-----|
 | **Carter Minimal API** | Building all 17 endpoints |
 | **MediatR + CQRS** | Commands & queries with separate handlers |
-| **EF Core + SQL Server** | Entities, migrations, LINQ queries, Include/ThenInclude |
+| **EF Core + SQLite** | Entities, migrations, LINQ queries, Include/ThenInclude |
 | **JWT Authentication** | Token generation, validation, protected routes |
 | **React + TypeScript** | Components, hooks, forms, routing |
 | **React Query** | useQuery, useMutation, cache invalidation |
 | **Zustand** | Simple client state (auth token) |
 | **shadcn/ui + Tailwind** | Pre-built components, utility-first CSS |
-| **Docker** | Running SQL Server in a container |
 | **Git + PR workflow** | Branching, committing, PR description, code review |
 | **Testing mindset** | Writing test cases, manual testing, bug reporting |
 

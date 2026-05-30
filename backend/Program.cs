@@ -15,9 +15,9 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ─── Database ───────────────────────────────────────────
+// ─── Database (SQLite — file-based, no Docker needed for training) ──
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
+    options.UseSqlite(builder.Configuration.GetConnectionString("Default")));
 
 // ─── Carter (Minimal API) ───────────────────────────────
 builder.Services.AddCarter();

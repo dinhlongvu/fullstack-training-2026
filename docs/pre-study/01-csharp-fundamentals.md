@@ -170,6 +170,39 @@ int? length = user.Nickname?.Length;  // null if Nickname is null
 
 ---
 
+## 7. Records (C# 9+)
+
+Records are immutable reference types — perfect for DTOs, commands, and queries. This project uses records extensively in CQRS:
+
+```csharp
+// Record = short, immutable, value-equality
+public record TaskDto(int Id, string Title, string Status);
+
+// Record with explicit properties (for JSON serialization)
+public record CreateTaskCommand
+{
+    public string Title { get; init; } = string.Empty;
+    public string Description { get; init; } = string.Empty;
+    public Priority Priority { get; init; }
+}
+
+// With-expression: create a copy with one field changed
+var cmd = new CreateTaskCommand { Title = "Hello", Priority = Priority.High };
+var updated = cmd with { Title = "Updated" }; // Priority stays High, Title changes
+```
+
+**Records vs Classes:**
+| Feature | `record` | `class` |
+|---------|----------|---------|
+| Equality | Value-based (compares all properties) | Reference-based (compares memory address) |
+| Mutability | Immutable by default (`init` only) | Mutable (`get; set;`) |
+| `ToString()` | Auto-generated (shows all properties) | Default (shows type name) |
+| Use for | DTOs, Commands, Queries | Entities, Services, DbContext |
+
+Our CQRS pattern: **Commands and Queries = records, Entities = classes.**
+
+---
+
 ## 📚 Further Reading
 
 - [Microsoft Learn — C# Fundamentals](https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/)

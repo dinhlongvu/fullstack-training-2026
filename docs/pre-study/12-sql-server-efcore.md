@@ -1,13 +1,13 @@
-# 12 — SQL Server & Entity Framework Core
+# 12 — SQLite & Entity Framework Core
 
 ## Concept
 
-**SQL Server** is a relational database — data is stored in tables with rows and columns, connected by relationships.
+**SQLite** is a lightweight, file-based relational database — no server setup, no Docker. Perfect for development and training. The database is a single `.db` file.
 
 **Entity Framework Core (EF Core)** is an ORM (Object-Relational Mapper) — it lets you work with databases using C# objects instead of writing raw SQL. You write LINQ queries, EF Core translates them to SQL.
 
 ```
-Your C# Code  →  EF Core (LINQ → SQL)  →  SQL Server
+Your C# Code  →  EF Core (LINQ → SQL)  →  SQLite Database
 Task task = db.Tasks.Find(42);
 // EF Core generates: SELECT * FROM Tasks WHERE Id = 42
 ```
@@ -52,15 +52,27 @@ public class AppDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        // Configure relationships
-        modelBuilder.Entity<TaskItem>()
-            .HasOne(t => t.Project)
+        // Apply ALL configuration classes from this assembly
+        // Each entity gets its own config file in Configurations/
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+    }
+}
+
+// Infrastructure/Data/Configurations/TaskConfiguration.cs
+// Fluent API in separate files keeps Domain classes pure (no EF dependencies)
+public class TaskConfiguration : IEntityTypeConfiguration<TaskItem>
+{
+    public void Configure(EntityTypeBuilder<TaskItem> builder)
+    {
+        builder.HasKey(t => t.Id);
+
+        builder.Property(t => t.Title)
+            .IsRequired()
+            .HasMaxLength(200);
+
+        builder.HasOne(t => t.Project)
             .WithMany(p => p.Tasks)
             .HasForeignKey(t => t.ProjectId);
-
-        // Configure indexes
-        modelBuilder.Entity<TaskItem>()
-            .HasIndex(t => t.Status);
     }
 }
 ```
@@ -122,6 +134,7 @@ dotnet ef database update PreviousMigrationName
 - 🟢 **Watch for N+1 queries** — use `.Include()` to eager-load related data
 - 🟡 **Add indexes** on columns you frequently filter/sort by
 - 🟡 **Connection strings belong in `appsettings.json`** (or User Secrets in dev), never hardcoded
+- 🟡 **Use Fluent API in separate Configurations/ files** — keeps Domain classes clean (see CONVENTIONS.md)
 - 🔴 **Never use string concatenation for SQL** — always use LINQ or parameterized queries
 
 ## N+1 Query Problem

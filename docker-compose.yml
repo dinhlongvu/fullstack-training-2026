@@ -1,0 +1,19 @@
+# Docker Compose — TaskBoard Training Project
+# 
+# SQLite is the default database (file-based, no Docker needed).
+# To use SQL Server instead, uncomment the sqlserver service below,
+# switch the NuGet package in Backend.csproj, and update Program.cs.
+
+# services:
+#   sqlserver:
+#     image: mcr.microsoft.com/mssql/server:2022-latest
+#     environment:
+#       SA_PASSWORD: "YourStrong!Passw0rd"
+#       ACCEPT_EULA: "Y"
+#     ports:
+#       - "1433:1433"
+#     volumes:
+#       - sqldata:/var/opt/mssql
+#
+# volumes:
+#   sqldata:

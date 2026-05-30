@@ -52,6 +52,8 @@ public class UserService
 - Easy to test: mock `IUserRepository`
 - Business logic doesn't know where data comes from
 
+> **Note for this project:** We do NOT wrap EF Core's `DbSet<T>` in a separate repository. EF Core's `DbSet<T>` IS the repository — it already implements the Repository and Unit of Work patterns. Our CQRS handlers inject `AppDbContext` directly (see `CreateTaskHandler` in the backend code). The Repository pattern is taught here as a concept you should understand, but in practice, don't wrap EF Core.
+
 ---
 
 ## 2. Dependency Injection (DI)
@@ -63,15 +65,21 @@ public class UserService
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
 
-// Controller — automatically receives dependencies via constructor
-[ApiController]
-[Route("api/[controller]")]
-public class UsersController : ControllerBase
+// Carter module — dependencies injected via method parameters (Minimal API)
+public class UsersModule : ICarterModule
 {
-    private readonly IUserService _service;
-    public UsersController(IUserService service) => _service = service;
-    // _service is injected automatically — no manual instantiation
+    public void AddRoutes(IEndpointRouteBuilder app)
+    {
+        app.MapGet("/api/users/{id}", async (int id, IUserService service) =>
+        {
+            var user = await service.GetByIdAsync(id);
+            return user is null ? Results.NotFound() : Results.Ok(user);
+        });
+    }
 }
+// IUserService is injected automatically by the framework — no manual instantiation.
+// In this project we use Carter (Minimal API), not traditional [ApiController].
+// See file 05-aspnet-core-carter.md for details.
 ```
 
 **Lifetimes:**

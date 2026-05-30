@@ -1,8 +1,8 @@
 # Fullstack Training 2026
 
-Intern training program 2026 — 2 Fullstack Developers + 1 QA. Learning through a real project: building a **TaskBoard** app (simple Kanban board) in 4 weeks.
+Intern training program 2026 — 2 Fullstack Developers + 1 QA. Learning through a real project: building a **TaskBoard** app (simple Kanban board) in 6 weeks.
 
-**Stack:** .NET 8 (Carter + MediatR + CQRS) + React 18 (TypeScript) + SQL Server + Docker
+**Stack:** .NET 8 (Carter + MediatR + CQRS) + React 18 (TypeScript) + SQLite + Docker (optional)
 
 ## Team
 
@@ -90,7 +90,7 @@ fullstack-training-2026/
 │   ├── bug-reports/                  # Bug report templates
 │   └── postman/                      # Postman collections + environments
 │
-├── docker-compose.yml                # SQL Server container
+├── docker-compose.yml                # SQL Server container (optional — SQLite is default)
 ├── .github/workflows/                # CI/CD (lint + build on PR)
 ├── .github/PULL_REQUEST_TEMPLATE.md
 ├── README.md                         # This file
@@ -107,7 +107,7 @@ fullstack-training-2026/
 | Framework | .NET 8 |
 | API | Carter (Minimal API) |
 | Architecture | Clean Architecture, CQRS with MediatR |
-| ORM | Entity Framework Core 8 + SQL Server |
+| ORM | Entity Framework Core 8 + SQLite |
 | Validation | FluentValidation |
 | Mapping | AutoMapper |
 | Auth | JWT (JSON Web Tokens) |
@@ -130,7 +130,7 @@ fullstack-training-2026/
 
 | Layer | Technology |
 |-------|-----------|
-| Database | SQL Server 2022 (Docker) |
+| Database | SQLite (file-based, no setup required) |
 | CI/CD | GitHub Actions (lint + build) |
 | Manual Testing | Test cases, exploratory testing |
 | API Testing | Postman (collections + test scripts) |
@@ -189,4 +189,4 @@ Dev builds → QA tests → Bug found? ──YES──→ Dev fixes → QA verif
 
 ---
 
-*Program duration: 12 weeks (2 weeks pre-study + 4 weeks mini project + 6 weeks real project)*
+*Program duration: 8 weeks training (2 weeks pre-study + 6 weeks mini project) + real project onboarding*

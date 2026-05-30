@@ -12,7 +12,8 @@ Instead of writing `if (string.IsNullOrEmpty(title))` everywhere, define rules i
 
 ```csharp
 // Step 1: Install
-// dotnet add package FluentValidation.AspNetCore
+// dotnet add package FluentValidation
+// dotnet add package FluentValidation.DependencyInjectionExtensions
 
 // Step 2: Create a validator
 public class CreateTaskCommandValidator : AbstractValidator<CreateTaskCommand>
@@ -32,26 +33,12 @@ public class CreateTaskCommandValidator : AbstractValidator<CreateTaskCommand>
             .WithMessage("Due date must be in the future");
     }
 }
-
-// Step 3: Use in handler (manual validation)
-public class CreateTaskHandler : IRequestHandler<CreateTaskCommand, TaskDto>
-{
-    private readonly CreateTaskCommandValidator _validator;
-
-    public async Task<TaskDto> Handle(CreateTaskCommand cmd, CancellationToken ct)
-    {
-        var result = await _validator.ValidateAsync(cmd);
-        if (!result.IsValid)
-            throw new ValidationException(result.Errors);
-        // ... proceed with business logic
-    }
-}
 ```
 
-**Or even better — validate automatically with a pipeline behavior:**
+**Validation runs automatically via pipeline behavior — no manual calls needed:**
 
 ```csharp
-// ValidationBehavior.cs — runs BEFORE every handler
+// ValidationBehavior.cs — runs BEFORE every handler, automatically
 public class ValidationBehavior<TRequest, TResponse>
     : IPipelineBehavior<TRequest, TResponse>
     where TRequest : IRequest<TResponse>
@@ -73,9 +60,12 @@ public class ValidationBehavior<TRequest, TResponse>
     }
 }
 
-// Register in Program.cs
-builder.Services.AddValidatorsFromAssemblyContaining<CreateTaskCommandValidator>();
+// Register in Program.cs — validators + pipeline behavior
+builder.Services.AddValidatorsFromAssembly(typeof(Program).Assembly);
 builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+
+// Now every handler gets automatic validation — no manual ValidateAsync() calls!
+// The CONVENTIONS.md rule: "Never call ValidateAsync() manually"
 ```
 
 Now every handler gets automatic validation — no manual `ValidateAsync()` calls needed!
@@ -188,7 +178,7 @@ Clean, focused, testable.
 | Rule | Why |
 |------|-----|
 | One validator per command/query | Matches CQRS: each handler has its own validation rules |
-| Use pipeline behavior for validation | Don't call `ValidateAsync()` in every handler — automate it |
+| Use pipeline behavior for validation | NEVER call `ValidateAsync()` in handlers — automate it |
 | `.ProjectTo<T>()` over `.Include()` + `.Map()` | Translates to SQL `SELECT` — only fetches columns you need |
 | Don't over-map simple properties | If AutoMapper config is longer than manual mapping, skip it |
 
