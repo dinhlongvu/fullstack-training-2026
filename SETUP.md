@@ -112,17 +112,17 @@ If all checks pass, you're ready for the mini-project!
 2. [ ] Start the backend → verify Swagger at https://localhost:5001/swagger
 3. [ ] Start the frontend → verify it loads at http://localhost:5173
 4. [ ] Create your first branch:
-       git checkout -b <label>/task-00-setup
+       git checkout -b hoc/task-00-setup
 5. [ ] Make a small change (e.g., add your name to this file)
 6. [ ] Commit & push:
        git add .
        git commit -m "chore(setup): verify environment"
-       git push -u origin <label>/task-00-setup
+       git push -u origin hoc/task-00-setup
 7. [ ] Open a Pull Request on GitHub (just for practice)
 8. [ ] Ask your mentor to review — this proves you can do the full Git workflow
 ```
 
-### Học — Day 1 After Setup (Backend)
+### Học — Day 1 After Setup (Backend) - Ready
 
 ```
 1. [ ] Read these files carefully (they are your reference implementations):
