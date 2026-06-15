@@ -33,3 +33,9 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer components {
+  .taskboard-home-card {
+    @apply border-primary/20 shadow-md;
+  }
+}

@@ -1,9 +1,10 @@
 // App.tsx — Root component: router + layout.
 // Add new pages as <Route> elements inside the AuthGuard layout.
 
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import { AuthGuard } from '@/components/AuthGuard';
 import { Layout } from '@/components/Layout';
+import { HomePage } from '@/pages/HomePage';
 import { LoginPage } from '@/pages/LoginPage';
 import { RegisterPage } from '@/pages/RegisterPage';
 import { ProjectsPage } from '@/pages/ProjectsPage';
@@ -16,6 +17,7 @@ export default function App() {
   return (
     <Routes>
       {/* Public routes */}
+      <Route path="/" element={<HomePage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
 
@@ -27,7 +29,6 @@ export default function App() {
           </AuthGuard>
         }
       >
-        <Route path="/" element={<Navigate to="/projects" replace />} />
         <Route path="/projects" element={<ProjectsPage />} />
         <Route path="/projects/:id" element={<ProjectDetailPage />} />
         <Route path="/tasks/:id" element={<TaskDetailPage />} />
