@@ -64,4 +64,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapCarter(); // Must be AFTER auth!
 
+// API Health Check
+app.MapGet("/health", () => Results.Ok(new { status = "Healthy", timestamp = DateTime.UtcNow }));
+
 app.Run();
