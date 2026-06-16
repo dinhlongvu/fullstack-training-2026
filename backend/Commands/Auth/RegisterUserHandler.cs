@@ -35,7 +35,7 @@ public class RegisterUserHandler : IRequestHandler<RegisterUserCommand, UserDto>
         // Check if email already exists in database
         var existingUser = await _db.Users
             .FirstOrDefaultAsync(u => u.Email.ToLower() == normalizedEmail, ct);
-        
+
         if (existingUser != null)
         {
             throw new ConflictException("Email is already registered.");
@@ -55,7 +55,7 @@ public class RegisterUserHandler : IRequestHandler<RegisterUserCommand, UserDto>
         // Save user to database
         _db.Users.Add(user);
         await _db.SaveChangesAsync(ct);
-        
+
         // Map entity to DTO and return
         return _mapper.Map<UserDto>(user);
     }
