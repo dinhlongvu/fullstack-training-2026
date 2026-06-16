@@ -1,3 +1,5 @@
+![CI Status](https://github.com/dinhlongvu/fullstack-training-2026/actions/workflows/ci.yml/badge.svg)
+
 # Fullstack Training 2026
 
 Intern training program 2026 — 2 Fullstack Developers + 1 QA. Learning through a real project: building a **TaskBoard** app (simple Kanban board) in 6 weeks.
