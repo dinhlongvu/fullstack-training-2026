@@ -5,12 +5,12 @@ import { Link, Outlet, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/useAuthStore';
 
 export function Layout() {
-  const user = useAuthStore((s) => s.user);
-  const logout = useAuthStore((s) => s.logout);
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const clearAuth = useAuthStore((s) => s.clearAuth);
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    logout();
+    clearAuth();
     navigate('/login');
   };
 
@@ -33,7 +33,7 @@ export function Layout() {
       <div className="flex flex-1 flex-col">
         <header className="flex items-center justify-between border-b px-6 py-3">
           <span className="text-sm text-muted-foreground">
-            {user ? `Hello, ${user.fullName}` : 'TaskBoard'}
+            {currentUser ? `Hello, ${currentUser.username}` : 'TaskBoard'}
           </span>
           <button
             onClick={handleLogout}
