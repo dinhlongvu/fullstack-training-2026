@@ -5,6 +5,7 @@
 using System.Net;
 using System.Text.Json;
 using FluentValidation;
+using Backend.Exceptions; // Custom exceptions can be defined here for more specific error handling.
 
 namespace Backend.Middleware;
 
@@ -31,18 +32,29 @@ public class ExceptionHandlingMiddleware
 
     private static async Task HandleExceptionAsync(HttpContext context, Exception exception)
     {
-        var (statusCode, message) = exception switch
+        // 1. Determine HTTP Status Code
+        var statusCode = exception switch
         {
-            ValidationException => (HttpStatusCode.BadRequest, exception.Message),
-            UnauthorizedAccessException => (HttpStatusCode.Unauthorized, "Unauthorized."),
-            KeyNotFoundException => (HttpStatusCode.NotFound, exception.Message),
-            _ => (HttpStatusCode.InternalServerError, "An unexpected error occurred.")
+            ValidationException => HttpStatusCode.BadRequest,
+            ConflictException => HttpStatusCode.Conflict,
+            UnauthorizedAccessException => HttpStatusCode.Unauthorized,
+            KeyNotFoundException => HttpStatusCode.NotFound,
+            _ => HttpStatusCode.InternalServerError
         };
 
         context.Response.ContentType = "application/json";
         context.Response.StatusCode = (int)statusCode;
 
-        var response = new { error = message };
+        // 2. Format Body returns (Validation returns array 'errors', otherwise returns 'error')
+        object response = exception switch
+        {
+            ValidationException ve => new { errors = ve.Errors.Select(e => e.ErrorMessage) },
+            ConflictException ce => new { error = ce.Message },
+            UnauthorizedAccessException => new { error = "Unauthorized." },
+            KeyNotFoundException ke => new { error = ke.Message },
+            _ => new { error = "An unexpected error occurred." } // Does not return specific errors, avoiding data disclosure
+        };
+
         await context.Response.WriteAsync(JsonSerializer.Serialize(response));
     }
 }
