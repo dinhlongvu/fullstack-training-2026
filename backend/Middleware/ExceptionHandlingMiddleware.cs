@@ -37,6 +37,7 @@ public class ExceptionHandlingMiddleware
         {
             ValidationException => HttpStatusCode.BadRequest,
             ConflictException => HttpStatusCode.Conflict,
+            UnauthorizedException => HttpStatusCode.Unauthorized, // Map login errors to 401
             UnauthorizedAccessException => HttpStatusCode.Unauthorized,
             KeyNotFoundException => HttpStatusCode.NotFound,
             _ => HttpStatusCode.InternalServerError
@@ -50,6 +51,7 @@ public class ExceptionHandlingMiddleware
         {
             ValidationException ve => new { errors = ve.Errors.Select(e => e.ErrorMessage) },
             ConflictException ce => new { error = ce.Message },
+            UnauthorizedException ue => new { error = ue.Message }, // Returns the error message from the LoginCommand handler
             UnauthorizedAccessException => new { error = "Unauthorized." },
             KeyNotFoundException ke => new { error = ke.Message },
             _ => new { error = "An unexpected error occurred." } // Does not return specific errors, avoiding data disclosure
