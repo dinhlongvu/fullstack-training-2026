@@ -1,4 +1,3 @@
-// check email already exists
 // Exceptions/ConflictException.cs
 // Use this when the requested operation cannot be completed
 // because it would create duplicate or conflicting data

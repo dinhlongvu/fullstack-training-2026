@@ -11,7 +11,7 @@ public class RegisterUserCommandValidator : AbstractValidator<RegisterUserComman
 {
     public RegisterUserCommandValidator()
     {
-        // Validate email is not empty and is a valid email fomat
+        // Validate email is not empty and is a valid email format
         RuleFor(x => x.Email)
             .NotEmpty().WithMessage("Email is required")
             .EmailAddress().WithMessage("Email format is invalid");

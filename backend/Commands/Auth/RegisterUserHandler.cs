@@ -29,12 +29,12 @@ public class RegisterUserHandler : IRequestHandler<RegisterUserCommand, UserDto>
     {
         // Validation runs automatically via MediatR pipeline behavior
 
-        // Mormalize emaiil: trim and convert to lowercase for uniqueness check
+        // Mormalize email: trim and convert to lowercase for uniqueness check
         var normalizedEmail = cmd.Email.Trim().ToLowerInvariant();
 
         // Check if email already exists in database
         var existingUser = await _db.Users
-            .FirstOrDefaultAsync(u => u.Email.ToLower() == normalizedEmail, ct);
+            .FirstOrDefaultAsync(u => u.Email == normalizedEmail, ct);
 
         if (existingUser != null)
         {
