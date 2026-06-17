@@ -15,7 +15,7 @@ interface ApiErrorResponse {
 
 async function getErrorMessage(response: Response): Promise<string> {
   // Default error message when API doesn't provide one
-  const fallbackMessage = "HTTP ${response.status}";
+  const fallbackMessage = `HTTP ${response.status}`;
 
   try {
     const body = (await response.json()) as ApiErrorResponse;
@@ -71,5 +71,5 @@ export async function apiClient<TResponse>(
     return undefined as TResponse; // No response body
   }
 
-  return response.json() as Promise<TResponse>;
+  return response.json();
 }

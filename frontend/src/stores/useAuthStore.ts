@@ -2,7 +2,6 @@
 // Manages: JWT token, current user, login/logout actions.
 // Token persists in localStorage so the user stays logged in across page refreshes.
 
-//Create store
 import { create } from "zustand";
 
 // Keys used to store auth data in browser localStorage
@@ -12,8 +11,8 @@ const USER_STORAGE_KEY = "taskboard_current_user";
 // Represents the authenticated user returned by the API
 export interface AuthUser {
   id: number;
-  username: string;
   email: string;
+  fullName: string;
 }
 
 // Shape of the authentication store
