@@ -1,17 +1,17 @@
 // components/Layout.tsx
 // Main app shell: sidebar navigation + header + content area.
 
-import { Link, Outlet, useNavigate } from 'react-router-dom';
-import { useAuthStore } from '@/stores/useAuthStore';
+import { Link, Outlet, useNavigate } from "react-router-dom";
+import { useAuthStore } from "@/stores/useAuthStore";
 
 export function Layout() {
-  const user = useAuthStore((s) => s.user);
-  const logout = useAuthStore((s) => s.logout);
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const clearAuth = useAuthStore((s) => s.clearAuth);
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    logout();
-    navigate('/login');
+    clearAuth();
+    navigate("/login");
   };
 
   return (
@@ -20,10 +20,16 @@ export function Layout() {
       <aside className="w-64 border-r bg-muted/40 p-4">
         <h1 className="mb-6 text-lg font-bold">TaskBoard</h1>
         <nav className="space-y-1">
-          <Link to="/projects" className="block rounded-md px-3 py-2 hover:bg-accent">
+          <Link
+            to="/projects"
+            className="block rounded-md px-3 py-2 hover:bg-accent"
+          >
             Projects
           </Link>
-          <Link to="/dashboard" className="block rounded-md px-3 py-2 hover:bg-accent">
+          <Link
+            to="/dashboard"
+            className="block rounded-md px-3 py-2 hover:bg-accent"
+          >
             Dashboard
           </Link>
         </nav>
@@ -33,7 +39,7 @@ export function Layout() {
       <div className="flex flex-1 flex-col">
         <header className="flex items-center justify-between border-b px-6 py-3">
           <span className="text-sm text-muted-foreground">
-            {user ? `Hello, ${user.fullName}` : 'TaskBoard'}
+            {currentUser ? `Hello, ${currentUser.fullName}` : "TaskBoard"}
           </span>
           <button
             onClick={handleLogout}

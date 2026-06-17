@@ -74,6 +74,7 @@ Thumbs.db
 .env
 .env.*
 !.env.example
+!frontend/.env.development
 *.pem
 *.key
 secrets.json
