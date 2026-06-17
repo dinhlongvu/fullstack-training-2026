@@ -1,6 +1,6 @@
 # Mini Project: TaskBoard — Simple Task Management
 
-> **Duration:** 6 weeks (Week 3–8, right after pre-study)  
+> **Duration:** 6 weeks (Week 1–6 of the Core phase, right after pre-study)  
 > **Team:** 2 Fullstack Devs + 1 QA  
 > **Tech Stack:** .NET 8 (Carter + MediatR + EF Core) + React 18 (TypeScript) + SQLite + Docker (optional)  
 > **Difficulty:** Beginner-Friendly 🟢
@@ -136,7 +136,7 @@ POST   /api/tasks/{id}/comments      ← Add { content }
 GET    /api/dashboard/my-stats        ← My task counts by status, upcoming deadlines
 ```
 
-**Total: 17 endpoints** — small enough to build in 4 weeks.
+**Total: 17 endpoints** — small enough to build in 6 weeks.
 
 ---
 
@@ -215,38 +215,42 @@ App
 
 ## 7. Task Breakdown — Complementary
 
+> Weeks below map 1:1 to the GitHub milestones (`Week 1` … `Week 6`). Auth is front-loaded
+> into Week 1 as the foundation; each later week ships one feature slice end-to-end (BE + FE + QA),
+> with a regression pass folded in where the milestone calls for it.
+
 ### Stream A — Học (Backend-Heavy)
 
-| Week | What to Build | Skills |
-|------|--------------|--------|
-| 3 | **Project CRUD API** — Carter module + EF Core + MediatR commands/queries | Carter, EF Core, CQRS basics |
-| 4 | **Task CRUD API** — commands, queries, status transitions, filtering | FluentValidation, AutoMapper, LINQ |
-| 5 | **Task CRUD continued + Comments API** — complete task endpoints, nested comments | API design, nested resources |
-| 6 | **Auth API** — JWT generation, validation, protected routes | JWT, middleware, auth policies |
-| 7 | **Dashboard API + Integration** — stats endpoint, connect with frontend | Aggregation queries, CORS |
-| 8 | **Polish + Bug Fixes** — code review, error handling, edge cases | Git workflow, debugging |
+| Week | Milestone | What to Build | Skills |
+|------|-----------|--------------|--------|
+| 1 | Setup + Auth | **Setup + Auth API** — .NET 8 + EF Core + SQLite + Swagger skeleton, CI; then register, login, `/me`, JWT middleware | Carter, EF Core, JWT, FluentValidation |
+| 2 | Project CRUD + Regression Auth | **Project CRUD API** — Carter module + MediatR commands/queries, members | CQRS, EF Core relations, AutoMapper |
+| 3 | Task CRUD + Kanban | **Task CRUD API** — commands, queries, status transitions, filtering, assign | LINQ, validation, `ProjectTo<T>` |
+| 4 | Comments + Regression | **Comments API** — nested resources under tasks; fix bugs from regression | API design, nested resources |
+| 5 | Dashboard + Integration | **Dashboard API + Integration** — stats/aggregation endpoint, CORS, connect FE | Aggregation queries, CORS |
+| 6 | Final Polish + Demo | **Polish + Bug Fixes** — error handling, edge cases, full regression | Git workflow, debugging |
 
 ### Stream B — Bảo (Frontend-Heavy)
 
-| Week | What to Build | Skills |
-|------|--------------|--------|
-| 3 | **Auth UI + Router** — Login, Register, Zustand store, protected routes | React Router, Zustand, forms |
-| 4 | **Projects UI** — Project list, create dialog, member management | React Query (mutations), shadcn/ui |
-| 5 | **Kanban Board (Part 1)** — 3-column layout, TaskCard component | Component design, props/state |
-| 6 | **Kanban Board (Part 2)** — "New Task" form, status toggle, filtering | React Query (queries), forms |
-| 7 | **Task Detail + Comments** — Task detail page, comment list, comment form | Nested routes, useParams |
-| 8 | **Dashboard + Polish** — Stats cards, upcoming deadlines, UX polish | Data visualization, final polish |
+| Week | Milestone | What to Build | Skills |
+|------|-----------|--------------|--------|
+| 1 | Setup + Auth | **Setup + Auth UI** — React 18 + Vite + Tailwind + Router + shadcn/ui, CI; auth store + apiClient, Login/Register pages, AuthGuard | React Router, Zustand, RHF + Zod |
+| 2 | Project CRUD + Regression Auth | **Projects UI** — project list, create dialog, member management | React Query (mutations), shadcn/ui |
+| 3 | Task CRUD + Kanban | **Kanban Board** — 3-column layout, TaskCard, "New Task" form, status toggle, filtering | Component design, React Query |
+| 4 | Comments + Regression | **Task Detail + Comments** — task detail page, comment list + form | Nested routes, useParams |
+| 5 | Dashboard + Integration | **Dashboard UI** — stats cards, upcoming deadlines; wire to backend | Data visualization, integration |
+| 6 | Final Polish + Demo | **UX Polish** — loading/empty/error states, responsive, final fixes | UX polish, accessibility |
 
 ### Stream C — Phúc (QA)
 
-| Week | What to Do | Skills |
-|------|-----------|--------|
-| 3 | Write test cases from spec + practice Postman with public APIs | Test case design, Postman basics |
-| 4 | Manual test Project CRUD; report bugs | Bug reporting, Postman |
-| 5 | Manual test Task CRUD + comments; start Postman collection | API testing, collections |
-| 6 | Test Auth flow + protected endpoints | Auth testing, token handling |
-| 7 | Test full Kanban flow; complete Postman collection | Integration testing |
-| 8 | Regression test, verify all bug fixes, final test report | Test summary, QA sign-off |
+| Week | Milestone | What to Do | Skills |
+|------|-----------|-----------|--------|
+| 1 | Setup + Auth | Write test cases for Auth (register/login/me) + manual test + Postman collection | Test case design, Postman, auth testing |
+| 2 | Project CRUD + Regression Auth | Manual test Project CRUD; regression Auth; report bugs | Bug reporting, Postman |
+| 3 | Task CRUD + Kanban | Test Task CRUD + Kanban flow; extend Postman collection | API testing, collections |
+| 4 | Comments + Regression | Test comments; regression on Projects + Tasks | Integration testing |
+| 5 | Dashboard + Integration | Integration testing full flow; complete Postman collection | End-to-end testing |
+| 6 | Final Polish + Demo | Full regression, verify all bug fixes, final test report + QA sign-off | Test summary, QA sign-off |
 
 ---
 
@@ -288,7 +292,7 @@ Every GitHub Issue must satisfy:
 
 ## 10. Success Criteria
 
-By end of Week 8, interns should have:
+By end of Week 6, interns should have:
 
 - ✅ A working TaskBoard app running locally (Docker + `dotnet run` + `npm run dev`)
 - ✅ Can register, login, create projects, add tasks, comment
