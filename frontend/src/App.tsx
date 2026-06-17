@@ -12,9 +12,11 @@ import { ProjectDetailPage } from '@/pages/ProjectDetailPage';
 import { TaskDetailPage } from '@/pages/TaskDetailPage';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
+import { Toaster } from '@/components/ui/Sonner';
 
 export default function App() {
   return (
+    <>
     <Routes>
       {/* Public routes */}
       <Route path="/" element={<HomePage />} />
@@ -38,5 +40,8 @@ export default function App() {
       {/* 404 */}
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
+    
+    <Toaster />
+    </>
   );
 }
