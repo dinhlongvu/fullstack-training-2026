@@ -37,6 +37,13 @@ public class JwtTokenService : ITokenService
 
         var key = Encoding.UTF8.GetBytes(jwtKey);
 
+        // Read token lifetime from configuration settings, default to 60 minutes if fallback occurs
+        var expirationMinutesStr = _configuration["Jwt:AccessTokenExpirationMinutes"];
+        if (!double.TryParse(expirationMinutesStr, out double expirationMinutes))
+        {
+            expirationMinutes = 60; // If the config file is corrupted, the default is 60 minutes
+        }
+
         // Define the content (Payload) of the Token
         var tokenDescriptor = new SecurityTokenDescriptor
         {
@@ -45,7 +52,8 @@ public class JwtTokenService : ITokenService
                 new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
                 new Claim(JwtRegisteredClaimNames.Email, user.Email)
             }),
-            Expires = DateTime.UtcNow.AddHours(1), // Token expires in 1 hour
+            // Use dynamic configuration expiration instead of hardcoded hours values
+            Expires = DateTime.UtcNow.AddMinutes(expirationMinutes),
             Issuer = _configuration["Jwt:Issuer"],
             Audience = _configuration["Jwt:Audience"],
             SigningCredentials = new SigningCredentials(
