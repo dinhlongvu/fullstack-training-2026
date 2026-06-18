@@ -1,6 +1,3 @@
-// pages/RegisterPage.tsx — Registration form placeholder.
-// TODO: Intern will implement.
-
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
@@ -8,7 +5,6 @@ import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { register } from "@/features/auth/api/authApi";
-import { useAuthStore } from "@/stores/useAuthStore";
 import { Button } from "@/components/ui/Button";
 import {
   Form,
@@ -32,11 +28,9 @@ const registerSchema = z.object({
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
 // Register Page Component
-// Handles new user account creation, form validation, and auto-login upon success.
+// Registration succeeds without a token, so the user signs in next.
 export function RegisterPage() {
   const navigate = useNavigate();
-  // Select only 'setAuth' to update global state without unnecessary re-renders
-  const setAuth = useAuthStore((s) => s.setAuth);
 
   // Initialize form with default values and Zod validation
   const form = useForm<RegisterFormValues>({
@@ -51,9 +45,9 @@ export function RegisterPage() {
   // Setup API mutation for user registration
   const registerMutation = useMutation({
     mutationFn: register,
-    onSuccess: (data) => {
-      setAuth(data.token, data.user);
-      navigate("/projects");
+    onSuccess: () => {
+      toast.success("Account created successfully. Please sign in.");
+      navigate("/login");
     },
     onError: (error) => {
       toast.error(error.message);

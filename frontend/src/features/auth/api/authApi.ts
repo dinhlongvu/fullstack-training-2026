@@ -27,9 +27,15 @@ export function login(request: LoginRequest) {
   });
 }
 
+export interface RegisterResponse {
+  id: number;
+  email: string;
+  fullName: string;
+}
+
 // Registers a new user
 export function register(request: RegisterRequest) {
-  return apiClient<AuthResponse>("/api/auth/register", {
+  return apiClient<RegisterResponse>("/api/auth/register", {
     method: "POST",
     body: JSON.stringify(request),
   });

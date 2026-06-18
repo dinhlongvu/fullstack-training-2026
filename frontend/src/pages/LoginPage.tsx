@@ -1,6 +1,3 @@
-// pages/LoginPage.tsx — Login form placeholder.
-// TODO: Intern will implement React Hook Form + Zod + API call.
-
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
@@ -28,7 +25,6 @@ const loginSchema = z.object({
 
 // Infer TypeScript type directly from the schema
 type LoginFormValues = z.infer<typeof loginSchema>;
-
 
 // Login Page Component
 // Handles user authentication, form validation, and global state updates.
