@@ -1,9 +1,10 @@
 // Program.cs — Application entry point.
-// Registers ALL services: Carter, MediatR, EF Core, JWT, FluentValidation, AutoMapper, Swagger.
+// Registers ALL services: Carter, MediatR, EF Core, JWT, FluentValidation, AutoMapper, Swagger, and Custom Services.
 // Order matters! Authentication → Authorization → Carter modules.
 
 using Backend.Infrastructure.Data;
 using Backend.Middleware;
+using Backend.Services.Auth;
 using Backend.Validation;
 using Carter;
 using FluentValidation;
@@ -11,6 +12,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -32,10 +34,17 @@ builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBeh
 // ─── AutoMapper ─────────────────────────────────────────
 builder.Services.AddAutoMapper(typeof(Program).Assembly);
 
+// ─── Custom Infrastructure Services ─────────────────────
+// Register the token service to handle isolated infrastructure cryptography logic
+builder.Services.AddScoped<ITokenService, JwtTokenService>();
+
 // ─── JWT Authentication ─────────────────────────────────
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
+        // Disable inbound claim mapping to prevent Microsoft from renaming "sub" to ClaimTypes.NameIdentifier
+        options.MapInboundClaims = false;
+
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -45,7 +54,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
             ValidAudience = builder.Configuration["Jwt:Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)),
+            // Explicitly set the claim type used to resolve User.Identity.Name to stable "sub"
+            NameClaimType = JwtRegisteredClaimNames.Sub
         };
     });
 builder.Services.AddAuthorization();

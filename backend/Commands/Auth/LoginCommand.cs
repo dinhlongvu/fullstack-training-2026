@@ -6,14 +6,10 @@ using Backend.Domain;
 using Backend.DTOs;
 using Backend.Exceptions;
 using Backend.Infrastructure.Data;
+using Backend.Services.Auth; // Added to use ITokenService
 using AutoMapper;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
 
 namespace Backend.Commands.Auth;
 
@@ -28,14 +24,14 @@ public class LoginHandler : IRequestHandler<LoginCommand, LoginResponseDto>
 {
     private readonly AppDbContext _db;
     private readonly IMapper _mapper;
-    private readonly IConfiguration _configuration;
+    private readonly ITokenService _tokenService;
 
     // Constructor for Dependency Injection
-    public LoginHandler(AppDbContext db, IMapper mapper, IConfiguration configuration)
+    public LoginHandler(AppDbContext db, IMapper mapper, ITokenService tokenService)
     {
         _db = db;
         _mapper = mapper;
-        _configuration = configuration;
+        _tokenService = tokenService;
     }
 
     // The core business logic
@@ -62,41 +58,13 @@ public class LoginHandler : IRequestHandler<LoginCommand, LoginResponseDto>
             throw new UnauthorizedException("Invalid email or password");
         }
 
-        // 4. Initialize the JWT Token creation process
-        var tokenHandler = new JwtSecurityTokenHandler();
-        var jwtKey = _configuration["Jwt:Key"];
+        // 4. Generate JWT Token using the dedicated service
+        var tokenString = _tokenService.CreateAccessToken(user);
 
-        if (string.IsNullOrEmpty(jwtKey))
-        {
-            throw new InvalidOperationException("JWT Secret Key is not configured");
-        }
-
-        var key = Encoding.UTF8.GetBytes(jwtKey);
-
-        // Define the content (Payload) of the Token
-        var tokenDescriptor = new SecurityTokenDescriptor
-        {
-            Subject = new ClaimsIdentity(new[]
-            {
-                new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-                new Claim(JwtRegisteredClaimNames.Email, user.Email)
-            }),
-            Expires = DateTime.UtcNow.AddHours(24), // Token expires in 24 Hours
-            Issuer = _configuration["Jwt:Issuer"],
-            Audience = _configuration["Jwt:Audience"],
-            SigningCredentials = new SigningCredentials(
-                new SymmetricSecurityKey(key),
-                SecurityAlgorithms.HmacSha256Signature) // HS256 encryption algorithm to create Signature
-        };
-
-        // 5. Sign and create Token 
-        var token = tokenHandler.CreateToken(tokenDescriptor);
-        var tokenString = tokenHandler.WriteToken(token);
-
-        // 6. Map the User Entity to UserDto to hide PasswordHash
+        // 5. Map the User Entity to UserDto to hide PasswordHash
         var userProfile = _mapper.Map<UserDto>(user);
 
-        // 7. Return Login Response (Token + User Profile)
+        // 6. Return Login Response (Token + User Profile)
         return new LoginResponseDto(tokenString, userProfile);
     }
 }
