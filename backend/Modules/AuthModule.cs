@@ -4,6 +4,8 @@
 
 using Backend.Commands.Auth;
 using Backend.DTOs; // Add this using to identify UserDto
+using Backend.Queries.Auth;
+using Backend.Services.Auth; // Add this to use ClaimsPrincipalExtensions
 using Carter;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
@@ -46,6 +48,25 @@ public class AuthModule : ICarterModule
         })
         .Produces<LoginResponseDto>(StatusCodes.Status200OK)
         .Produces(StatusCodes.Status400BadRequest)
+        .Produces(StatusCodes.Status401Unauthorized);
+
+        // GET /api/auth/me
+        // Retrieves current user profile using JWT Bearer token
+        group.MapGet("/me", async (HttpContext context, IMediator mediator, CancellationToken ct) =>
+        {
+            // 1. Extract the user ID from the "sub" claim securely using the centralized extension method
+            // If parsing fails, it throws an UnauthorizedException handled by the global middleware
+            var userId = context.User.GetUserId();
+
+            // 2. Send query to MediatR to fetch profile from data layer
+            var query = new GetCurrentUserQuery(userId);
+            var userProfile = await mediator.Send(query, ct);
+
+            // 3. Return the mapped UserDto payload
+            return Results.Ok(userProfile);
+        })
+        .RequireAuthorization() // Triggers the JWT Authentication Middleware (Equivalent to [Authorize])
+        .Produces<UserDto>(StatusCodes.Status200OK)
         .Produces(StatusCodes.Status401Unauthorized);
     }
 }
