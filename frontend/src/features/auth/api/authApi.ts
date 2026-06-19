@@ -40,3 +40,8 @@ export function register(request: RegisterRequest) {
     body: JSON.stringify(request),
   });
 }
+
+// Fetches the currently authenticated user's information using the stored JWT token.
+export function getCurrentUser() {
+  return apiClient<AuthUser>("/api/auth/me");
+}
