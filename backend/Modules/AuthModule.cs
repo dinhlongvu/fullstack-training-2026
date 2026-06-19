@@ -8,6 +8,9 @@ using Carter;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using System.Security.Claims;
+using System.IdentityModel.Tokens.Jwt;
+using Backend.Queries.Auth;
 
 namespace Backend.Modules;
 
@@ -46,6 +49,29 @@ public class AuthModule : ICarterModule
         })
         .Produces<LoginResponseDto>(StatusCodes.Status200OK)
         .Produces(StatusCodes.Status400BadRequest)
+        .Produces(StatusCodes.Status401Unauthorized);
+
+        // GET /api/auth/me
+        // Retrieves current user profile using JWT Bearer token
+        group.MapGet("/me", async (HttpContext context, IMediator mediator, CancellationToken ct) =>
+        {
+            // 1. Extract the user ID from the "sub" claim inside the JWT
+            var userIdStr = context.User.FindFirstValue(JwtRegisteredClaimNames.Sub);
+
+            if (string.IsNullOrEmpty(userIdStr) || !int.TryParse(userIdStr, out int userId))
+            {
+                return Results.Unauthorized();
+            }
+
+            // 2. Send query to MediatR to fetch profile from data layer
+            var query = new GetCurrentUserQuery(userId);
+            var userProfile = await mediator.Send(query, ct);
+
+            // 3. Return the mapped UserDto payload
+            return Results.Ok(userProfile);
+        })
+        .RequireAuthorization() // Triggers the JWT Authentication Middleware (Equivalent to [Authorize])
+        .Produces<UserDto>(StatusCodes.Status200OK)
         .Produces(StatusCodes.Status401Unauthorized);
     }
 }
