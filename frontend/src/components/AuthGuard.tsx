@@ -17,12 +17,11 @@ import { useAuthStore } from "@/stores/useAuthStore";
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   // Extract state and actions from Zustand store
   const token = useAuthStore((s) => s.token);
-  const currrentUser = useAuthStore((s) => s.currentUser);
+  const currentUser = useAuthStore((s) => s.currentUser);
   const setAuth = useAuthStore((s) => s.setAuth);
-  const clearAuth = useAuthStore((s) => s.clearAuth);
 
   // Condition to fetch user data
-  const shouldFetchCurrentUser = Boolean(token && !currrentUser);
+  const shouldFetchCurrentUser = Boolean(token && !currentUser);
 
   // Fetch current user from API if token exists but user data is missing
   const {
@@ -32,8 +31,14 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   } = useQuery({
     queryKey: ["auth", "me"],
     queryFn: getCurrentUser,
-    enabled: shouldFetchCurrentUser, // Only run the query if this is true
-    retry: false, // Fail immediately if token is expired/invalid
+    enabled: shouldFetchCurrentUser,
+    retry: (failureCount, error) => {
+      if (error instanceof Error && error.message === "Unauthorized") {
+        return false;
+      }
+
+      return failureCount < 2;
+    },
   });
 
   // Update Zustand store with fetched user data when available
@@ -43,16 +48,14 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     }
   }, [token, fetchedUser, setAuth]);
 
-  // Clear local auth state if the API rejects the token
-  useEffect(() => {
-    if (isError) {
-      clearAuth();
-    }
-  }, [isError, clearAuth]);
-
   // --- Rendering Logic ---
   // No token at all -> Kick back to login
   if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // Fetch failed (invalid/expired token) -> Kick back to login
+  if (isError) {
     return <Navigate to="/login" replace />;
   }
 
@@ -63,11 +66,6 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     );
-  }
-
-  // Fetch failed (invalid/expired token) -> Kick back to login
-  if (isError) {
-    return <Navigate to="/login" replace />;
   }
 
   // All checks passed -> Render the protected page
