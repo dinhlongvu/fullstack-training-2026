@@ -34,6 +34,20 @@ builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBeh
 // ─── AutoMapper ─────────────────────────────────────────
 builder.Services.AddAutoMapper(typeof(Program).Assembly);
 
+// ─── CORS (Allow Frontend Dev Server to Access API) ─────
+// Read origins dynamically from configuration to prevent hardcoding
+var allowedOrigins = builder.Configuration
+    .GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
+
+builder.Services.AddCors(options =>
+{
+    // Use Default Policy so app.UseCors() automatically hooks into it without explicitly naming the policy
+    options.AddDefaultPolicy(policy =>
+        policy.WithOrigins(allowedOrigins)
+              .AllowAnyHeader()
+              .AllowAnyMethod());
+});
+
 // ─── Custom Infrastructure Services ─────────────────────
 // Register the token service to handle isolated infrastructure cryptography logic
 builder.Services.AddScoped<ITokenService, JwtTokenService>();
@@ -99,6 +113,11 @@ var app = builder.Build();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseSwagger();
 app.UseSwaggerUI();
+
+// CORS MUST be placed before Authentication and Authorization
+// to handle unauthenticated OPTIONS preflight requests successfully
+app.UseCors();
+
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapCarter(); // Must be AFTER authentication and authorization middleware!
