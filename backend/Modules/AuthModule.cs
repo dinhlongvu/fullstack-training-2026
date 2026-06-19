@@ -4,13 +4,12 @@
 
 using Backend.Commands.Auth;
 using Backend.DTOs; // Add this using to identify UserDto
+using Backend.Queries.Auth;
+using Backend.Services.Auth; // Add this to use ClaimsPrincipalExtensions
 using Carter;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
-using System.Security.Claims;
-using System.IdentityModel.Tokens.Jwt;
-using Backend.Queries.Auth;
 
 namespace Backend.Modules;
 
@@ -55,13 +54,9 @@ public class AuthModule : ICarterModule
         // Retrieves current user profile using JWT Bearer token
         group.MapGet("/me", async (HttpContext context, IMediator mediator, CancellationToken ct) =>
         {
-            // 1. Extract the user ID from the "sub" claim inside the JWT
-            var userIdStr = context.User.FindFirstValue(JwtRegisteredClaimNames.Sub);
-
-            if (string.IsNullOrEmpty(userIdStr) || !int.TryParse(userIdStr, out int userId))
-            {
-                return Results.Unauthorized();
-            }
+            // 1. Extract the user ID from the "sub" claim securely using the centralized extension method
+            // If parsing fails, it throws an UnauthorizedException handled by the global middleware
+            var userId = context.User.GetUserId();
 
             // 2. Send query to MediatR to fetch profile from data layer
             var query = new GetCurrentUserQuery(userId);
