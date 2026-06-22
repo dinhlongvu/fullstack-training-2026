@@ -68,10 +68,22 @@ public class RefreshTokenHandler : IRequestHandler<RefreshTokenCommand, RefreshT
         }
 
         // 4. SUCCESSFUL ROTATION PROCESS
-        // 4a. Revoke the current valid token so it can never be used again
-        existingToken.RevokedAt = DateTime.UtcNow;
+        // Use ExecuteUpdateAsync to update directly under the DB in an "atomic" way.
+        // This command will only update exactly 1 line if RevokedAt is still equal to NULL.
+        var rowsRevoked = await _db.RefreshTokens
+            .Where(rt => rt.Id == existingToken.Id && rt.RevokedAt == null)
+            .ExecuteUpdateAsync(
+                s => s.SetProperty(rt => rt.RevokedAt, DateTime.UtcNow),
+                ct);
 
-        // 4b. Generate a brand new set of tokens (Access + Refresh)
+        // If rowsRevoked == 0, it means there was a parallel request that revoked this token 0.001 seconds ago!
+        // Immediately deny future requests to stop Hackers.
+        if (rowsRevoked == 0)
+        {
+            throw new UnauthorizedException("Invalid or expired refresh token");
+        }
+
+        // 4d. Save the creation of the new token to the DB (Revoked state was already saved via ExecuteUpdateAsync)
         var newAccessToken = _tokenService.CreateAccessToken(existingToken.User);
 
         // DRY: Use the helper method from ITokenService to handle generation, hashing, and config at once.
