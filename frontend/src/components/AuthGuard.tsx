@@ -67,7 +67,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   }
 
   // Still fetching user data -> Show spinner
-  if (isLoading || shouldFetchCurrentUser) {
+  if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
