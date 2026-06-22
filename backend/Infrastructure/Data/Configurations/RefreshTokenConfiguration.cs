@@ -1,7 +1,6 @@
 // Infrastructure/Data/Configurations/RefreshTokenConfiguration.cs
 // Database schema configuration for the RefreshToken entity
 
-// Infrastructure/Data/Configurations/RefreshTokenConfiguration.cs
 using Backend.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -17,6 +16,9 @@ public class RefreshTokenConfiguration : IEntityTypeConfiguration<RefreshToken>
         builder.Property(rt => rt.TokenHash).IsRequired();
         builder.Property(rt => rt.ExpiresAt).IsRequired();
         builder.Property(rt => rt.CreatedAt).IsRequired();
+
+        // Type Unique Index for TokenHash for quick lookup and anti-duplication
+        builder.HasIndex(rt => rt.TokenHash).IsUnique();
 
         // 1 User can have multiple Refresh Tokens
         // If User is deleted, their refresh tokens are also deleted (Cascade)

@@ -17,6 +17,9 @@ public interface ITokenService
     string CreateAccessToken(User user);
     string GenerateRefreshToken();
     string HashToken(string token);
+    
+    // Helper method to consolidate refresh token generation, hashing, and configuration reading (DRY principle)
+    (string PlainToken, RefreshToken Entity) CreateRefreshTokenEntity(int userId);
 }
 
 public class JwtTokenService : ITokenService
@@ -28,9 +31,7 @@ public class JwtTokenService : ITokenService
         _configuration = configuration;
     }
 
-    /// <summary>
-    /// Generates a short-lived JWT Access Token for the given user.
-    /// </summary>
+    // Generates a short-lived JWT Access Token for the given user.
     public string CreateAccessToken(User user)
     {
         // 1. Retrieve the secret key from configuration safely
@@ -43,9 +44,9 @@ public class JwtTokenService : ITokenService
         // 2. Read access token lifetime. 
         // Defensive programming: Fallback to 15 minutes if the config is missing, empty, or invalid.
         var expirationMinutesStr = _configuration["Jwt:AccessTokenExpirationMinutes"];
-        if (!int.TryParse(expirationMinutesStr, out int expirationMinutes))
+        if (!double.TryParse(expirationMinutesStr, out double expirationMinutes))
         {
-            expirationMinutes = 1;
+            expirationMinutes = 15; 
         }
 
         // 3. Define the token payload (Claims)
@@ -107,5 +108,34 @@ public class JwtTokenService : ITokenService
 
         // Return the hashed bytes as a Base64 encoded string to store in the database
         return Convert.ToBase64String(hash);
+    }
+
+    // Consolidates the logic for creating, hashing, and configuring a Refresh Token entity to enforce the DRY principle.
+    public (string PlainToken, RefreshToken Entity) CreateRefreshTokenEntity(int userId)
+    {
+        // 1. Generate the plain text opaque token
+        var plainToken = GenerateRefreshToken();
+        
+        // 2. Hash the token securely for database storage
+        var hashedToken = HashToken(plainToken);
+
+        // 3. Read the expiration lifespan from configuration with a defensive fallback
+        var expirationDaysStr = _configuration["Jwt:RefreshTokenExpirationDays"];
+        if (!double.TryParse(expirationDaysStr, out double expirationDays))
+        {
+            expirationDays = 1; // Fallback to 1 day if config is missing or invalid
+        }
+
+        // 4. Construct the entity to be persisted in the database
+        var entity = new RefreshToken
+        {
+            UserId = userId,
+            TokenHash = hashedToken,
+            ExpiresAt = DateTime.UtcNow.AddDays(expirationDays),
+            CreatedAt = DateTime.UtcNow
+        };
+
+        // 5. Return both the plain token (to send to the client) and the entity (to save to DB)
+        return (plainToken, entity);
     }
 }
