@@ -26,6 +26,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     data: fetchedUser,
     isLoading,
     isError,
+    error,
   } = useQuery({
     queryKey: ["auth", "me"],
     queryFn: getCurrentUser,
@@ -50,10 +51,10 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
 
   // Backend returned 401 → clear corrupt data
   useEffect(() => {
-    if (isError) {
+    if (error instanceof Error && error.message === "Unauthorized") {
       clearAuth();
     }
-  }, [isError, clearAuth]);
+  }, [error, clearAuth]);
 
   // --- Rendering Logic ---
   // No token at all -> Kick back to login
