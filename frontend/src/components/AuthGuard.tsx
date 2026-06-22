@@ -25,7 +25,6 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   const {
     data: fetchedUser,
     isLoading,
-    isError,
     error,
   } = useQuery({
     queryKey: ["auth", "me"],
@@ -63,7 +62,10 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   }
 
   // Fetch failed (invalid/expired token) -> Kick back to login
-  if (isError) {
+  const isAuthError =
+    error instanceof Error && error.message === "Unauthorized";
+
+  if (isAuthError) {
     return <Navigate to="/login" replace />;
   }
 
