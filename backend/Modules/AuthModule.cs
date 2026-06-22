@@ -68,5 +68,19 @@ public class AuthModule : ICarterModule
         .RequireAuthorization() // Triggers the JWT Authentication Middleware (Equivalent to [Authorize])
         .Produces<UserDto>(StatusCodes.Status200OK)
         .Produces(StatusCodes.Status401Unauthorized);
+
+        // POST /api/auth/refresh
+        // Exchanges a valid, non-expired refresh token for a new set of tokens (Rotation)
+        group.MapPost("/refresh", async (IMediator mediator, RefreshTokenCommand command) =>
+        {
+            // Send the command through MediatR pipeline to execute RefreshTokenHandler
+            var result = await mediator.Send(command);
+            return Results.Ok(result);
+        })
+        .WithName("RefreshToken")
+        .Produces<RefreshTokenResponseDto>(StatusCodes.Status200OK)
+        .ProducesProblem(StatusCodes.Status401Unauthorized)
+        .ProducesValidationProblem()
+        .AllowAnonymous(); // Crucial: Refresh token endpoint must be accessible without an Access Token (JWT)
     }
 }
