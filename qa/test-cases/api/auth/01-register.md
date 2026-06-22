@@ -450,10 +450,11 @@
 | **Precondition** | None |
 | **Test Data** | `{ "email": "john@müller.com", "fullName": "John Doe", "password": "Passw0rd!" }` |
 | **Test Steps** | 1. Send POST request to `/api/auth/register` <br> 2. Provide email with Unicode domain john@müller.com <br> 3. Check response status code <br> 4. Check database for stored value |
-| **Expected Result** | 1. Status 201 Created <br> 2. Unicode domain is accepted (IDN support) <br> 3. Domain is stored as Unicode or Punycode (xn--mller-kva.com) |
-| **Actual Result** | 1. Status 201 Created ✅ <br> 2. Unicode domain is accepted (IDN support) ✅ <br> 3. Email stored as john@müller.com ✅ |
+| **Expected Result** | 1.Status 400 Bad Request <br> 2. Response body contains validation error: "Email format is invalid" <br> 3. Domain with Unicode characters (ü) is not accepted because validator only supports ASCII [a-zA-Z0-9.-] <br> 4. No user created in database|
+| **Actual Result** | 1. Status 400 Bad Request ✅ <br> 2.Response body contains validation error: "Email format is invalid" ✅ <br> 3. No user created ✅ |
 | **Status** | ✅ Pass |
 | **Bug link** | — |
+| **Note** | Unicode domain (IDN) is not supported in current version. Validator rejects because domain contains character 'ü'. System only accepts ASCII characters in domain part: [a-zA-Z0-9.-]. This matches business requirements as of 2026-06-18.|
 
 ---
 

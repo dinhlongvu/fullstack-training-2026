@@ -84,12 +84,10 @@
           }
         },
         "url": {
-          "raw": "http://localhost:5000/api/auth/register",
-          "protocol": "http",
+          "raw": "{{base_url}}/api/auth/register",
           "host": [
-            "localhost"
+            "{{base_url}}"
           ],
-          "port": "5000",
           "path": [
             "api",
             "auth",
@@ -178,30 +176,14 @@
           }
         },
         "url": {
-          "raw": "http://localhost:5000/api/auth/login?base_url&token&userId",
-          "protocol": "http",
+          "raw": "{{base_url}}/api/auth/login",
           "host": [
-            "localhost"
+            "{{base_url}}"
           ],
-          "port": "5000",
           "path": [
             "api",
             "auth",
             "login"
-          ],
-          "query": [
-            {
-              "key": "base_url",
-              "value": null
-            },
-            {
-              "key": "token",
-              "value": null
-            },
-            {
-              "key": "userId",
-              "value": null
-            }
           ]
         }
       },
@@ -231,6 +213,18 @@
               "// ============================================\r",
               "pm.test(\"Response has body (not empty)\", () => {\r",
               "    pm.expect(pm.response.text()).to.not.be.empty;\r",
+              "});\r",
+              "\r",
+              "const body = pm.response.json();\r",
+              "\r",
+              "pm.test(\"Has id, email, fullName\", () => {\r",
+              "    pm.expect(body).to.have.property(\"id\");\r",
+              "    pm.expect(body).to.have.property(\"email\");\r",
+              "    pm.expect(body).to.have.property(\"fullName\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Does not expose passwordHash\", () => {\r",
+              "    pm.expect(pm.response.text()).to.not.include(\"passwordHash\");\r",
               "});\r",
               "\r",
               "// ============================================\r",
@@ -319,12 +313,10 @@
           }
         },
         "url": {
-          "raw": "http://localhost:5000/api/auth/me",
-          "protocol": "http",
+          "raw": "{{base_url}}/api/auth/me",
           "host": [
-            "localhost"
+            "{{base_url}}"
           ],
-          "port": "5000",
           "path": [
             "api",
             "auth",

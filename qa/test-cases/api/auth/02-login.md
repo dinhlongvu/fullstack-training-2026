@@ -244,8 +244,8 @@
 | **Test Data** | `{ "email": "test@example.com", "password": "Test@1234" }` |
 | **Test Steps** | 1. Login with valid credentials <br> 2. Receive JWT token <br> 3. Decode JWT token <br> 4. Check exp claim |
 | **Expected Result** | 1. Status 200 OK <br> 2. Token contains exp (expiration) claim <br> 3. exp is a future timestamp <br> 4. Token expires after configured time (e.g., 15min) |
-| **Actual Result** | 1. Status 200 OK ✅ <br> 2. Token contains exp claim ✅ <br> 3. exp timestamp: future ✅ <br> 4. Expiration time: **15 minutes** from issue ✅ |
-| **Status** | ✅ Pass |
+| **Actual Result** |  |
+| **Status** | Pending|
 | **Bug link** | — |
 
 ---
@@ -254,4 +254,4 @@
 
 | Total TCs | Pass | Fail | Blocked | Not Run |
 |:---:|:---:|:---:|:---:|:---:|
-| 14 | 14 | 0 | 0 | 0 |
+| 14 | 13 | 0 | 0 | 1 |
