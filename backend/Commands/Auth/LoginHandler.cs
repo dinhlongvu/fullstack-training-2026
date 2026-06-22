@@ -59,7 +59,7 @@ public class LoginHandler : IRequestHandler<LoginCommand, LoginResponseDto>
         return new LoginResponseDto
         {
             Token = accessToken,
-            RefreshToken = refreshTokenInfo.PlainToken, 
+            RefreshToken = refreshTokenInfo.PlainToken,
             User = userProfile
         };
     }

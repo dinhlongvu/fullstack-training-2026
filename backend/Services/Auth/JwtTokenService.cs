@@ -17,7 +17,7 @@ public interface ITokenService
     string CreateAccessToken(User user);
     string GenerateRefreshToken();
     string HashToken(string token);
-    
+
     // Helper method to consolidate refresh token generation, hashing, and configuration reading (DRY principle)
     (string PlainToken, RefreshToken Entity) CreateRefreshTokenEntity(int userId);
 }
@@ -46,7 +46,7 @@ public class JwtTokenService : ITokenService
         var expirationMinutesStr = _configuration["Jwt:AccessTokenExpirationMinutes"];
         if (!double.TryParse(expirationMinutesStr, out double expirationMinutes))
         {
-            expirationMinutes = 15; 
+            expirationMinutes = 15;
         }
 
         // 3. Define the token payload (Claims)
@@ -115,7 +115,7 @@ public class JwtTokenService : ITokenService
     {
         // 1. Generate the plain text opaque token
         var plainToken = GenerateRefreshToken();
-        
+
         // 2. Hash the token securely for database storage
         var hashedToken = HashToken(plainToken);
 
