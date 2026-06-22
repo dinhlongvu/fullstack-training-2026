@@ -244,9 +244,10 @@
 | **Test Data** | `{ "email": "test@example.com", "password": "Test@1234" }` |
 | **Test Steps** | 1. Login with valid credentials <br> 2. Receive JWT token <br> 3. Decode JWT token <br> 4. Check exp claim |
 | **Expected Result** | 1. Status 200 OK <br> 2. Token contains exp (expiration) claim <br> 3. exp is a future timestamp <br> 4. Token expires after configured time (e.g., 15min) |
-| **Actual Result** |  |
-| **Status** | Pending|
+| **Actual Result** |  1. Status 200 OK ✅ <br> 2. Token contains exp claim ✅ <br> 3. exp is a future timestamp (15 minutes) ✅ <br> 4. After expiration, request returns 401 Unauthorized with `{ "error": "Unauthorized" }` ✅ |
+| **Status** |✅Pass |
 | **Bug link** | — |
+| **Notes** | Token expiration changed to 15 minutes as per PR. Expired token correctly returns 401. |
 
 ---
 
