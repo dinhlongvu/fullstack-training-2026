@@ -12,18 +12,16 @@ import { useAuthStore } from "@/stores/useAuthStore";
 /**
  * AuthGuard Component
  * Wraps protected routes to ensure the user is authenticated.
- * Handles auto-fetching user data on page refresh if a token exists.
+ * Always calls GET /api/auth/me to verify the token with the backend.
+ * If backend returns 401, apiClient interceptor handles logout automatically.
  */
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   // Extract state and actions from Zustand store
   const token = useAuthStore((s) => s.token);
-  const currentUser = useAuthStore((s) => s.currentUser);
   const setAuth = useAuthStore((s) => s.setAuth);
+  const clearAuth = useAuthStore((s) => s.clearAuth);
 
-  // Condition to fetch user data
-  const shouldFetchCurrentUser = Boolean(token && !currentUser);
-
-  // Fetch current user from API if token exists but user data is missing
+  // Always verify token with backend when token exists
   const {
     data: fetchedUser,
     isLoading,
@@ -31,7 +29,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   } = useQuery({
     queryKey: ["auth", "me"],
     queryFn: getCurrentUser,
-    enabled: shouldFetchCurrentUser,
+    enabled: Boolean(token),
     retry: (failureCount, error) => {
       if (error instanceof Error && error.message === "Unauthorized") {
         return false;
@@ -39,6 +37,8 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
 
       return failureCount < 2;
     },
+    // Avoid re-calling /me on every page navigation
+    staleTime: 5 * 60 * 1000,
   });
 
   // Update Zustand store with fetched user data when available
@@ -47,6 +47,13 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       setAuth(token, fetchedUser);
     }
   }, [token, fetchedUser, setAuth]);
+
+  // Backend returned 401 → clear corrupt data
+  useEffect(() => {
+    if (isError) {
+      clearAuth();
+    }
+  }, [isError, clearAuth]);
 
   // --- Rendering Logic ---
   // No token at all -> Kick back to login
