@@ -106,6 +106,8 @@ coverage/
 *.coveragexml
 TestResults/
 *.trx
+playwright-report/
+test-results/
 
 # ============================================
 # AI / Agent config
