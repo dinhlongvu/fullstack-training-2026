@@ -6,6 +6,7 @@ import { create } from "zustand";
 
 // Keys used to store auth data in browser localStorage
 const TOKEN_STORAGE_KEY = "taskboard_token";
+const REFRESH_TOKEN_STORAGE_KEY = "taskboard_refresh_token";
 const USER_STORAGE_KEY = "taskboard_current_user";
 
 // Represents the authenticated user returned by the API
@@ -19,8 +20,10 @@ export interface AuthUser {
 // Contains auth data and actions to update it
 interface AuthState {
   token: string | null;
+  refreshToken: string | null;
   currentUser: AuthUser | null;
-  setAuth: (token: string, currentUser: AuthUser) => void;
+  setAuth: (token: string, refreshToken: string, currentUser: AuthUser) => void;
+  setTokens: (token: string, refreshToken: string) => void;
   clearAuth: () => void;
 }
 
@@ -43,17 +46,28 @@ function getStoredCurrentUser(): AuthUser | null {
 
 export const useAuthStore = create<AuthState>((set) => ({
   token: localStorage.getItem(TOKEN_STORAGE_KEY),
+  refreshToken: localStorage.getItem(REFRESH_TOKEN_STORAGE_KEY),
   currentUser: getStoredCurrentUser(),
 
-  setAuth: (token, currentUser) => {
+  // Store all auth data (used after login)
+  setAuth: (token, refreshToken, currentUser) => {
     localStorage.setItem(TOKEN_STORAGE_KEY, token);
+    localStorage.setItem(REFRESH_TOKEN_STORAGE_KEY, refreshToken);
     localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(currentUser));
-    set({ token, currentUser });
+    set({ token, refreshToken, currentUser });
+  },
+
+  // Update only tokens, keep current user unchanged (used by refresh flow)
+  setTokens: (token, refreshToken) => {
+    localStorage.setItem(TOKEN_STORAGE_KEY, token);
+    localStorage.setItem(REFRESH_TOKEN_STORAGE_KEY, refreshToken);
+    set({ token, refreshToken });
   },
 
   clearAuth: () => {
     localStorage.removeItem(TOKEN_STORAGE_KEY);
+    localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
     localStorage.removeItem(USER_STORAGE_KEY);
-    set({ token: null, currentUser: null });
+    set({ token: null, refreshToken: null, currentUser: null });
   },
 }));
