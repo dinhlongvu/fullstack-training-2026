@@ -44,7 +44,12 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   // Update Zustand store with fetched user data when available
   useEffect(() => {
     if (token && fetchedUser) {
-      setAuth(token, fetchedUser);
+      const { refreshToken, clearAuth } = useAuthStore.getState();
+      if (refreshToken) {
+        setAuth(token, refreshToken, fetchedUser);
+      } else {
+        clearAuth();
+      }
     }
   }, [token, fetchedUser, setAuth]);
 
