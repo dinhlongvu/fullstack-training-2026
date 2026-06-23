@@ -1,9 +1,9 @@
 name: Playwright Tests
+# Heavy end-to-end suite: boots the backend, frontend, a database and real
+# browsers, so it is not run automatically on every push/PR. Trigger it on
+# demand from the Actions tab (Actions -> Playwright Tests -> Run workflow).
 on:
-  push:
-    branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
+  workflow_dispatch:
 
 jobs:
   test:
