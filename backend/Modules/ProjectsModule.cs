@@ -16,7 +16,8 @@ namespace Backend.Modules;
 
 public class ProjectsModule : ICarterModule
 {
-    public record CreateProjectRequest(string Name, string Description);
+    // Add a ? to Description to mark optional
+    public record CreateProjectRequest(string Name, string? Description);
 
     public void AddRoutes(IEndpointRouteBuilder app)
     {
@@ -46,7 +47,8 @@ public class ProjectsModule : ICarterModule
             var userId = context.User.GetUserId();
 
             // Combine Request Body + JWT Claim into the CQRS Command
-            var command = new CreateProjectCommand(req.Name, req.Description, userId);
+            // Use "??" to coerce null into an empty string right at the Boundary API
+            var command = new CreateProjectCommand(req.Name, req.Description ?? string.Empty, userId);
 
             var result = await mediator.Send(command, ct);
             return Results.Created($"/api/projects/{result.Id}", result); // Return 201 Created with the new project
