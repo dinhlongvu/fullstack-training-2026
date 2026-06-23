@@ -7,7 +7,7 @@ using MediatR;
 namespace Backend.Commands.Projects;
 
 public record CreateProjectCommand(
-    string Name, 
-    string Description, 
+    string Name,
+    string Description,
     int UserId
 ) : IRequest<ProjectDto>;

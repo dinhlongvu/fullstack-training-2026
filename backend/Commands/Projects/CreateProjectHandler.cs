@@ -28,7 +28,7 @@ public class CreateProjectHandler : IRequestHandler<CreateProjectCommand, Projec
             Description = cmd.Description,
             CreatedAt = DateTime.UtcNow,
             CreatedById = cmd.UserId,
-            
+
             // Auto-add creator to ProjectMembers list immediately
             // Initializing the list here ensures a project cannot exist without members
             Members = new List<ProjectMember>

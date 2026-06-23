@@ -17,7 +17,7 @@ namespace Backend.Modules;
 public class ProjectsModule : ICarterModule
 {
     public record CreateProjectRequest(string Name, string Description);
-    
+
     public void AddRoutes(IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/projects")
@@ -44,13 +44,13 @@ public class ProjectsModule : ICarterModule
         {
             // Extract user ID securely from JWT claim
             var userId = context.User.GetUserId();
-            
+
             // Combine Request Body + JWT Claim into the CQRS Command
             var command = new CreateProjectCommand(req.Name, req.Description, userId);
-            
+
             var result = await mediator.Send(command, ct);
             return Results.Created($"/api/projects/{result.Id}", result); // Return 201 Created with the new project
-        })        
+        })
         .WithName("CreateProject")
         .WithSummary("Create a new project")
         .WithDescription("Create a new project owned by the current user.")
