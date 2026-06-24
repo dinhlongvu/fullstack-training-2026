@@ -4,13 +4,22 @@
 
 import { apiClient } from "@/lib/api";
 
-// Shape of a project returned by GET /api/projects
+// Shape of a project returned by GET /api/projects 
 export interface Project {
-    id: string;
+    id: number;
     name: string;
     description: string;
     createdAt: string;
     memberCount: number;
+}
+
+// Shape of a project returned by POST /api/projects 
+export interface ProjectDetails {
+    id: number;
+    name: string;
+    description: string;
+    createdAt: string;
+    createdById: number;
 }
 
 // Shape of the request body for POST /api/projects
@@ -26,7 +35,7 @@ export function getProjects() {
 
 // Create a new project
 export function createProject(request: CreateProjectRequest) {
-    return apiClient<Project>("/api/projects", {
+    return apiClient<ProjectDetails>("/api/projects", {
         method: "POST",
         body: JSON.stringify(request),
     });
