@@ -3,6 +3,7 @@
 // Handlers return a custom result object to elegantly handle 404 and 403 without throwing exceptions.
 
 using AutoMapper;
+using AutoMapper.QueryableExtensions; // Required for ProjectTo extension method
 using Backend.Domain;
 using Backend.DTOs;
 using Backend.Infrastructure.Data;
@@ -34,29 +35,30 @@ public class GetProjectDetailHandler : IRequestHandler<GetProjectDetailQuery, Pr
 
     public async Task<ProjectDetailResult> Handle(GetProjectDetailQuery req, CancellationToken ct)
     {
-        // Use AsNoTracking for read-only performance optimization
-        // Include/ThenInclude to get members and related user information
-        var project = await _db.Projects
-            .Include(p => p.Members)
-                .ThenInclude(m => m.User) // Join across 3 tables to get Email and FullName
-            .AsNoTracking()
-            .FirstOrDefaultAsync(p => p.Id == req.ProjectId, ct);
+        // Use ProjectTo to let AutoMapper automatically analyze the DTO structure and force Entity Framework
+        // Generate a SQL SELECT statement that only retrieves the CORRECT columns needed
+        // Completely remove .Include() because AutoMapper understands and handles JOIN at the Database level
+        var dto = await _db.Projects
+            .Where(p => p.Id == req.ProjectId)
+            .ProjectTo<ProjectDetailDto>(_mapper.ConfigurationProvider)
+            .FirstOrDefaultAsync(ct);
 
-        if (project == null)
+        // 1. Check 404 not found project
+        // If the project does not exist, return null
+        if (dto == null)
         {
             return new ProjectDetailResult(false, false, null);
         }
 
-        // Authorization Rule: Only the creator OR an existing member can view
-        bool isAuthorized = project.CreatedById == req.UserId || project.Members.Any(m => m.UserId == req.UserId);
-
-        // There is a project but the user does not have access
+        // 2. Check 403 Forbidden (Authorization logic)
+        // Because dto already contains the Members array (automatically mapped by ProjectTo), check the permissions directly on the DTO
+        bool isAuthorized = dto.CreatedById == req.UserId || dto.Members.Any(m => m.UserId == req.UserId);
         if (!isAuthorized)
         {
             return new ProjectDetailResult(true, false, null);
         }
 
-        var dto = _mapper.Map<ProjectDetailDto>(project);
+        // 3. Return 200 OK
         return new ProjectDetailResult(true, true, dto);
     }
 }
