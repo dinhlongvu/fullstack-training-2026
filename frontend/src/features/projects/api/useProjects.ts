@@ -3,7 +3,7 @@
 // useQuery for reading, useMutation for writing
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getProjects, createProject, type CreateProjectRequest } from "./projectsApi";
+import { getProjects, getProjectDetail, createProject, type CreateProjectRequest } from "./projectsApi";
 
 // Cache key for project list - React Query uses this for caching + invalidation
 const PROJECTS_QUERY_KEY = ["projects"];
@@ -13,6 +13,15 @@ export function useProjectsQuery() {
     return useQuery({
         queryKey: PROJECTS_QUERY_KEY,
         queryFn: getProjects,
+    });
+}
+
+// Hook to fetch a single project's detail
+export function useProjectDetailQuery(id: number) {
+    return useQuery({
+        queryKey: ["projects", id],
+        queryFn: () => getProjectDetail(id),
+        enabled: id > 0,
     });
 }
 

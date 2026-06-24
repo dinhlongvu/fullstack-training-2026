@@ -28,6 +28,26 @@ export interface CreateProjectRequest {
     description: string;
 }
 
+// Shape of a member within the project detail response
+export interface ProjectMember {
+    id: number;
+    userId: number;
+    email: string;
+    fullName: string;
+    joinedAt: string;
+}
+
+// Shape of a response from GET /api/projects/{id}
+export interface ProjectDetailResponse {
+    id: number;
+    name: string;
+    description: string;
+    createdAt: string;
+    createdById: number;
+    members: ProjectMember[];
+}
+
+
 // Fetch all projects the current user belong to
 export function getProjects() {
     return apiClient<Project[]>("/api/projects");
@@ -39,4 +59,9 @@ export function createProject(request: CreateProjectRequest) {
         method: "POST",
         body: JSON.stringify(request),
     });
+}
+
+// Fetch a single project's detail with members list
+export function getProjectDetail(id: number) {
+    return apiClient<ProjectDetailResponse>(`/api/projects/${id}`);
 }
