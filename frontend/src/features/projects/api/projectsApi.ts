@@ -30,7 +30,6 @@ export interface CreateProjectRequest {
 
 // Shape of a member within the project detail response
 export interface ProjectMember {
-    id: number;
     userId: number;
     email: string;
     fullName: string;

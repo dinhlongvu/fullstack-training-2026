@@ -28,7 +28,7 @@ export function MemberList({ members }: MemberListProps) {
                 </thead>
                 <tbody>
                     {members.map((member) => (
-                        <tr key={member.id} className="border-b last:border-0">
+                        <tr key={member.userId} className="border-b last:border-0">
                             <td className="px-4 py-2">{member.fullName}</td>
                             <td className="px-4 py-2 text-muted-foreground">
                                 {member.email}
