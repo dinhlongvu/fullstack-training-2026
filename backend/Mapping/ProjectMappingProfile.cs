@@ -20,5 +20,13 @@ public class ProjectMappingProfile : Profile
 
         // Map for single project response
         CreateMap<Project, ProjectDto>();
+
+        // Map for detail view
+        // Map nested User entity fields into the flat ProjectMemberDto
+        CreateMap<ProjectMember, ProjectMemberDto>()
+            .ForCtorParam("Email", opt => opt.MapFrom(src => src.User.Email))
+            .ForCtorParam("FullName", opt => opt.MapFrom(src => src.User.FullName));
+
+        CreateMap<Project, ProjectDetailDto>();
     }
 }
