@@ -32,10 +32,10 @@ const createProjectSchema = z.object({
     name: z
         .string()
         .min(1, "Project name is required")
-        .max(100, "Project name must be at most 100 characters"),
+        .max(200, "Project name must be at most 200 characters"),
     description: z
         .string()
-        .max(500, "Description must be at most 500 characters")
+        .max(2000, "Description must be at most 2000 characters")
         .optional()
         .or(z.literal("")),
 });
@@ -64,6 +64,13 @@ export function CreateProjectDialog({
     // 4. Setup mutation
     const createMutation = useCreateProjectMutation();
 
+    const handleOpenChange = (next: boolean) => {
+        if (!next) {
+            form.reset();
+        }
+        onOpenChange(next);
+    }
+
     // 5. Form submit handler
     const onSubmit = (values: CreateProjectFormValues) => {
         createMutation.mutate(
@@ -74,8 +81,7 @@ export function CreateProjectDialog({
             {
                 onSuccess: () => {
                     toast.success("Project created successfully");
-                    form.reset();
-                    onOpenChange(false);
+                    handleOpenChange(false);
                 },
                 onError: (error) => {
                     toast.error(error.message);
@@ -85,7 +91,7 @@ export function CreateProjectDialog({
     };
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
+        <Dialog open={open} onOpenChange={handleOpenChange}>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
                     <DialogTitle>Create Project</DialogTitle>
