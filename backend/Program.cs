@@ -72,6 +72,26 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             // Explicitly set the claim type used to resolve User.Identity.Name to stable "sub"
             NameClaimType = JwtRegisteredClaimNames.Sub
         };
+
+        // Intercept authentication failures to return structural JSON payloads for 401 Unauthorized responses
+        options.Events = new JwtBearerEvents
+        {
+            OnChallenge = async context =>
+            {
+                // Suppress the default empty inbound HTTP 401 challenge response behavior
+                context.HandleResponse();
+
+                // Explicitly set the standardized content type boundary and HTTP status code
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                context.Response.ContentType = "application/json";
+
+                // Emit a unified error payload for consistent client-side interceptor parsing
+                await context.Response.WriteAsJsonAsync(new
+                {
+                    error = "Unauthorized. Please provide a valid Bearer token."
+                });
+            }
+        };
     });
 builder.Services.AddAuthorization();
 
