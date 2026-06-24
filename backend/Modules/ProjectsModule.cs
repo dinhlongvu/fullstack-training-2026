@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Backend.Commands.Projects;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace Backend.Modules;
 
@@ -24,7 +25,7 @@ public class ProjectsModule : ICarterModule
         var group = app.MapGroup("/api/projects")
             .RequireAuthorization(); // All endpoints require JWT Bearer
 
-        // GET /api/projects
+        // ======== 1. GET /api/projects ========
         // Returns all projects where current user is owner OR member, sorted by CreatedAt desc.
         group.MapGet("/", async (HttpContext context, IMediator mediator, CancellationToken ct) =>
         {
@@ -40,7 +41,7 @@ public class ProjectsModule : ICarterModule
         .Produces<List<ProjectListDto>>(StatusCodes.Status200OK)
         .Produces(StatusCodes.Status401Unauthorized);
 
-        // POST /api/projects - create project
+        // ======== 2. POST /api/projects - create project ========
         group.MapPost("/", async (CreateProjectRequest req, HttpContext context, IMediator mediator, CancellationToken ct) =>
         {
             // Extract user ID securely from JWT claim
@@ -59,5 +60,35 @@ public class ProjectsModule : ICarterModule
         .Produces<ProjectDto>(StatusCodes.Status201Created) // 201 Created if successful
         .ProducesValidationProblem() // Auto-returns 400 if FluentValidation fails
         .Produces(StatusCodes.Status401Unauthorized); // 401 Unauthorized if token invalid
+
+        // ======== 3. GET /api/projects/{id} ========
+        // Returns detailed project info if the current user is the owner or a member
+        group.MapGet("/{id:int}", async (int id, HttpContext context, IMediator mediator, CancellationToken ct) =>
+        {
+            var userId = context.User.GetUserId();
+            var result = await mediator.Send(new GetProjectDetailQuery(id, userId), ct);
+
+            // Handle 404 not found project
+            if (!result.IsFound)
+            {
+                return Results.NotFound(new { error = "Project not found" });
+            }
+
+            // Handle 403 forbidden if the user is not authorized to view the project
+            if (!result.IsAuthorized)
+            {
+                return Results.Json(new { error = "Not authorized to view this project" }, statusCode: StatusCodes.Status403Forbidden);
+            }
+
+            // Handle 200 OK
+            return Results.Ok(result.Data);
+        })
+        .WithName("GetProjectDetail")
+        .WithSummary("Get project details")
+        .WithDescription("Returns detailed information about a specific project if the current user is the owner or a member.")
+        .Produces<ProjectDetailDto>(StatusCodes.Status200OK)
+        .Produces(StatusCodes.Status404NotFound)
+        .Produces(StatusCodes.Status403Forbidden)
+        .Produces(StatusCodes.Status401Unauthorized);
     }
 }
