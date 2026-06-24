@@ -22,3 +22,15 @@ export {
 
 export { Label } from "./Label";
 export { Toaster } from "./Sonner";
+
+export {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "./Dialog";
+
+export { Textarea } from "./Textarea";
