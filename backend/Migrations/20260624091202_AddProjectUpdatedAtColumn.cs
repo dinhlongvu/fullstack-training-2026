@@ -17,6 +17,8 @@ namespace Backend.Migrations
                 type: "TEXT",
                 nullable: false,
                 defaultValue: new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified));
+            // Backfill: Sync UpdatedAt = CreatedAt for old records
+            migrationBuilder.Sql("UPDATE \"Projects\" SET \"UpdatedAt\" = \"CreatedAt\";");
         }
 
         /// <inheritdoc />
