@@ -1,0 +1,26 @@
+{
+  "name": "fullstack-training-2026",
+  "version": "1.0.0",
+  "description": "![CI Status](https://github.com/dinhlongvu/fullstack-training-2026/actions/workflows/ci.yml/badge.svg)",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dinhlongvu/fullstack-training-2026.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/dinhlongvu/fullstack-training-2026/issues"
+  },
+  "homepage": "https://github.com/dinhlongvu/fullstack-training-2026#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.61.0",
+    "@types/node": "^26.0.0"
+  }
+}
