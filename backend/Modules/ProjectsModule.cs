@@ -19,6 +19,7 @@ public class ProjectsModule : ICarterModule
 {
     // Add a ? to Description to mark optional
     public record CreateProjectRequest(string Name, string? Description);
+    public record UpdateProjectRequest(string Name, string? Description);
 
     public void AddRoutes(IEndpointRouteBuilder app)
     {
@@ -89,6 +90,41 @@ public class ProjectsModule : ICarterModule
         .Produces<ProjectDetailDto>(StatusCodes.Status200OK)
         .Produces(StatusCodes.Status404NotFound)
         .Produces(StatusCodes.Status403Forbidden)
+        .Produces(StatusCodes.Status401Unauthorized);
+
+        // ======== 4. PUT /api/projects/{id} ========
+        // Updates project details
+        group.MapPut("/{id:int}", async (int id, UpdateProjectRequest req, HttpContext context, IMediator mediator, CancellationToken ct) =>
+        {
+            var userId = context.User.GetUserId();
+
+            // Coerce null description into an empty string at the API boundary
+            var command = new UpdateProjectCommand(id, req.Name, req.Description ?? string.Empty, userId);
+
+            var result = await mediator.Send(command, ct);
+
+            // Handle 404 Not Found
+            if (!result.IsFound)
+            {
+                return Results.NotFound(new { error = "Project not found" });
+            }
+
+            // Handle 403 Forbidden
+            if (!result.IsAuthorized)
+            {
+                return Results.Json(new { error = "Not authorized to update this project. Owner access required." }, statusCode: StatusCodes.Status403Forbidden);
+            }
+
+            // Handle 200 OK
+            return Results.Ok(result.Data);
+        })
+        .WithName("UpdateProject")
+        .WithSummary("Update project details")
+        .WithDescription("Updates the name and description of a project. Can only be performed by the project creator.")
+        .Produces<ProjectDto>(StatusCodes.Status200OK)
+        .ProducesValidationProblem()
+        .Produces(StatusCodes.Status403Forbidden)
+        .Produces(StatusCodes.Status404NotFound)
         .Produces(StatusCodes.Status401Unauthorized);
     }
 }

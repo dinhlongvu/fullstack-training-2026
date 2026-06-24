@@ -6,5 +6,6 @@ public record ProjectDto(
     string Name,
     string Description,
     DateTime CreatedAt,
+    DateTime UpdatedAt,
     int CreatedById
 );
