@@ -21,12 +21,15 @@ public class CreateProjectHandler : IRequestHandler<CreateProjectCommand, Projec
 
     public async Task<ProjectDto> Handle(CreateProjectCommand cmd, CancellationToken ct)
     {
+        var now = DateTime.UtcNow; // assign the same timeline to CreateAt and UpdateAt when creating a project
+
         // Init Entity manually to maintain strict domain integrity
         var project = new Project
         {
             Name = cmd.Name,
             Description = cmd.Description,
-            CreatedAt = DateTime.UtcNow,
+            CreatedAt = now,
+            UpdatedAt = now,
             CreatedById = cmd.UserId,
 
             // Auto-add creator to ProjectMembers list immediately

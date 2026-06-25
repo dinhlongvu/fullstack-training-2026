@@ -9,5 +9,6 @@ public record ProjectListDto(
     string Name,
     string Description,
     DateTime CreatedAt,
+    DateTime UpdatedAt,
     int MemberCount  // Flattened from Project.Members.Count
 );
