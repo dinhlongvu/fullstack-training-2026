@@ -30,11 +30,14 @@ public class ProjectConfiguration : IEntityTypeConfiguration<Project>
         builder.HasOne(p => p.CreatedBy)
             .WithMany()
             .HasForeignKey(p => p.CreatedById)
+            // Ensures that if a User is deleted from the system, all Projects created by that specific user are automatically cascade-deleted (Use for delete User)
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasMany(p => p.Members)
             .WithOne(m => m.Project)
             .HasForeignKey(m => m.ProjectId)
+            // When a Project is deleted via _db.Projects.Remove(project), EF Core instructs
+            // the database to automatically delete all associated records in the 'ProjectMembers' table
             .OnDelete(DeleteBehavior.Cascade);
 
         // Index for common queries (filter by owner)
