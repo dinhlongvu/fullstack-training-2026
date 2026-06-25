@@ -28,6 +28,17 @@ export interface CreateProjectRequest {
     description: string;
 }
 
+// Shape of the request body for PUT /api/projects/{id}
+export interface UpdateProjectRequest {
+    name: string;
+    description: string;
+}
+
+// Shape of the request body for POST /api/projects/{id}/members
+export interface AddMemberRequest {
+    email: string;
+}
+
 // Shape of a member within the project detail response
 export interface ProjectMember {
     userId: number;
@@ -63,4 +74,27 @@ export function createProject(request: CreateProjectRequest) {
 // Fetch a single project's detail with members list
 export function getProjectDetail(id: number) {
     return apiClient<ProjectDetailResponse>(`/api/projects/${id}`);
+}
+
+// Update project (owner only)
+export function updateProject(id: number, request: UpdateProjectRequest) {
+    return apiClient<ProjectDetails>(`/api/projects/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(request),
+    });
+}
+
+// Delete project (owner only)
+export function deleteProject(id: number) {
+    return apiClient(`/api/projects/${id}`, {
+        method: "DELETE",
+    });
+}
+
+// Add a member to a project by email
+export function addProjectMember(projectId: number, request: AddMemberRequest) {
+    return apiClient<void>(`/api/projects/${projectId}/members`, {
+        method: "POST",
+        body: JSON.stringify(request),
+    });
 }
