@@ -2,6 +2,7 @@
 // Displays project detail: info, members list, and owner action buttons.
 // Uses React Query for data fetching, Zustand for current user.
 
+import { useState } from "react";
 import { useParams, Navigate, Link } from "react-router-dom";
 import { Loader2, ArrowLeft, UserPlus, Pencil, Trash2, Users, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/Button";
@@ -15,10 +16,19 @@ import {
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useProjectDetailQuery } from "@/features/projects/api/useProjects";
 import { MemberList } from "@/features/projects/components/MemberList";
+import { AddMemberDialog } from "@/features/projects/components/AddMemberDialog";
+import { EditProjectDialog } from "@/features/projects/components/EditProjectDialog";
+import { DeleteProjectDialog } from "@/features/projects/components/DeleteProjectDialog";
+
 
 export function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
   const currentUser = useAuthStore((s) => s.currentUser);
+
+  // Dialog open/close states - local UI state -> useState
+  const [addMemberOpen, setAddMemberOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   // Parse URL param to number - no hardcoded IDs
   const projectId = Number(id);
@@ -72,6 +82,7 @@ export function ProjectDetailPage() {
         <ArrowLeft className="mr-1 h-4 w-4" />
         Back to projects
       </Link>
+
       {/* Project info section */}
       <div className="flex items-start justify-between">
         <div>
@@ -83,6 +94,11 @@ export function ProjectDetailPage() {
             <span className="flex items-center gap-1">
               <Calendar className="h-4 w-4" />
               Created {new Date(project.createdAt).toLocaleDateString()}
+              {project.updatedAt !== project.createdAt && (
+                <span className="ml-1 italic">
+                  (Updated {new Date(project.updatedAt).toLocaleDateString()})
+                </span>
+              )}
             </span>
             <span className="flex items-center gap-1">
               <Users className="h-4 w-4" />
@@ -91,24 +107,38 @@ export function ProjectDetailPage() {
             </span>
           </div>
         </div>
+
         {/* Owner-only action buttons */}
         {isOwner && (
           <div className="flex gap-2">
-            <Button variant="outline" size="sm">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setAddMemberOpen(true)}
+            >
               <UserPlus className="mr-2 h-4 w-4" />
               Add Member
             </Button>
-            <Button variant="outline" size="sm">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setEditOpen(true)}
+            >
               <Pencil className="mr-2 h-4 w-4" />
               Edit
             </Button>
-            <Button variant="destructive" size="sm">
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => setDeleteOpen(true)}
+            >
               <Trash2 className="mr-2 h-4 w-4" />
               Delete
             </Button>
           </div>
         )}
       </div>
+
       {/* Members section */}
       <Card>
         <CardHeader>
@@ -121,6 +151,26 @@ export function ProjectDetailPage() {
           <MemberList members={project.members} />
         </CardContent>
       </Card>
+
+      {/* Dialogs — only rendered when project data is available */}
+      <AddMemberDialog
+        projectId={project.id}
+        open={addMemberOpen}
+        onOpenChange={setAddMemberOpen}
+      />
+      <EditProjectDialog
+        projectId={project.id}
+        currentName={project.name}
+        currentDescription={project.description}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+      />
+      <DeleteProjectDialog
+        projectId={project.id}
+        projectName={project.name}
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+      />
     </div>
   );
 }
