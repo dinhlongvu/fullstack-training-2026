@@ -14,12 +14,25 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
+using Backend.Infrastructure.Interceptors;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // ─── Database (SQLite — file-based, no Docker needed for training) ──
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("Default")));
+
+// ─── ADDED FOR INTERCEPTOR ───────────────────────────────
+// 1. Register the interceptor into the Dependency Injection container as a Scoped service
+builder.Services.AddScoped<AuditableEntityInterceptor>();
+
+// 2. Configure the AppDbContext and attach the interceptor to its options
+builder.Services.AddDbContext<AppDbContext>((sp, options) =>
+{
+    // Retrieve the interceptor instance from the service provider
+    var auditableInterceptor = sp.GetRequiredService<AuditableEntityInterceptor>();
+
+    // Configure the database provider and explicitly add the interceptor to the EF Core pipeline.
+    options.UseSqlite(builder.Configuration.GetConnectionString("Default")).AddInterceptors(auditableInterceptor);
+});
 
 // ─── Carter (Minimal API) ───────────────────────────────
 builder.Services.AddCarter();
