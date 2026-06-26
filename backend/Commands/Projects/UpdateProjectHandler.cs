@@ -45,7 +45,6 @@ public class UpdateProjectHandler : IRequestHandler<UpdateProjectCommand, Update
         // EF Core Change Tracker automatically detects if values actually changed before executing SQL UPDATE.
         project.Name = req.Name;
         project.Description = req.Description;
-        project.UpdatedAt = DateTime.UtcNow;
 
         // 5. Commit changes to the database
         await _db.SaveChangesAsync(ct);
