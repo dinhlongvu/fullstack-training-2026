@@ -157,5 +157,46 @@ public class ProjectsModule : ICarterModule
         .Produces(StatusCodes.Status403Forbidden)
         .Produces(StatusCodes.Status404NotFound)
         .Produces(StatusCodes.Status401Unauthorized);
+
+        // ======== 6. POST /api/projects/{id}/members ========
+        group.MapPost("/{id:int}/members", async (int id, AddProjectMemberDto req, HttpContext context, IMediator mediator, CancellationToken ct) =>
+        {
+            // Extract the current user ID from JWT
+            var currentUserId = context.User.GetUserId();
+
+            // Dispatch the command
+            var command = new AddProjectMemberCommand(id, req.UserId, currentUserId);
+            var result = await mediator.Send(command, ct);
+
+            // Handle 404 Not Found (Project or User)
+            if (!result.IsProjectFound || !result.IsUserFound)
+            {
+                return Results.NotFound(new { error = "Project or User not found" });
+            }
+
+            // Handle 403 Forbidden (Not the owner)
+            if (!result.IsAuthorized)
+            {
+                return Results.Json(new { error = "Not authorized to add members to this project. Owner access required." },
+                statusCode: StatusCodes.Status403Forbidden);
+            }
+
+            // Handle 409 Conflict (User is already a member)
+            if (result.IsAlreadyMember)
+            {
+                return Results.Conflict(new { error = "User is already a member of this project" });
+            }
+
+            // Handle 201 Created
+            return Results.Created($"/api/projects/{id}/members/{result.Data?.UserId}", result.Data);
+        })
+        .WithName("AddProjectMember")
+        .WithSummary("Add user to project")
+        .WithDescription("Add user to project. Owner-only. Validates user exists, validates user not already a member.")
+        .Produces<ProjectMemberDto>(StatusCodes.Status201Created)
+        .Produces(StatusCodes.Status404NotFound)
+        .Produces(StatusCodes.Status409Conflict)
+        .Produces(StatusCodes.Status403Forbidden)
+        .Produces(StatusCodes.Status401Unauthorized);
     }
 }
