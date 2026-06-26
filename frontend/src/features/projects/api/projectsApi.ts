@@ -10,6 +10,7 @@ export interface Project {
     name: string;
     description: string;
     createdAt: string;
+    updatedAt: string;
     memberCount: number;
 }
 
@@ -19,6 +20,7 @@ export interface ProjectDetails {
     name: string;
     description: string;
     createdAt: string;
+    updatedAt: string;
     createdById: number;
 }
 
@@ -53,6 +55,7 @@ export interface ProjectDetailResponse {
     name: string;
     description: string;
     createdAt: string;
+    updatedAt: string;
     createdById: number;
     members: ProjectMember[];
 }

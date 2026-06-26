@@ -94,6 +94,11 @@ export function ProjectDetailPage() {
             <span className="flex items-center gap-1">
               <Calendar className="h-4 w-4" />
               Created {new Date(project.createdAt).toLocaleDateString()}
+              {project.updatedAt !== project.createdAt && (
+                <span className="ml-1 italic">
+                  (Updated {new Date(project.updatedAt).toLocaleDateString()})
+                </span>
+              )}
             </span>
             <span className="flex items-center gap-1">
               <Users className="h-4 w-4" />
