@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Backend.Commands.Projects;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Backend.Domain;
 
 namespace Backend.Modules;
 
@@ -19,6 +20,7 @@ public class ProjectsModule : ICarterModule
 {
     // Add a ? to Description to mark optional
     public record CreateProjectRequest(string Name, string? Description);
+    public record UpdateProjectRequest(string Name, string? Description);
 
     public void AddRoutes(IEndpointRouteBuilder app)
     {
@@ -89,6 +91,71 @@ public class ProjectsModule : ICarterModule
         .Produces<ProjectDetailDto>(StatusCodes.Status200OK)
         .Produces(StatusCodes.Status404NotFound)
         .Produces(StatusCodes.Status403Forbidden)
+        .Produces(StatusCodes.Status401Unauthorized);
+
+        // ======== 4. PUT /api/projects/{id} ========
+        // Updates project details
+        group.MapPut("/{id:int}", async (int id, UpdateProjectRequest req, HttpContext context, IMediator mediator, CancellationToken ct) =>
+        {
+            var userId = context.User.GetUserId();
+
+            // Coerce null description into an empty string at the API boundary
+            var command = new UpdateProjectCommand(id, req.Name, req.Description ?? string.Empty, userId);
+
+            var result = await mediator.Send(command, ct);
+
+            // Handle 404 Not Found
+            if (!result.IsFound)
+            {
+                return Results.NotFound(new { error = "Project not found" });
+            }
+
+            // Handle 403 Forbidden
+            if (!result.IsAuthorized)
+            {
+                return Results.Json(new { error = "Not authorized to update this project. Owner access required." }, statusCode: StatusCodes.Status403Forbidden);
+            }
+
+            // Handle 200 OK
+            return Results.Ok(result.Data);
+        })
+        .WithName("UpdateProject")
+        .WithSummary("Update project details")
+        .WithDescription("Updates the name and description of a project. Can only be performed by the project creator.")
+        .Produces<ProjectDto>(StatusCodes.Status200OK)
+        .ProducesValidationProblem()
+        .Produces(StatusCodes.Status403Forbidden)
+        .Produces(StatusCodes.Status404NotFound)
+        .Produces(StatusCodes.Status401Unauthorized);
+
+        // ======== 5. DELETE /api/projects/{id} ========
+        group.MapDelete("/{id:int}", async (int id, HttpContext context, IMediator mediator, CancellationToken ct) =>
+        {
+            var userId = context.User.GetUserId();
+
+            var command = new DeleteProjectCommand(id, userId);
+            var result = await mediator.Send(command, ct);
+
+            if (!result.IsFound)
+            {
+                return Results.NotFound(new { error = "Project not found" });
+            }
+
+            if (!result.IsAuthorized)
+            {
+                return Results.Json(
+                    new { error = "Not authorized to delete this project. Owner access required." },
+                    statusCode: StatusCodes.Status403Forbidden);
+            }
+
+            return Results.NoContent();
+        })
+        .WithName("DeleteProject")
+        .WithSummary("Delete a project")
+        .WithDescription("Deletes a project. Only the project owner can delete it. Cascade deletes all related ProjectMembers, Tasks, and Comments.")
+        .Produces(StatusCodes.Status204NoContent)
+        .Produces(StatusCodes.Status403Forbidden)
+        .Produces(StatusCodes.Status404NotFound)
         .Produces(StatusCodes.Status401Unauthorized);
     }
 }

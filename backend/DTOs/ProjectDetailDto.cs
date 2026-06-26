@@ -15,6 +15,7 @@ public record ProjectDetailDto(
     string Name,
     string? Description,
     DateTime CreatedAt,
+    DateTime UpdatedAt,
     int CreatedById,
     List<ProjectMemberDto> Members
 );
