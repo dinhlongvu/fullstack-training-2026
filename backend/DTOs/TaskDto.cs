@@ -4,23 +4,25 @@
 
 namespace Backend.DTOs;
 
-public record TaskDto(
-    int Id,
-    string Title,
-    string Description,
-    string Status,        // Enum → string: "Todo" | "InProgress" | "Done"
-    string Priority,      // Enum → string: "Low" | "Medium" | "High"
-    DateTime? DueDate,
-    string? AssigneeName, // Flattened from TaskItem.Assignee.FullName
-    int CommentCount,
-    DateTime CreatedAt
-);
+public record TaskDto
+{
+    public int Id { get; init; }
+    public string Title { get; init; } = string.Empty;
+    public string Description { get; init; } = string.Empty;
+    public string Status { get; init; } = string.Empty;        // Enum -> string: "Todo" | "InProgress" | "Done"
+    public string Priority { get; init; } = string.Empty;      // Enum -> string: "Low" | "Medium" | "High"
+    public DateTime? DueDate { get; init; }
+    public string? AssigneeName { get; init; } // Flattened from TaskItem.Assignee.FullName
+    public int CommentCount { get; init; }
+    public DateTime CreatedAt { get; init; }
+}
 
 // Separate DTO for list views (fewer fields = faster queries)
-public record TaskSummaryDto(
-    int Id,
-    string Title,
-    string Status,
-    string Priority,
-    string? AssigneeName
-);
+public record TaskSummaryDto
+{
+    public int Id { get; init; }
+    public string Title { get; init; } = string.Empty;
+    public string Status { get; init; } = string.Empty;
+    public string Priority { get; init; } = string.Empty;
+    public string? AssigneeName { get; init; }
+}
