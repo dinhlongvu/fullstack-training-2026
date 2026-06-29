@@ -44,7 +44,7 @@ public class JwtTokenService : ITokenService
         // 2. Read access token lifetime. 
         // Defensive programming: Fallback to 15 minutes if the config is missing, empty, or invalid.
         var expirationMinutesStr = _configuration["Jwt:AccessTokenExpirationMinutes"];
-        if (!double.TryParse(expirationMinutesStr, out double expirationMinutes))
+        if (!double.TryParse(expirationMinutesStr, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out double expirationMinutes))
         {
             expirationMinutes = 15;
         }
@@ -121,7 +121,7 @@ public class JwtTokenService : ITokenService
 
         // 3. Read the expiration lifespan from configuration with a defensive fallback
         var expirationDaysStr = _configuration["Jwt:RefreshTokenExpirationDays"];
-        if (!double.TryParse(expirationDaysStr, out double expirationDays))
+        if (!double.TryParse(expirationDaysStr, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out double expirationDays))
         {
             expirationDays = 1; // Fallback to 1 day if config is missing or invalid
         }
