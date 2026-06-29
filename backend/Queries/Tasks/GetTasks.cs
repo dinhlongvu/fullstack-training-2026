@@ -1,26 +1,33 @@
 // Queries/Tasks/GetTasks.cs
-// CQRS Query: ONE file = Query record + Handler.
+// CQRS Query — 1 file = Query record + Result record + Handler class.
 // Queries only READ data — no side effects, no SaveChanges.
 
+using AutoMapper;
+using Backend.Domain;
 using Backend.DTOs;
 using Backend.Infrastructure.Data;
-using AutoMapper;
-using AutoMapper.QueryableExtensions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
+using DomainTaskStatus = Backend.Domain.TaskStatus;
+
 namespace Backend.Queries.Tasks;
 
-// 1. Query = the "request" DTO
 public record GetTasksQuery(
     int ProjectId,
-    string? Status = null,
-    string? Priority = null,
+    int CurrentUserId,
+    DomainTaskStatus? Status = null,
+    Priority? Priority = null,
     int? AssigneeId = null
-) : IRequest<List<TaskSummaryDto>>;
+) : IRequest<GetTasksResult>;
 
-// 2. Handler = read-only logic
-public class GetTasksHandler : IRequestHandler<GetTasksQuery, List<TaskSummaryDto>>
+public record GetTasksResult(
+    bool IsProjectFound,
+    bool IsAuthorized,
+    List<TaskDto>? Data
+);
+
+public class GetTasksHandler : IRequestHandler<GetTasksQuery, GetTasksResult>
 {
     private readonly AppDbContext _db;
     private readonly IMapper _mapper;
@@ -31,25 +38,41 @@ public class GetTasksHandler : IRequestHandler<GetTasksQuery, List<TaskSummaryDt
         _mapper = mapper;
     }
 
-    public async Task<List<TaskSummaryDto>> Handle(GetTasksQuery q, CancellationToken ct)
+    public async Task<GetTasksResult> Handle(GetTasksQuery req, CancellationToken ct)
     {
+        var project = await _db.Projects
+            .Include(p => p.Members)
+            .FirstOrDefaultAsync(p => p.Id == req.ProjectId, ct);
+
+        if (project == null) return new GetTasksResult(false, false, null);
+
+        bool isOwner = project.CreatedById == req.CurrentUserId;
+        bool isMember = project.Members.Any(m => m.UserId == req.CurrentUserId);
+
+        if (!isOwner && !isMember) return new GetTasksResult(true, false, null);
+
+        // Apply optional filters using IQueryable
         var query = _db.Tasks
-            .Where(t => t.ProjectId == q.ProjectId);
+            .AsNoTracking()
+            .Include(t => t.Assignee)   // needed for AssigneeName mapping
+            .Include(t => t.Comments)   // needed for CommentCount mapping
+            .Where(t => t.ProjectId == req.ProjectId);
 
-        // Apply optional filters
-        if (!string.IsNullOrWhiteSpace(q.Status))
-            query = query.Where(t => t.Status.ToString() == q.Status);
+        if (req.Status.HasValue)
+            query = query.Where(t => t.Status == req.Status.Value);
 
-        if (!string.IsNullOrWhiteSpace(q.Priority))
-            query = query.Where(t => t.Priority.ToString() == q.Priority);
+        if (req.Priority.HasValue)
+            query = query.Where(t => t.Priority == req.Priority.Value);
 
-        if (q.AssigneeId.HasValue)
-            query = query.Where(t => t.AssigneeId == q.AssigneeId);
+        if (req.AssigneeId.HasValue)
+            query = query.Where(t => t.AssigneeId == req.AssigneeId.Value);
 
-        // ProjectTo<T> = SQL SELECT of only needed columns (fast!)
-        return await query
+        // Load entities to memory, then map in-memory
+        var tasks = await query
             .OrderByDescending(t => t.CreatedAt)
-            .ProjectTo<TaskSummaryDto>(_mapper.ConfigurationProvider)
             .ToListAsync(ct);
+
+        var taskDtos = _mapper.Map<List<TaskDto>>(tasks);
+        return new GetTasksResult(true, true, taskDtos);
     }
 }
