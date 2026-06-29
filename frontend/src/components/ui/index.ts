@@ -46,3 +46,4 @@ export {
 } from "./AlertDialog";
 
 export { Textarea } from "./Textarea";
+export { Skeleton } from "./Skeleton";
