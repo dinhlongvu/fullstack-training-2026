@@ -23,12 +23,14 @@ export function ProjectCard({ project }: ProjectCardProps) {
 
     return (
         <Card
-            className="cursor-pointer transition-shadow hover:shadow-md"
+            className="cursor-pointer transition-shadow hover:shadow-md overflow-hidden"
             onClick={() => navigate(`/projects/${project.id}`)}
         >
-            <CardHeader>
-                <CardTitle className="text-lg">{project.name}</CardTitle>
-                <CardDescription className="line-clamp-2">
+            <CardHeader className="min-w-0">
+                <CardTitle className="text-lg truncate" title={project.name}>
+                    {project.name}
+                </CardTitle>
+                <CardDescription className="line-clamp-2 break-words" title={project.description || ""}>
                     {project.description || "No description"}
                 </CardDescription>
             </CardHeader>
