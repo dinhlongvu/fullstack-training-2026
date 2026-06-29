@@ -2,14 +2,17 @@
 // Main app shell: sidebar navigation + header + content area.
 
 import { Link, Outlet, useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/stores/useAuthStore";
 
 export function Layout() {
   const currentUser = useAuthStore((s) => s.currentUser);
   const clearAuth = useAuthStore((s) => s.clearAuth);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const handleLogout = () => {
+    queryClient.clear();
     clearAuth();
     navigate("/login");
   };
