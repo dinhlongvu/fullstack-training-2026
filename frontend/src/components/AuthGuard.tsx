@@ -3,7 +3,7 @@
 // Wrap protected pages with this component.
 
 import { useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { Navigate } from "react-router-dom";
 import { getCurrentUser } from "@/features/auth/api/authApi";
@@ -20,6 +20,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   const token = useAuthStore((s) => s.token);
   const setAuth = useAuthStore((s) => s.setAuth);
   const clearAuth = useAuthStore((s) => s.clearAuth);
+  const queryClient = useQueryClient();
 
   // Always verify token with backend when token exists
   const {
@@ -56,9 +57,10 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   // Backend returned 401 → clear corrupt data
   useEffect(() => {
     if (error instanceof Error && error.message === "Unauthorized") {
+      queryClient.clear();
       clearAuth();
     }
-  }, [error, clearAuth]);
+  }, [error, clearAuth, queryClient]);
 
   // --- Rendering Logic ---
   // No token at all -> Kick back to login
