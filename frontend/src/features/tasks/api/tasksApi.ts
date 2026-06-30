@@ -16,9 +16,8 @@ export interface Task {
     priority: TaskPriority;
     dueDate: string | null;
     createdAt: string;
-    assigneeId: number | null;
     assigneeName: string | null;
-    projectId: number;
+    commentCount: number;
 }
 
 // Filter parameters for the tasks list endpoint
