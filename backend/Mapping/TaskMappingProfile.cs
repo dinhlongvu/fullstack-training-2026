@@ -17,14 +17,14 @@ public class TaskMappingProfile : Profile
         CreateMap<TaskItem, TaskDto>()
             .ForMember(d => d.Status, o => o.MapFrom(s => s.Status.ToString()))
             .ForMember(d => d.Priority, o => o.MapFrom(s => s.Priority.ToString()))
-            .ForMember(d => d.AssigneeName, o => o.MapFrom(s => s.Assignee!.FullName))
+            .ForMember(d => d.AssigneeName, o => o.MapFrom(s => s.Assignee != null ? s.Assignee.FullName : null))
             .ForMember(d => d.CommentCount, o => o.MapFrom(s => s.Comments.Count));
 
         // Entity → Summary DTO (list view — fewer fields)
         CreateMap<TaskItem, TaskSummaryDto>()
             .ForMember(d => d.Status, o => o.MapFrom(s => s.Status.ToString()))
             .ForMember(d => d.Priority, o => o.MapFrom(s => s.Priority.ToString()))
-            .ForMember(d => d.AssigneeName, o => o.MapFrom(s => s.Assignee!.FullName));
+            .ForMember(d => d.AssigneeName, o => o.MapFrom(s => s.Assignee != null ? s.Assignee.FullName : null));
 
         // Command → Entity
         CreateMap<CreateTaskCommand, TaskItem>()
