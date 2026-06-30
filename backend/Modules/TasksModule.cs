@@ -26,7 +26,7 @@ public class TasksModule : ICarterModule
         var group = app.MapGroup("/api/projects/{projectId:int}/tasks")
             .RequireAuthorization();
 
-        // ======== GET /api/projects/{projectId}/tasks ========
+        // ======== 1. GET /api/projects/{projectId}/tasks ========
         // Returns all tasks in a project, with optional filters
         group.MapGet("/", async (
             int projectId,
@@ -64,16 +64,55 @@ public class TasksModule : ICarterModule
         .Produces(StatusCodes.Status404NotFound)
         .Produces(StatusCodes.Status401Unauthorized);
 
-        // ======== POST /api/projects/{projectId}/tasks ========
+        // ======== 2. POST /api/projects/{projectId}/tasks ========
         group.MapPost("/", async (
             int projectId,
-            CreateTaskCommand command,
+            CreateTaskRequest req,
+            HttpContext context,
             IMediator mediator) =>
         {
-            command = command with { ProjectId = projectId };
-            var task = await mediator.Send(command);
-            return Results.Created($"/api/tasks/{task.Id}", task);
-        });
+            var currentUserId = context.User.GetUserId();
+
+            var command = new CreateTaskCommand(
+                projectId,
+                req.Title,
+                req.Description,
+                req.Priority,
+                req.DueDate,
+                currentUserId,
+                req.AssigneeId
+            );
+
+            var result = await mediator.Send(command);
+
+            if (!result.IsProjectFound)
+            {
+                return Results.NotFound(new { error = "Project not found" });
+            }
+
+            if (!result.IsAuthorized)
+            {
+                return Results.Json(
+                    new { error = "Not authorized to create tasks in this project. Project member access required." },
+                    statusCode: StatusCodes.Status403Forbidden);
+            }
+
+            if (!result.IsAssigneeValid)
+            {
+                return Results.BadRequest(new { error = "Assignee must be a project member" });
+            }
+
+            return Results.Created($"/api/projects/{projectId}/tasks/{result.Data?.Id}", result.Data);
+        })
+        .WithName("CreateTask")
+        .WithSummary("Create a new task")
+        .WithDescription("Creates a new task in the specified project. Requires project member access.")
+        .Produces<TaskDto>(StatusCodes.Status201Created)
+        .ProducesValidationProblem()
+        .Produces(StatusCodes.Status400BadRequest)
+        .Produces(StatusCodes.Status403Forbidden)
+        .Produces(StatusCodes.Status404NotFound)
+        .Produces(StatusCodes.Status401Unauthorized);
 
         // ======== PATCH /api/tasks/{taskId}/status ========
         app.MapPatch("/api/tasks/{taskId:int}/status", async (
