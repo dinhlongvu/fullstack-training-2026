@@ -102,7 +102,7 @@ public class TasksModule : ICarterModule
                 return Results.BadRequest(new { error = "Assignee must be a project member" });
             }
 
-            return Results.Created($"/api/projects/{projectId}/tasks/{result.Data?.Id}", result.Data);
+            return Results.Created($"/api/projects/{projectId}/tasks", result.Data);
         })
         .WithName("CreateTask")
         .WithSummary("Create a new task")
