@@ -19,7 +19,7 @@ import { MemberList } from "@/features/projects/components/MemberList";
 import { AddMemberDialog } from "@/features/projects/components/AddMemberDialog";
 import { EditProjectDialog } from "@/features/projects/components/EditProjectDialog";
 import { DeleteProjectDialog } from "@/features/projects/components/DeleteProjectDialog";
-
+import { KanbanBoard } from "@/features/tasks/components/KanbanBoard";
 
 export function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -151,6 +151,12 @@ export function ProjectDetailPage() {
           <MemberList members={project.members} />
         </CardContent>
       </Card>
+
+      {/* Kanban Board section */}
+      <div>
+        <h3 className="mb-3 text-lg font-semibold">Task Board</h3>
+        <KanbanBoard projectId={project.id} members={project.members} />
+      </div>
 
       {/* Dialogs — only rendered when project data is available */}
       <AddMemberDialog
