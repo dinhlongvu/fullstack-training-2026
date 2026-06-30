@@ -13,7 +13,8 @@ public class AddProjectMemberCommandValidator : AbstractValidator<AddProjectMemb
         RuleFor(x => x.ProjectId)
             .GreaterThan(0).WithMessage("ProjectId must be greater than 0.");
 
-        RuleFor(x => x.TargetUserId)
-            .GreaterThan(0).WithMessage("TargetUserId must be greater than 0.");
+        RuleFor(x => x.Email)
+            .NotEmpty().WithMessage("Email is required.")
+            .EmailAddress().WithMessage("Email must be a valid email address.");
     }
 }
