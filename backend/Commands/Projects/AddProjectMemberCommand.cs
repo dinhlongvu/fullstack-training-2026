@@ -8,7 +8,7 @@ namespace Backend.Commands.Projects;
 
 public record AddProjectMemberCommand(
     int ProjectId,
-    int TargetUserId,
+    string Email,
     int CurrentUserId
 ) : IRequest<AddProjectMemberResult>;
 

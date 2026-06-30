@@ -1,5 +1,4 @@
 // Commands/Projects/AddProjectMemberHandler.cs
-// Implements the business logic for adding a user to a project's member list.
 
 using AutoMapper;
 using Backend.Domain;
@@ -23,55 +22,49 @@ public class AddProjectMemberHandler : IRequestHandler<AddProjectMemberCommand, 
 
     public async Task<AddProjectMemberResult> Handle(AddProjectMemberCommand req, CancellationToken ct)
     {
-        // 1. Fetch the project along with its current members to check for duplicates later
-        var project = await _db.Projects
-            .Include(p => p.Members)
+        var projectInfo = await _db.Projects
+            .AsNoTracking()
+            .Select(p => new { p.Id, p.CreatedById })
             .FirstOrDefaultAsync(p => p.Id == req.ProjectId, ct);
 
-        // 2. Handle 404 Not Found (Project)
-        if (project == null)
+        if (projectInfo == null)
         {
             return new AddProjectMemberResult(false, false, false, false, null);
         }
 
-        // 3. Handle 403 Forbidden (Strictly Owner-only authorization)
-        if (project.CreatedById != req.CurrentUserId)
+        if (projectInfo.CreatedById != req.CurrentUserId)
         {
             return new AddProjectMemberResult(true, true, false, false, null);
         }
 
-        // 4. Fetch the target user to ensure they exist
-        var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == req.TargetUserId, ct);
+        // Process the string in C# RAM before stuffing it into the Query so EF Core doesn't have to translate
+        string normalizedEmail = req.Email.Trim().ToLowerInvariant();
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == normalizedEmail, ct);
 
-        // 5. Handle 404 Not Found (User)
         if (user == null)
         {
             return new AddProjectMemberResult(true, false, true, false, null);
         }
 
-        // 6. Handle 409 Conflict (User is already a member)
-        if (project.Members.Any(m => m.UserId == req.TargetUserId))
+        bool isAlreadyMember = await _db.ProjectMembers
+            .AnyAsync(m => m.ProjectId == req.ProjectId && m.UserId == user.Id, ct);
+
+        if (isAlreadyMember)
         {
             return new AddProjectMemberResult(true, true, true, true, null);
         }
 
-        // 7. Create the new ProjectMember entity
         var newProjectMember = new ProjectMember
         {
             ProjectId = req.ProjectId,
-            UserId = req.TargetUserId,
+            UserId = user.Id,
             JoinedAt = DateTime.UtcNow,
-            User = user // Attach the fetched user entity so AutoMapper can resolve Email and FullName
+            User = user
         };
 
         _db.ProjectMembers.Add(newProjectMember);
-
-        // 8. Commit changes to the database
         await _db.SaveChangesAsync(ct);
-
-        // 9. Map entity to DTO and return success
         var projectMemberDto = _mapper.Map<ProjectMemberDto>(newProjectMember);
-
         return new AddProjectMemberResult(true, true, true, false, projectMemberDto);
     }
 }

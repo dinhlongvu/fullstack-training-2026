@@ -4,5 +4,5 @@
 namespace Backend.DTOs;
 
 public record AddProjectMemberDto(
-    int UserId
+    string Email
 );

@@ -165,7 +165,7 @@ public class ProjectsModule : ICarterModule
             var currentUserId = context.User.GetUserId();
 
             // Dispatch the command
-            var command = new AddProjectMemberCommand(id, req.UserId, currentUserId);
+            var command = new AddProjectMemberCommand(id, req.Email, currentUserId);
             var result = await mediator.Send(command, ct);
 
             // Handle 404 Not Found (Project or User)
