@@ -27,9 +27,16 @@ const PRIORITY_OPTIONS: TaskPriority[] = ["Low", "Medium", "High"];
 export function KanbanBoard({ projectId, members }: KanbanBoardProps) {
     const [searchParams, setSearchParams] = useSearchParams();
 
-    // Read filter values from URL query params
-    const priorityFilter = searchParams.get("priority") as TaskPriority | null;
-    const assigneeFilter = searchParams.get("assigneeId");
+    // Read and validate filter values from URL query params
+    const rawPriority = searchParams.get("priority");
+    const priorityFilter: TaskPriority | null =
+        rawPriority && PRIORITY_OPTIONS.includes(rawPriority as TaskPriority)
+            ? (rawPriority as TaskPriority)
+            : null;
+
+    const rawAssignee = searchParams.get("assigneeId");
+    const assigneeFilter =
+        rawAssignee && /^\d+$/.test(rawAssignee) ? rawAssignee : null;
 
     // Fetch tasks — filters passed to API via query params
     const { data: tasks, isLoading, error } = useProjectTasksQuery(projectId, {
