@@ -2,9 +2,13 @@
 // Main Kanban board: 3 columns (Todo, InProgress, Done).
 // Fetches tasks via React Query, syncs filter state with URL query params.
 
+import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { Plus } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 import { KanbanColumn } from "./KanbanColumn";
 import { KanbanBoardSkeleton } from "./KanbanBoardSkeleton";
+import { CreateTaskDialog } from "./CreateTaskDialog";
 import { useProjectTasksQuery } from "../api/useTasks";
 import { type Task, type TaskPriority } from "../api/tasksApi";
 import { type ProjectMember } from "@/features/projects/api/projectsApi";
@@ -26,6 +30,7 @@ const PRIORITY_OPTIONS: TaskPriority[] = ["Low", "Medium", "High"];
 
 export function KanbanBoard({ projectId, members }: KanbanBoardProps) {
     const [searchParams, setSearchParams] = useSearchParams();
+    const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
     // Read and validate filter values from URL query params
     const rawPriority = searchParams.get("priority");
@@ -79,7 +84,7 @@ export function KanbanBoard({ projectId, members }: KanbanBoardProps) {
 
     return (
         <div className="space-y-4">
-            {/* Filter bar */}
+            {/* Toolbar: filters + New Task button */}
             <div className="flex flex-wrap items-center gap-3">
                 {/* Priority filter */}
                 <select
@@ -118,6 +123,16 @@ export function KanbanBoard({ projectId, members }: KanbanBoardProps) {
                         Clear filters
                     </button>
                 )}
+
+                {/* New Task button — pushed to the right */}
+                <Button
+                    size="sm"
+                    className="ml-auto"
+                    onClick={() => setCreateDialogOpen(true)}
+                >
+                    <Plus className="mr-2 h-4 w-4" />
+                    New Task
+                </Button>
             </div>
 
             {/* 3-column Kanban layout: responsive (stack on mobile) */}
@@ -131,6 +146,14 @@ export function KanbanBoard({ projectId, members }: KanbanBoardProps) {
                     />
                 ))}
             </div>
+
+            {/* Create Task Dialog */}
+            <CreateTaskDialog
+                projectId={projectId}
+                members={members}
+                open={createDialogOpen}
+                onOpenChange={setCreateDialogOpen}
+            />
         </div>
     );
 }
