@@ -102,7 +102,8 @@ public class TasksModule : ICarterModule
                 return Results.BadRequest(new { error = "Assignee must be a project member" });
             }
 
-            return Results.Created($"/api/projects/{projectId}/tasks", result.Data);
+            // Points the new task to GET Task Detail endpoint
+            return Results.Created($"/api/tasks/{result.Data?.Id}", result.Data);
         })
         .WithName("CreateTask")
         .WithSummary("Create a new task")
@@ -110,6 +111,46 @@ public class TasksModule : ICarterModule
         .Produces<TaskDto>(StatusCodes.Status201Created)
         .ProducesValidationProblem()
         .Produces(StatusCodes.Status400BadRequest)
+        .Produces(StatusCodes.Status403Forbidden)
+        .Produces(StatusCodes.Status404NotFound)
+        .Produces(StatusCodes.Status401Unauthorized);
+
+        // ======== 3. GET /api/projects/{projectId}/tasks/{taskId} ========
+        // Define a separate group for tasks to avoid the project/{projectId} prefix
+        var taskRootGroup = app.MapGroup("/api/tasks")
+            .WithTags("Tasks")
+            .RequireAuthorization();
+
+        taskRootGroup.MapGet("/{taskId:int}", async (
+            int taskId,
+            HttpContext context,
+            IMediator mediator,
+            CancellationToken ct
+        ) =>
+        {
+            var currentUserId = context.User.GetUserId();
+
+            var result = await mediator.Send(
+                new GetTaskDetailQuery(taskId, currentUserId), ct);
+
+            if (!result.IsFound)
+            {
+                return Results.NotFound(new { error = "Task not found" });
+            }
+
+            if (!result.IsAuthorized)
+            {
+                return Results.Json(
+                    new { error = "Not authorized to view this task. Project member access required." },
+                    statusCode: StatusCodes.Status403Forbidden);
+            }
+
+            return Results.Ok(result.Data);
+        })
+        .WithName("GetTaskDetail")
+        .WithSummary("Get task detail")
+        .WithDescription("Returns detailed information about a specific task. Requires project member access.")
+        .Produces<TaskDto>(StatusCodes.Status200OK)
         .Produces(StatusCodes.Status403Forbidden)
         .Produces(StatusCodes.Status404NotFound)
         .Produces(StatusCodes.Status401Unauthorized);
