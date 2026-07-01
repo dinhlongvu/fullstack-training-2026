@@ -116,7 +116,7 @@ export function CreateTaskDialog({
                 title: values.title,
                 description: values.description ?? "",
                 priority: values.priority as TaskPriority,
-                dueDate: values.dueDate ? values.dueDate.toISOString() : null,
+                dueDate: values.dueDate ? format(values.dueDate, "yyyy-MM-dd") : null,
                 assigneeId: values.assigneeId ? Number(values.assigneeId) : null,
             },
             {
@@ -241,6 +241,7 @@ export function CreateTaskDialog({
                                                 mode="single"
                                                 selected={field.value ?? undefined}
                                                 onSelect={field.onChange}
+                                                disabled={{ before: new Date() }}
                                                 autoFocus
                                             />
                                         </PopoverContent>

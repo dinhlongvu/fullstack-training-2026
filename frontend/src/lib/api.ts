@@ -13,6 +13,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL;
 interface ApiErrorResponse {
   error?: string;
   message?: string;
+  errors?: string[];
 }
 
 const AUTH_ENDPOINTS = [
@@ -34,7 +35,7 @@ async function getErrorMessage(response: Response): Promise<string> {
 
   try {
     const body = (await response.json()) as ApiErrorResponse;
-    return body.message ?? body.error ?? fallbackMessage;
+    return body.message ?? body.error ?? body.errors?.join(", ") ?? fallbackMessage;
   } catch {
     return fallbackMessage;
   }
