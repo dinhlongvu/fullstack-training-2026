@@ -40,3 +40,36 @@ export function getProjectTasks(projectId: number, filters: TaskFilters = {}) {
 
     return apiClient<Task[]>(path);
 }
+
+// Map priority string to backend enum number
+// Backend enum: Low=0, Medium=1, High=2
+const PRIORITY_TO_NUMBER: Record<TaskPriority, number> = {
+    Low: 0,
+    Medium: 1,
+    High: 2,
+};
+
+// Shape of the request body for POST /api/projects/{id}/tasks
+export interface CreateTaskRequest {
+    title: string;
+    description: string;
+    priority: TaskPriority;
+    dueDate: string | null;
+    assigneeId: number | null;
+}
+
+// Create a new task in a project
+// POST /api/projects/{projectId}/tasks
+export function createTask(projectId: number, request: CreateTaskRequest) {
+    return apiClient<Task>(`/api/projects/${projectId}/tasks`, {
+        method: "POST",
+        body: JSON.stringify({
+            title: request.title,
+            description: request.description,
+            priority: PRIORITY_TO_NUMBER[request.priority],
+            dueDate: request.dueDate,
+            assigneeId: request.assigneeId,
+        }),
+    });
+}
+
