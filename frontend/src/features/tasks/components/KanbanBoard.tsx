@@ -40,8 +40,9 @@ export function KanbanBoard({ projectId, members }: KanbanBoardProps) {
       : null;
 
   const rawAssignee = searchParams.get("assigneeId");
+  const validAssigneeIds = new Set(members.map((m) => String(m.userId)));
   const assigneeFilter =
-    rawAssignee && /^\d+$/.test(rawAssignee) ? rawAssignee : null;
+    rawAssignee && validAssigneeIds.has(rawAssignee) ? rawAssignee : null;
 
   // Fetch tasks — filters passed to API via query params
   const {
