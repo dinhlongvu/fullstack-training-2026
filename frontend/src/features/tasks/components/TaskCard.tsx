@@ -33,9 +33,19 @@ function formatDueDate(dateString: string): string {
   return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-// Check if a due date is overdue (before today)
+// Check if a due date is overdue — compares calendar dates, not raw timestamps
 function isOverdue(dateString: string): boolean {
-  return new Date(dateString) < new Date();
+  const due = new Date(dateString);
+  const dueDateOnly = new Date(
+    due.getFullYear(),
+    due.getMonth(),
+    due.getDate(),
+  );
+
+  const now = new Date();
+  const todayOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  return dueDateOnly < todayOnly;
 }
 
 export function TaskCard({ task, projectId }: TaskCardProps) {
@@ -43,8 +53,11 @@ export function TaskCard({ task, projectId }: TaskCardProps) {
   const updateStatus = useUpdateTaskStatusMutation(projectId);
 
   const currentIndex = TASK_STATUS_ORDER.indexOf(task.status);
+  // currentIndex === -1 means an unrecognized status — disable both buttons
+  // instead of silently computing a wrong "next" column
   const canMoveLeft = currentIndex > 0;
-  const canMoveRight = currentIndex < TASK_STATUS_ORDER.length - 1;
+  const canMoveRight =
+    currentIndex !== -1 && currentIndex < TASK_STATUS_ORDER.length - 1;
 
   // Move task to the previous/next column.
   // stopPropagation prevents the card's own onClick (navigate to detail) from firing.
@@ -127,6 +140,6 @@ export function TaskCard({ task, projectId }: TaskCardProps) {
           </Button>
         </div>
       </CardContent>
-    </Card> 
+    </Card>
   );
 }
