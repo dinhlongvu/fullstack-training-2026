@@ -169,8 +169,13 @@ public class TasksModule : ICarterModule
             Priority? parsedPriority = null;
             if (req.Priority is not null)
             {
-                if (!Enum.TryParse<Priority>(req.Priority, ignoreCase: true, out var p))
+                // Block numeric input with int.TryParse
+                if (int.TryParse(req.Priority, out _)
+                    || !Enum.TryParse<Priority>(req.Priority, ignoreCase: true, out var p)
+                    || !Enum.IsDefined(p))
+                {
                     return Results.BadRequest(new { error = "Priority must be 'Low', 'Medium', or 'High'." });
+                }
                 parsedPriority = p;
             }
 

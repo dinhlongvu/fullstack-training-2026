@@ -21,7 +21,13 @@ public class UpdateTaskCommandValidator : AbstractValidator<UpdateTaskCommand>
         When(x => x.Description != null, () =>
         {
             RuleFor(x => x.Description)
-                .MaximumLength(1000).WithMessage("Description must be 1000 characters or less.");
+                .MaximumLength(2000).WithMessage("Description must be 2000 characters or less.");
+        });
+
+        When(x => x.Priority.HasValue, () =>
+        {
+            RuleFor(x => x.Priority!.Value)
+                .IsInEnum().WithMessage("Priority must be Low, Medium, or High.");
         });
 
         When(x => x.DueDate.HasValue, () =>

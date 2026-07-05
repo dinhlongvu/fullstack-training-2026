@@ -2,6 +2,7 @@
 // Pattern: auth-check first (cheap SELECT), then mutate entity, then save.
 
 using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using Backend.DTOs;
 using Backend.Infrastructure.Data;
 using MediatR;
@@ -54,30 +55,32 @@ public class UpdateTaskHandler : IRequestHandler<UpdateTaskCommand, UpdateTaskRe
             }
         }
 
+        // Load the actual entity for mutation (second, targeted query)
         var task = await _db.Tasks.FindAsync([req.TaskId], ct);
+        if (task is null)
+            return new UpdateTaskResult(false, false, false, null);
 
-        if (req.Title is not null) task!.Title = req.Title;
-        if (req.Description is not null) task!.Description = req.Description;
-        if (req.Priority.HasValue) task!.Priority = req.Priority.Value;
-        if (req.DueDate.HasValue) task!.DueDate = req.DueDate;
+        if (req.Title is not null) task.Title = req.Title;
+        if (req.Description is not null) task.Description = req.Description;
+        if (req.Priority.HasValue) task.Priority = req.Priority.Value;
+        if (req.DueDate.HasValue) task.DueDate = req.DueDate;
 
         // AssigneeId requires special handling:
         //   - req.AssigneeId has a value  -> assign to that user
         //   - ClearAssignee is true       -> explicitly set to null (remove assignee)
         //   - neither                     -> leave unchanged
         if (req.AssigneeId.HasValue)
-            task!.AssigneeId = req.AssigneeId;
+            task.AssigneeId = req.AssigneeId;
         else if (req.ClearAssignee)
-            task!.AssigneeId = null;
+            task.AssigneeId = null;
 
         await _db.SaveChangesAsync(ct);
 
-        if (task!.AssigneeId.HasValue)
-        {
-            await _db.Entry(task).Reference(t => t.Assignee).LoadAsync(ct);
-        }
+        var dto = await _db.Tasks
+            .Where(t => t.Id == req.TaskId)
+            .ProjectTo<TaskDto>(_mapper.ConfigurationProvider)
+            .FirstAsync(ct);
 
-        var dto = _mapper.Map<TaskDto>(task);
         return new UpdateTaskResult(true, true, true, dto);
     }
 }
