@@ -217,7 +217,7 @@ export function CreateTaskDialog({
               render={({ field }) => (
                 <FormItem className="flex flex-col">
                   <FormLabel>Due Date</FormLabel>
-                  <Popover>
+                  <Popover modal>
                     <PopoverTrigger asChild>
                       <FormControl>
                         <Button
