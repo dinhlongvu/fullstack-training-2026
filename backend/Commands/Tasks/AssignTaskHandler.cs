@@ -22,7 +22,7 @@ public class AssignTaskHandler : IRequestHandler<AssignTaskCommand, AssignTaskRe
 
     public async Task<AssignTaskResult> Handle(AssignTaskCommand req, CancellationToken ct)
     {
-        // forces SQL Server to calculate and return only 2 bool variables
+        // Only retrieve check flags (valid permissions + assignee), avoid loading full entities
         var taskInfo = await _db.Tasks
             .AsNoTracking()
             .Where(t => t.Id == req.TaskId)
@@ -51,17 +51,22 @@ public class AssignTaskHandler : IRequestHandler<AssignTaskCommand, AssignTaskRe
         var affectedRows = await _db.Tasks
             .Where(t => t.Id == req.TaskId)
             .ExecuteUpdateAsync(
-                s => s.SetProperty(t => t.AssigneeId, req.AssigneeId),
+                s => s
+                    .SetProperty(t => t.AssigneeId, req.AssigneeId)
+                    .SetProperty(t => t.UpdatedAt, DateTime.UtcNow),
                 ct);
 
-        // If = 0 means the task was deleted before the UPDATE command arrived
         if (affectedRows == 0)
             return new AssignTaskResult(false, false, false, null);
 
+        // Use FirstOrDefaultAsync instead of FirstAsync to avoid 500 error if the task was deleted in the meantime
         var dto = await _db.Tasks
             .Where(t => t.Id == req.TaskId)
             .ProjectTo<TaskDto>(_mapper.ConfigurationProvider)
-            .FirstAsync(ct);
+            .FirstOrDefaultAsync(ct);
+
+        if (dto == null)
+            return new AssignTaskResult(false, false, false, null);
 
         return new AssignTaskResult(true, true, true, dto);
     }
