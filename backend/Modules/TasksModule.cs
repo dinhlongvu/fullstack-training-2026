@@ -234,12 +234,7 @@ public class TasksModule : ICarterModule
                 return Results.BadRequest(new { error = "Status must be 'Todo', 'InProgress', or 'Done'." });
             }
 
-            var command = new UpdateTaskStatusCommand
-            {
-                TaskId = taskId,
-                CurrentUserId = currentUserId,
-                Status = parsedStatus
-            };
+            var command = new UpdateTaskStatusCommand(taskId, currentUserId, parsedStatus);
 
             var result = await mediator.Send(command, ct);
 
