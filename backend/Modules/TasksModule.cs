@@ -214,16 +214,53 @@ public class TasksModule : ICarterModule
         .Produces(StatusCodes.Status404NotFound)
         .Produces(StatusCodes.Status401Unauthorized);
 
-        // ======== PATCH /api/tasks/{taskId}/status ========
-        app.MapPatch("/api/tasks/{taskId:int}/status", async (
+        // ======== 5. PATCH /api/tasks/{taskId}/status ========
+        taskRootGroup.MapPatch("/{taskId:int}/status", async (
             int taskId,
-            UpdateTaskStatusCommand command,
-            IMediator mediator) =>
+            UpdateTaskStatusRequest req,
+            HttpContext context,
+            IMediator mediator,
+            CancellationToken ct) =>
         {
-            command = command with { TaskId = taskId };
-            await mediator.Send(command);
-            return Results.NoContent();
-        });
+            var currentUserId = context.User.GetUserId();
+
+            if (req.Status == null)
+                return Results.BadRequest(new { error = "Status is required." });
+
+            if (int.TryParse(req.Status, out _)
+                || !Enum.TryParse<DomainTaskStatus>(req.Status, ignoreCase: true, out var parsedStatus)
+                || !Enum.IsDefined(parsedStatus))
+            {
+                return Results.BadRequest(new { error = "Status must be 'Todo', 'InProgress', or 'Done'." });
+            }
+
+            var command = new UpdateTaskStatusCommand
+            {
+                TaskId = taskId,
+                CurrentUserId = currentUserId,
+                Status = parsedStatus
+            };
+
+            var result = await mediator.Send(command, ct);
+
+            if (!result.IsFound)
+                return Results.NotFound(new { error = "Task not found" });
+
+            if (!result.IsAuthorized)
+                return Results.Json(
+                    new { error = "Not authorized to update this task's status. Project member access required." },
+                    statusCode: StatusCodes.Status403Forbidden);
+
+            return Results.Ok(result.Data);
+        })
+        .WithName("UpdateTaskStatus")
+        .WithSummary("Move task to a new status")
+        .WithDescription("Updates the status of a task (Todo/InProgress/Done). Requires project member access.")
+        .Produces<TaskDto>(StatusCodes.Status200OK)
+        .Produces(StatusCodes.Status400BadRequest)
+        .Produces(StatusCodes.Status403Forbidden)
+        .Produces(StatusCodes.Status404NotFound)
+        .Produces(StatusCodes.Status401Unauthorized);
 
         // ======== DELETE /api/tasks/{taskId} ========
         app.MapDelete("/api/tasks/{taskId:int}", async (
