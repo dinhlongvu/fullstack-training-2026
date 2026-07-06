@@ -155,6 +155,65 @@ public class TasksModule : ICarterModule
         .Produces(StatusCodes.Status404NotFound)
         .Produces(StatusCodes.Status401Unauthorized);
 
+        // ======== 4. PUT /api/tasks/{taskId} ========
+        // Updates task fields only. Status excluded — use PATCH /status.
+        taskRootGroup.MapPut("/{taskId:int}", async (
+            int taskId,
+            UpdateTaskRequest req,
+            HttpContext context,
+            IMediator mediator,
+            CancellationToken ct) =>
+        {
+            var currentUserId = context.User.GetUserId();
+
+            Priority? parsedPriority = null;
+            if (req.Priority is not null)
+            {
+                // Block numeric input with int.TryParse
+                if (int.TryParse(req.Priority, out _)
+                    || !Enum.TryParse<Priority>(req.Priority, ignoreCase: true, out var p)
+                    || !Enum.IsDefined(p))
+                {
+                    return Results.BadRequest(new { error = "Priority must be 'Low', 'Medium', or 'High'." });
+                }
+                parsedPriority = p;
+            }
+
+            var command = new UpdateTaskCommand(
+                taskId,
+                currentUserId,
+                req.Title,
+                req.Description,
+                parsedPriority,
+                req.DueDate,
+                req.AssigneeId,
+                req.ClearAssignee
+            );
+
+            var result = await mediator.Send(command, ct);
+
+            if (!result.IsFound)
+                return Results.NotFound(new { error = "Task not found" });
+
+            if (!result.IsAuthorized)
+                return Results.Json(
+                    new { error = "Not authorized to update this task. Project member access required." },
+                    statusCode: StatusCodes.Status403Forbidden);
+
+            if (!result.IsAssigneeValid)
+                return Results.BadRequest(new { error = "Assignee must be a project member" });
+
+            return Results.Ok(result.Data);
+        })
+        .WithName("UpdateTask")
+        .WithSummary("Update a task")
+        .WithDescription("Updates task fields (title, description, priority, dueDate, assigneeId). Status is managed via PATCH /status. Requires project member access.")
+        .Produces<TaskDto>(StatusCodes.Status200OK)
+        .Produces(StatusCodes.Status400BadRequest)
+        .Produces(StatusCodes.Status403Forbidden)
+        .Produces(StatusCodes.Status404NotFound)
+        .Produces(StatusCodes.Status401Unauthorized);
+
         // ======== PATCH /api/tasks/{taskId}/status ========
         app.MapPatch("/api/tasks/{taskId:int}/status", async (
             int taskId,
