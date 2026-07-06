@@ -76,19 +76,10 @@ export function createTask(projectId: number, request: CreateTaskRequest) {
 // Used to compute prev/next status and disable buttons at the edges
 export const TASK_STATUS_ORDER: TaskStatus[] = ["Todo", "InProgress", "Done"];
 
-// Map status string to backend enum number
-// Backend enum: Todo=0, InProgress=1, Done=2
-const STATUS_TO_NUMBER: Record<TaskStatus, number> = {
-  Todo: 0,
-  InProgress: 1,
-  Done: 2,
-};
-
-// Move a task to a new status (Kanban column)
-// PATCH /api/tasks/{taskId}/status
+// Move a task to a new status
 export function updateTaskStatus(taskId: number, status: TaskStatus) {
-  return apiClient<void>(`/api/tasks/${taskId}/status`, {
+  return apiClient<Task>(`/api/tasks/${taskId}/status`, {
     method: "PATCH",
-    body: JSON.stringify({ status: STATUS_TO_NUMBER[status] }),
+    body: JSON.stringify({ status }),
   });
 }
