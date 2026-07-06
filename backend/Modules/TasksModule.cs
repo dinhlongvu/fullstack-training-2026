@@ -285,7 +285,7 @@ public class TasksModule : ICarterModule
                     statusCode: StatusCodes.Status403Forbidden);
 
             if (!result.IsAssigneeValid)
-                return Results.BadRequest(new { error = "Assignee must be a project member" });
+                return Results.BadRequest(new { error = "Assignee must be a project member or project owner" });
 
             return Results.Ok(result.Data);
         })

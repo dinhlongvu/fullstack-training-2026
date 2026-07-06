@@ -19,48 +19,50 @@ public class AssignTaskHandler : IRequestHandler<AssignTaskCommand, AssignTaskRe
         _db = db;
         _mapper = mapper;
     }
+
     public async Task<AssignTaskResult> Handle(AssignTaskCommand req, CancellationToken ct)
     {
+        // forces SQL Server to calculate and return only 2 bool variables
         var taskInfo = await _db.Tasks
             .AsNoTracking()
             .Where(t => t.Id == req.TaskId)
             .Select(t => new
             {
                 t.Id,
-                ProjectOwnerId = t.Project.CreatedById,
-                MemberIds = t.Project.Members.Select(m => m.UserId).ToList()
+                IsAuthorized = t.Project.CreatedById == req.CurrentUserId ||
+                               t.Project.Members.Any(m => m.UserId == req.CurrentUserId),
+
+                IsAssigneeValid = req.AssigneeId == null ||
+                                  t.Project.CreatedById == req.AssigneeId.Value ||
+                                  t.Project.Members.Any(m => m.UserId == req.AssigneeId.Value)
             })
             .FirstOrDefaultAsync(ct);
 
         if (taskInfo == null)
             return new AssignTaskResult(false, false, false, null);
 
-        bool isOwner = taskInfo.ProjectOwnerId == req.CurrentUserId;
-        bool isMember = taskInfo.MemberIds.Contains(req.CurrentUserId);
-
-        if (!isOwner && !isMember)
+        if (!taskInfo.IsAuthorized)
             return new AssignTaskResult(true, false, false, null);
 
-        if (req.AssigneeId.HasValue)
-        {
-            bool assigneeIsOwner = taskInfo.ProjectOwnerId == req.AssigneeId.Value;
-            bool assigneeIsMember = taskInfo.MemberIds.Contains(req.AssigneeId.Value);
+        if (!taskInfo.IsAssigneeValid)
+            return new AssignTaskResult(true, true, false, null);
 
-            if (!assigneeIsOwner && !assigneeIsMember)
-                return new AssignTaskResult(true, true, false, null);
-        }
-
-        // Update DB with ExecuteUpdateAsync does not consume tracking entity memory
-        await _db.Tasks
+        // Update DB and catch error of task being deleted
+        var affectedRows = await _db.Tasks
             .Where(t => t.Id == req.TaskId)
             .ExecuteUpdateAsync(
                 s => s.SetProperty(t => t.AssigneeId, req.AssigneeId),
                 ct);
 
+        // If = 0 means the task was deleted before the UPDATE command arrived
+        if (affectedRows == 0)
+            return new AssignTaskResult(false, false, false, null);
+
         var dto = await _db.Tasks
             .Where(t => t.Id == req.TaskId)
             .ProjectTo<TaskDto>(_mapper.ConfigurationProvider)
             .FirstAsync(ct);
+
         return new AssignTaskResult(true, true, true, dto);
     }
 }
