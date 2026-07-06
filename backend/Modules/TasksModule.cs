@@ -257,6 +257,47 @@ public class TasksModule : ICarterModule
         .Produces(StatusCodes.Status404NotFound)
         .Produces(StatusCodes.Status401Unauthorized);
 
+        // ======== 6. PATCH /api/tasks/{taskId}/assign ========
+        // Assign OR unassign task to a project member
+        taskRootGroup.MapPatch("/{taskId:int}/assign", async (
+            int taskId,
+            AssignTaskRequest req,
+            HttpContext context,
+            IMediator mediator,
+            CancellationToken ct) =>
+        {
+            var currentUserId = context.User.GetUserId();
+
+            var command = new AssignTaskCommand(
+                taskId,
+                currentUserId,
+                req.AssigneeId
+            );
+
+            var result = await mediator.Send(command, ct);
+
+            if (!result.IsFound)
+                return Results.NotFound(new { error = "Task not found" });
+
+            if (!result.IsAuthorized)
+                return Results.Json(
+                    new { error = "Not authorized to assign this task. Project member access required." },
+                    statusCode: StatusCodes.Status403Forbidden);
+
+            if (!result.IsAssigneeValid)
+                return Results.BadRequest(new { error = "Assignee must be a project member or project owner" });
+
+            return Results.Ok(result.Data);
+        })
+        .WithName("AssignTask")
+        .WithSummary("Assign or unassign a task")
+        .WithDescription("Assigns a task to a project member. Pass null to unassign. Requires project member access.")
+        .Produces<TaskDto>(StatusCodes.Status200OK)
+        .Produces(StatusCodes.Status400BadRequest)
+        .Produces(StatusCodes.Status403Forbidden)
+        .Produces(StatusCodes.Status404NotFound)
+        .Produces(StatusCodes.Status401Unauthorized);
+
         // ======== DELETE /api/tasks/{taskId} ========
         app.MapDelete("/api/tasks/{taskId:int}", async (
             int taskId,
