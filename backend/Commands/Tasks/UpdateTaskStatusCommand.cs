@@ -1,4 +1,5 @@
 // Commands/Tasks/UpdateTaskStatusCommand.cs
+using Backend.Domain;
 using Backend.DTOs;
 using MediatR;
 
@@ -6,17 +7,14 @@ using DomainTaskStatus = Backend.Domain.TaskStatus;
 
 namespace Backend.Commands.Tasks;
 
-public record UpdateTaskStatusRequest
-{
-    public string? Status { get; init; }
-}
+public record UpdateTaskStatusRequest(string? Status);
 
-public record UpdateTaskStatusCommand : IRequest<UpdateTaskStatusResult>
-{
-    public int TaskId { get; init; }
-    public int CurrentUserId { get; init; }
-    public DomainTaskStatus Status { get; init; }
-}
+public record UpdateTaskStatusCommand(
+    int TaskId,
+    int CurrentUserId,
+    DomainTaskStatus Status
+) : IRequest<UpdateTaskStatusResult>;
+
 public record UpdateTaskStatusResult(
     bool IsFound,
     bool IsAuthorized,
