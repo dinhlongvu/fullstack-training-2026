@@ -2,7 +2,7 @@
 // Main Kanban board: 3 columns (Todo, InProgress, Done).
 // Fetches tasks via React Query, syncs filter state with URL query params.
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/Button";
@@ -34,10 +34,46 @@ export function KanbanBoard({ projectId, members }: KanbanBoardProps) {
 
   // Read and validate filter values from URL query params
   const rawPriority = searchParams.get("priority");
-  const priorityFilter: TaskPriority | null =
-    rawPriority && PRIORITY_OPTIONS.includes(rawPriority as TaskPriority)
-      ? (rawPriority as TaskPriority)
-      : null;
+  
+  let priorityFilter: TaskPriority | null = null;
+  let needsUrlCleanup = false;
+  let validPriorityToSet: string | null = null;
+
+  if (rawPriority) {
+    if (PRIORITY_OPTIONS.includes(rawPriority as TaskPriority)) {
+      priorityFilter = rawPriority as TaskPriority;
+    } else {
+      needsUrlCleanup = true;
+      // Split by comma and find the first valid priority
+      const firstValid = rawPriority
+        .split(",")
+        .map((p) => p.trim())
+        .find((p) => PRIORITY_OPTIONS.includes(p as TaskPriority));
+
+      if (firstValid) {
+        validPriorityToSet = firstValid;
+        priorityFilter = firstValid as TaskPriority;
+      }
+    }
+  }
+
+  // Automatically clean up the URL without a full page reload
+  useEffect(() => {
+    if (needsUrlCleanup) {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          if (validPriorityToSet) {
+            next.set("priority", validPriorityToSet);
+          } else {
+            next.delete("priority");
+          }
+          return next;
+        },
+        { replace: true }
+      );
+    }
+  }, [needsUrlCleanup, validPriorityToSet, setSearchParams]);
 
   const rawAssignee = searchParams.get("assigneeId");
   const validAssigneeIds = new Set(members.map((m) => String(m.userId)));
