@@ -7,6 +7,7 @@ import {
   getProjectTasks,
   createTask,
   updateTaskStatus,
+  assignTask,
   type TaskFilters,
   type CreateTaskRequest,
   type TaskStatus,
@@ -45,6 +46,25 @@ export function useUpdateTaskStatusMutation(projectId: number) {
       updateTaskStatus(taskId, status),
     onSuccess: () => {
       // Same invalidation pattern as create — refresh every filter view
+      queryClient.invalidateQueries({ queryKey: ["tasks", projectId] });
+    },
+  });
+}
+
+// Hook to assign or unassign a task to a project member
+export function useAssignTaskMutation(projectId: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      taskId,
+      assigneeId,
+    }: {
+      taskId: number;
+      assigneeId: number | null;
+    }) => assignTask(taskId, assigneeId),
+    onSuccess: () => {
+      // Same invalidation pattern — refresh every filter view so the card's
+      // assignee updates without a manual refresh
       queryClient.invalidateQueries({ queryKey: ["tasks", projectId] });
     },
   });

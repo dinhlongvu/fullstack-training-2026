@@ -4,12 +4,14 @@
 
 import { TaskCard } from "./TaskCard";
 import { type Task, type TaskStatus } from "../api/tasksApi";
+import { type ProjectMember } from "@/features/projects/api/projectsApi";
 
 interface KanbanColumnProps {
   title: string;
   status: TaskStatus;
   tasks: Task[];
   projectId: number;
+  members: ProjectMember[];
 }
 
 // Map status to header accent color
@@ -24,6 +26,7 @@ export function KanbanColumn({
   status,
   tasks,
   projectId,
+  members,
 }: KanbanColumnProps) {
   return (
     <div className="flex flex-col rounded-lg bg-muted/30 p-3">
@@ -44,7 +47,12 @@ export function KanbanColumn({
           </p>
         ) : (
           tasks.map((task) => (
-            <TaskCard key={task.id} task={task} projectId={projectId} />
+            <TaskCard
+              key={task.id}
+              task={task}
+              projectId={projectId}
+              members={members}
+            />
           ))
         )}
       </div>

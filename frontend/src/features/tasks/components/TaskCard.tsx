@@ -1,31 +1,37 @@
 // features/tasks/components/TaskCard.tsx
 // Displays a single task as a card within a Kanban column.
-// Shows title, priority badge, assignee initials, and due date.
+// Shows title, priority badge, an assignee picker, and due date.
 // Click navigates to /tasks/:id. Move Left/Right buttons change status (column).
 
 import { useNavigate } from "react-router-dom";
-import { Calendar, User } from "lucide-react";
+import { Calendar } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/Select";
 import { PriorityBadge } from "./PriorityBadge";
-import { useUpdateTaskStatusMutation } from "../api/useTasks";
+import {
+  useUpdateTaskStatusMutation,
+  useAssignTaskMutation,
+} from "../api/useTasks";
 import { TASK_STATUS_ORDER, type Task } from "../api/tasksApi";
+import { type ProjectMember } from "@/features/projects/api/projectsApi";
 
 interface TaskCardProps {
   task: Task;
   projectId: number;
+  members: ProjectMember[];
 }
 
-// Extract initials from a full name (e.g., "Alice Smith" → "AS")
-function getInitials(name: string): string {
-  return name
-    .split(" ")
-    .map((word) => word.charAt(0))
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
-}
+// Sentinel value for the "Unassigned" option — shadcn Select cannot use an
+// empty string as an item value, so we map this to `null` on change.
+const UNASSIGNED_VALUE = "unassigned";
 
 // Format due date for display (e.g., "Jun 30")
 function formatDueDate(dateString: string): string {
@@ -48,9 +54,10 @@ function isOverdue(dateString: string): boolean {
   return dueDateOnly < todayOnly;
 }
 
-export function TaskCard({ task, projectId }: TaskCardProps) {
+export function TaskCard({ task, projectId, members }: TaskCardProps) {
   const navigate = useNavigate();
   const updateStatus = useUpdateTaskStatusMutation(projectId);
+  const assignTask = useAssignTaskMutation(projectId);
 
   const currentIndex = TASK_STATUS_ORDER.indexOf(task.status);
   // currentIndex === -1 means an unrecognized status — disable both buttons
@@ -75,6 +82,28 @@ export function TaskCard({ task, projectId }: TaskCardProps) {
     );
   }
 
+  // Reflect the current assignee as the selected value in the picker.
+  // `null` (unassigned) maps to the UNASSIGNED_VALUE sentinel.
+  const assigneeValue =
+    task.assigneeId === null ? UNASSIGNED_VALUE : String(task.assigneeId);
+
+  // Assign/unassign the task when a picker option is chosen.
+  // The sentinel maps back to `null` for the API.
+  function handleAssigneeChange(value: string) {
+    const nextAssigneeId = value === UNASSIGNED_VALUE ? null : Number(value);
+
+    // Skip the request if the value did not actually change.
+    if (nextAssigneeId === task.assigneeId) return;
+
+    assignTask.mutate(
+      { taskId: task.id, assigneeId: nextAssigneeId },
+      {
+        onSuccess: () => toast.success("Assignee updated"),
+        onError: (error) => toast.error(error.message),
+      },
+    );
+  }
+
   return (
     <Card
       className="cursor-pointer transition-shadow hover:shadow-md"
@@ -89,21 +118,28 @@ export function TaskCard({ task, projectId }: TaskCardProps) {
         {/* Task title */}
         <h4 className="text-sm font-medium leading-tight">{task.title}</h4>
 
-        {/* Footer: assignee + due date */}
-        <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
-          {/* Assignee initials */}
-          {task.assigneeName ? (
-            <div className="flex items-center gap-1" title={task.assigneeName}>
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-muted text-[10px] font-medium">
-                {getInitials(task.assigneeName)}
-              </span>
-            </div>
-          ) : (
-            <div className="flex items-center gap-1 text-muted-foreground/50">
-              <User className="h-4 w-4" />
-              <span>Unassigned</span>
-            </div>
-          )}
+        {/* Footer: assignee picker + due date */}
+        <div className="mt-3 flex items-center justify-between gap-2 text-xs text-muted-foreground">
+          {/* Assignee picker — stopPropagation so opening it doesn't navigate */}
+          <div onClick={(e) => e.stopPropagation()}>
+            <Select
+              value={assigneeValue}
+              onValueChange={handleAssigneeChange}
+              disabled={assignTask.isPending}
+            >
+              <SelectTrigger className="h-7 w-[140px] text-xs">
+                <SelectValue placeholder="Unassigned" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={UNASSIGNED_VALUE}>Unassigned</SelectItem>
+                {members.map((member) => (
+                  <SelectItem key={member.userId} value={String(member.userId)}>
+                    {member.fullName}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
           {/* Due date */}
           {task.dueDate && (
