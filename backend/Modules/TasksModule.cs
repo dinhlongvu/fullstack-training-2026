@@ -317,12 +317,31 @@ public class TasksModule : ICarterModule
         .Produces(StatusCodes.Status401Unauthorized);
 
         // ======== DELETE /api/tasks/{taskId} ========
-        app.MapDelete("/api/tasks/{taskId:int}", async (
+        taskRootGroup.MapDelete("/{taskId:int}", async (
             int taskId,
-            IMediator mediator) =>
+            HttpContext context,
+            IMediator mediator,
+            CancellationToken ct) =>
         {
-            await mediator.Send(new DeleteTaskCommand(taskId));
+            var currentUserId = context.User.GetUserId();
+
+            var result = await mediator.Send(new DeleteTaskCommand(taskId, currentUserId), ct);
+
+            if (!result.IsFound)
+                return Results.NotFound(new { error = "Task not found" });
+
+            if (!result.IsAuthorized)
+                return Results.Json(new { error = "Not authorized to delete this task. Project member access required." },
+                        statusCode: StatusCodes.Status403Forbidden);
+
             return Results.NoContent();
-        });
+        })
+        .WithName("DeleteTask")
+        .WithSummary("Delete a task")
+        .WithDescription("Deletes a task and utilizes DB cascade for comments. Requires project member access.")
+        .Produces(StatusCodes.Status204NoContent)
+        .Produces(StatusCodes.Status403Forbidden)
+        .Produces(StatusCodes.Status404NotFound)
+        .Produces(StatusCodes.Status401Unauthorized);
     }
 }
