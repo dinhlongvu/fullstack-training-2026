@@ -31,7 +31,7 @@ public class TasksModule : ICarterModule
         group.MapGet("/", async (
             int projectId,
             [FromQuery] DomainTaskStatus? status,   // ?status=Todo|InProgress|Done
-            [FromQuery] Priority? priority,         // ?priority=Low|Medium|High
+            [FromQuery] string? priority,         // ?priority=Low|Medium|High
             [FromQuery] int? assigneeId,            // ?assigneeId=id
             HttpContext context,
             IMediator mediator,
@@ -39,8 +39,26 @@ public class TasksModule : ICarterModule
         {
             var currentUserId = context.User.GetUserId();
 
+            Priority? parsedPriority = null;
+
+            if (!string.IsNullOrWhiteSpace(priority))
+            {
+                // Block transmission of multiple values ​​(contains commas)
+                if (priority.Contains(','))
+                    return Results.BadRequest(new { error = "Priority must be a single value" });
+
+                // Block garbage or numeric values
+                if (int.TryParse(priority, out _)
+                    || !Enum.TryParse<Priority>(priority, ignoreCase: true, out var p)
+                    || !Enum.IsDefined(p))
+                {
+                    return Results.BadRequest(new { error = "Priority must be 'Low', 'Medium', or 'High'." });
+                }
+                parsedPriority = p;
+            }
+
             var result = await mediator.Send(
-                new GetTasksQuery(projectId, currentUserId, status, priority, assigneeId), ct);
+                new GetTasksQuery(projectId, currentUserId, status, parsedPriority, assigneeId), ct);
 
             if (!result.IsProjectFound)
             {
