@@ -16,6 +16,7 @@ export interface Task {
   priority: TaskPriority;
   dueDate: string | null;
   createdAt: string;
+  assigneeId: number | null;
   assigneeName: string | null;
   commentCount: number;
 }
