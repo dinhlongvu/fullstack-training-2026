@@ -3,6 +3,12 @@ using MediatR;
 
 namespace Backend.Commands.Tasks;
 
-public record DeleteTaskCommand(int TaskId) : IRequest;
+public record DeleteTaskCommand(
+    int TaskId,
+    int CurrentUserId
+) : IRequest<DeleteTaskResult>;
 
-// Note: Handler not yet implemented — intern will complete this.
+public record DeleteTaskResult(
+    bool IsFound,
+    bool IsAuthorized
+);
