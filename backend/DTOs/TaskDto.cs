@@ -12,6 +12,7 @@ public record TaskDto
     public string Status { get; init; } = string.Empty;        // Enum -> string: "Todo" | "InProgress" | "Done"
     public string Priority { get; init; } = string.Empty;      // Enum -> string: "Low" | "Medium" | "High"
     public DateTime? DueDate { get; init; }
+    public int? AssigneeId { get; init; }
     public string? AssigneeName { get; init; } // Flattened from TaskItem.Assignee.FullName
     public int CommentCount { get; init; }
     public DateTime CreatedAt { get; init; }
@@ -24,5 +25,6 @@ public record TaskSummaryDto
     public string Title { get; init; } = string.Empty;
     public string Status { get; init; } = string.Empty;
     public string Priority { get; init; } = string.Empty;
+    public int? AssigneeId { get; init; }
     public string? AssigneeName { get; init; }
 }
