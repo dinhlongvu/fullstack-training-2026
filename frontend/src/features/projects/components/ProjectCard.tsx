@@ -5,43 +5,43 @@
 import { useNavigate } from "react-router-dom";
 import { Users } from "lucide-react";
 import {
-    Card,
-    CardHeader,
-    CardTitle,
-    CardDescription,
-    CardContent,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
 } from "@/components/ui/Card";
 import { type Project } from "../api/projectsApi";
 
 
 interface ProjectCardProps {
-    project: Project;
+  project: Project;
 }
 
 export function ProjectCard({ project }: ProjectCardProps) {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
 
-    return (
-        <Card
-            className="cursor-pointer transition-shadow hover:shadow-md overflow-hidden"
-            onClick={() => navigate(`/projects/${project.id}`)}
-        >
-            <CardHeader className="min-w-0">
-                <CardTitle className="text-lg truncate" title={project.name}>
-                    {project.name}
-                </CardTitle>
-                <CardDescription className="line-clamp-2 break-words" title={project.description || ""}>
-                    {project.description || "No description"}
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-                <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                    <Users className="h-4 w-4" />
-                    <span>
-                        {project.memberCount} {project.memberCount === 1 ? "member" : "members"}
-                    </span>
-                </div>
-            </CardContent>
-        </Card>
-    );
+  return (
+    <Card
+      className="cursor-pointer transition-shadow hover:shadow-md overflow-hidden"
+      onClick={() => navigate(`/projects/${project.id}`)}
+    >
+      <CardHeader className="min-w-0">
+        <CardTitle className="text-lg truncate" title={project.name}>
+          {project.name}
+        </CardTitle>
+        <CardDescription className="line-clamp-2 break-words" title={project.description || ""}>
+          {project.description || "No description"}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+          <Users className="h-4 w-4" />
+          <span>
+            {project.memberCount} {project.memberCount === 1 ? "member" : "members"}
+          </span>
+        </div>
+      </CardContent>
+    </Card>
+  );
 }

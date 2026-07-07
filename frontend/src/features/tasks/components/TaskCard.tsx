@@ -108,11 +108,10 @@ export function TaskCard({ task, projectId }: TaskCardProps) {
           {/* Due date */}
           {task.dueDate && (
             <div
-              className={`flex items-center gap-1 ${
-                isOverdue(task.dueDate) && task.status !== "Done"
-                  ? "text-red-500"
-                  : ""
-              }`}
+              className={`flex items-center gap-1 ${isOverdue(task.dueDate) && task.status !== "Done"
+                ? "text-red-500"
+                : ""
+                }`}
             >
               <Calendar className="h-3 w-3" />
               <span>{formatDueDate(task.dueDate)}</span>
