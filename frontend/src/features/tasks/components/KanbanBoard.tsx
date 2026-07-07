@@ -34,7 +34,7 @@ export function KanbanBoard({ projectId, members }: KanbanBoardProps) {
 
   // Read and validate filter values from URL query params
   const rawPriority = searchParams.get("priority");
-  
+
   let priorityFilter: TaskPriority | null = null;
   let needsUrlCleanup = false;
   let validPriorityToSet: string | null = null;
@@ -70,7 +70,7 @@ export function KanbanBoard({ projectId, members }: KanbanBoardProps) {
           }
           return next;
         },
-        { replace: true }
+        { replace: true },
       );
     }
   }, [needsUrlCleanup, validPriorityToSet, setSearchParams]);
@@ -185,6 +185,7 @@ export function KanbanBoard({ projectId, members }: KanbanBoardProps) {
             status={col.status}
             tasks={getTasksByStatus(col.status)}
             projectId={projectId}
+            members={members}
           />
         ))}
       </div>

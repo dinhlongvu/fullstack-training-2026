@@ -84,3 +84,12 @@ export function updateTaskStatus(taskId: number, status: TaskStatus) {
     body: JSON.stringify({ status }),
   });
 }
+
+// Assign or unassign a task to a project member
+// PATCH /api/tasks/{taskId}/assign — pass null to unassign
+export function assignTask(taskId: number, assigneeId: number | null) {
+  return apiClient<Task>(`/api/tasks/${taskId}/assign`, {
+    method: "PATCH",
+    body: JSON.stringify({ assigneeId }),
+  });
+}
