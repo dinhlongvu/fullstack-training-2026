@@ -10,6 +10,6 @@ public record CommentDto
     public int AuthorId { get; init; }
     public string AuthorName { get; init; } = null!;
 
-    public DateTime CreateAt { get; init; }
-    public DateTime? UpdateAt { get; init; }
+    public DateTime CreatedAt { get; init; }
+    public DateTime UpdatedAt { get; init; }
 }

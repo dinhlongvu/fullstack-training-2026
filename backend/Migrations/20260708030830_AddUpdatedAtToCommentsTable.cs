@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -17,6 +17,9 @@ namespace Backend.Migrations
                 type: "TEXT",
                 nullable: false,
                 defaultValue: new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified));
+
+            // DATA BACKFILL: Sync UpdatedAt = CreatedAt for existing comments
+            migrationBuilder.Sql("UPDATE \"Comments\" SET \"UpdatedAt\" = \"CreatedAt\";");
         }
 
         /// <inheritdoc />
