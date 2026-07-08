@@ -125,89 +125,95 @@ export function TaskCard({ task, projectId, members }: TaskCardProps) {
   }
 
   return (
-    <Card
-      className="cursor-pointer transition-shadow hover:shadow-md"
-      onClick={() => navigate(`/tasks/${task.id}`)}
-    >
-      <CardContent className="p-4">
-        {/* Header: priority badge + delete action */}
-        <div className="mb-2 flex items-start justify-between gap-2">
-          <PriorityBadge priority={task.priority} />
-          {canDelete && (
-            <button
-              type="button"
-              aria-label="Delete task"
-              onClick={handleDeleteClick}
-              className="text-muted-foreground transition-colors hover:text-destructive"
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
-          )}
-        </div>
-
-        {/* Task title */}
-        <h4 className="text-sm font-medium leading-tight">{task.title}</h4>
-
-        {/* Footer: assignee picker + due date */}
-        <div className="mt-3 flex items-center justify-between gap-2 text-xs text-muted-foreground">
-          {/* Assignee picker — stopPropagation so opening it doesn't navigate */}
-          <div onClick={(e) => e.stopPropagation()}>
-            <Select
-              value={assigneeValue}
-              onValueChange={handleAssigneeChange}
-              disabled={assignTask.isPending}
-            >
-              <SelectTrigger className="h-7 w-[140px] text-xs">
-                <SelectValue placeholder="Unassigned" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={UNASSIGNED_VALUE}>Unassigned</SelectItem>
-                {members.map((member) => (
-                  <SelectItem key={member.userId} value={String(member.userId)}>
-                    {member.fullName}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+    <>
+      <Card
+        className="cursor-pointer transition-shadow hover:shadow-md"
+        onClick={() => navigate(`/tasks/${task.id}`)}
+      >
+        <CardContent className="p-4">
+          {/* Header: priority badge + delete action */}
+          <div className="mb-2 flex items-start justify-between gap-2">
+            <PriorityBadge priority={task.priority} />
+            {canDelete && (
+              <button
+                type="button"
+                aria-label="Delete task"
+                onClick={handleDeleteClick}
+                className="text-muted-foreground transition-colors hover:text-destructive"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            )}
           </div>
 
-          {/* Due date */}
-          {task.dueDate && (
-            <div
-              className={`flex items-center gap-1 ${isOverdue(task.dueDate) && task.status !== "Done"
-                ? "text-red-500"
-                : ""
-                }`}
-            >
-              <Calendar className="h-3 w-3" />
-              <span>{formatDueDate(task.dueDate)}</span>
+          {/* Task title */}
+          <h4 className="text-sm font-medium leading-tight">{task.title}</h4>
+
+          {/* Footer: assignee picker + due date */}
+          <div className="mt-3 flex items-center justify-between gap-2 text-xs text-muted-foreground">
+            {/* Assignee picker — stopPropagation so opening it doesn't navigate */}
+            <div onClick={(e) => e.stopPropagation()}>
+              <Select
+                value={assigneeValue}
+                onValueChange={handleAssigneeChange}
+                disabled={assignTask.isPending}
+              >
+                <SelectTrigger className="h-7 w-[140px] text-xs">
+                  <SelectValue placeholder="Unassigned" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={UNASSIGNED_VALUE}>Unassigned</SelectItem>
+                  {members.map((member) => (
+                    <SelectItem
+                      key={member.userId}
+                      value={String(member.userId)}
+                    >
+                      {member.fullName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-          )}
-        </div>
 
-        {/* Move Left / Move Right — change status (column) */}
-        <div className="mt-3 flex items-center justify-between gap-2 border-t pt-2">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={!canMoveLeft || updateStatus.isPending}
-            onClick={(e) => handleMove(e, "left")}
-          >
-            ← Move Left
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={!canMoveRight || updateStatus.isPending}
-            onClick={(e) => handleMove(e, "right")}
-          >
-            Move Right →
-          </Button>
-        </div>
-      </CardContent>
+            {/* Due date */}
+            {task.dueDate && (
+              <div
+                className={`flex items-center gap-1 ${isOverdue(task.dueDate) && task.status !== "Done"
+                  ? "text-red-500"
+                  : ""
+                  }`}
+              >
+                <Calendar className="h-3 w-3" />
+                <span>{formatDueDate(task.dueDate)}</span>
+              </div>
+            )}
+          </div>
 
-      {/* Delete confirmation dialog — rendered in a portal, so it lives outside
-          the card's click-to-navigate area */}
+          {/* Move Left / Move Right — change status (column) */}
+          <div className="mt-3 flex items-center justify-between gap-2 border-t pt-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={!canMoveLeft || updateStatus.isPending}
+              onClick={(e) => handleMove(e, "left")}
+            >
+              ← Move Left
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={!canMoveRight || updateStatus.isPending}
+              onClick={(e) => handleMove(e, "right")}
+            >
+              Move Right →
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Delete confirmation dialog — kept OUTSIDE <Card> so its (portaled)
+          button clicks don't bubble through the React tree into the card's
+          navigate handler. */}
       {canDelete && (
         <DeleteTaskDialog
           taskId={task.id}
@@ -216,6 +222,6 @@ export function TaskCard({ task, projectId, members }: TaskCardProps) {
           onOpenChange={setDeleteOpen}
         />
       )}
-    </Card>
+    </>
   );
 }
