@@ -8,6 +8,7 @@ import {
   createTask,
   updateTaskStatus,
   assignTask,
+  deleteTask,
   type TaskFilters,
   type CreateTaskRequest,
   type TaskStatus,
@@ -65,6 +66,18 @@ export function useAssignTaskMutation(projectId: number) {
     onSuccess: () => {
       // Same invalidation pattern — refresh every filter view so the card's
       // assignee updates without a manual refresh
+      queryClient.invalidateQueries({ queryKey: ["tasks", projectId] });
+    },
+  });
+}
+
+// Hook to delete a task
+export function useDeleteTaskMutation(projectId: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (taskId: number) => deleteTask(taskId),
+    onSuccess: () => {
+      // Same invalidation pattern — refresh every filter view so the card disappears
       queryClient.invalidateQueries({ queryKey: ["tasks", projectId] });
     },
   });
