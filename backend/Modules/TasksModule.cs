@@ -316,7 +316,7 @@ public class TasksModule : ICarterModule
         .Produces(StatusCodes.Status404NotFound)
         .Produces(StatusCodes.Status401Unauthorized);
 
-        // ======== DELETE /api/tasks/{taskId} ========
+        // ======== 7. DELETE /api/tasks/{taskId} ========
         taskRootGroup.MapDelete("/{taskId:int}", async (
             int taskId,
             HttpContext context,
@@ -340,6 +340,33 @@ public class TasksModule : ICarterModule
         .WithSummary("Delete a task")
         .WithDescription("Deletes a task and utilizes DB cascade for comments. Requires project member access.")
         .Produces(StatusCodes.Status204NoContent)
+        .Produces(StatusCodes.Status403Forbidden)
+        .Produces(StatusCodes.Status404NotFound)
+        .Produces(StatusCodes.Status401Unauthorized);
+
+        // ======== 8. GET /api/tasks/{taskId}/comments ========
+        taskRootGroup.MapGet("/{taskId:int}/comments", async (
+            int taskId,
+            HttpContext context,
+            IMediator mediator,
+            CancellationToken ct) =>
+        {
+            var currentUserId = context.User.GetUserId();
+            var result = await mediator.Send(new GetTaskCommentsQuery(taskId, currentUserId), ct);
+
+            if (!result.IsTaskFound)
+                return Results.NotFound(new { error = "Task not found" });
+
+            if (!result.IsAuthorized)
+                return Results.Json(new { error = "Not authorized to view comments. Project member access required." },
+                statusCode: StatusCodes.Status403Forbidden);
+
+            return Results.Ok(result.Data);
+        })
+        .WithName("GetTaskComments")
+        .WithSummary("Get all comments for a task")
+        .WithDescription("Returns a chronological list of comments for a task, embedded with author names.")
+        .Produces<List<CommentDto>>(StatusCodes.Status200OK)
         .Produces(StatusCodes.Status403Forbidden)
         .Produces(StatusCodes.Status404NotFound)
         .Produces(StatusCodes.Status401Unauthorized);
