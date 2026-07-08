@@ -3,8 +3,9 @@
 // Shows title, priority badge, an assignee picker, and due date.
 // Click navigates to /tasks/:id. Move Left/Right buttons change status (column).
 
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Calendar } from "lucide-react";
+import { Calendar, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
@@ -16,12 +17,14 @@ import {
   SelectValue,
 } from "@/components/ui/Select";
 import { PriorityBadge } from "./PriorityBadge";
+import { DeleteTaskDialog } from "./DeleteTaskDialog";
 import {
   useUpdateTaskStatusMutation,
   useAssignTaskMutation,
 } from "../api/useTasks";
 import { TASK_STATUS_ORDER, type Task } from "../api/tasksApi";
 import { type ProjectMember } from "@/features/projects/api/projectsApi";
+import { useAuthStore } from "@/stores/useAuthStore";
 
 interface TaskCardProps {
   task: Task;
@@ -59,6 +62,16 @@ export function TaskCard({ task, projectId, members }: TaskCardProps) {
   const updateStatus = useUpdateTaskStatusMutation(projectId);
   const assignTask = useAssignTaskMutation(projectId);
 
+  // Local UI state for the delete confirmation dialog
+  const [deleteOpen, setDeleteOpen] = useState(false);
+
+  // Only project members (owner included) may delete a task — mirror the
+  // membership-based access rules used elsewhere in the app.
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const canDelete =
+    currentUser !== null &&
+    members.some((member) => member.userId === currentUser.id);
+
   const currentIndex = TASK_STATUS_ORDER.indexOf(task.status);
   // currentIndex === -1 means an unrecognized status — disable both buttons
   // instead of silently computing a wrong "next" column
@@ -80,6 +93,13 @@ export function TaskCard({ task, projectId, members }: TaskCardProps) {
         onError: (error) => toast.error(error.message),
       },
     );
+  }
+
+  // Open the delete confirmation dialog.
+  // stopPropagation so clicking the trash icon doesn't navigate to the detail page.
+  function handleDeleteClick(event: React.MouseEvent) {
+    event.stopPropagation();
+    setDeleteOpen(true);
   }
 
   // Reflect the current assignee as the selected value in the picker.
@@ -110,9 +130,19 @@ export function TaskCard({ task, projectId, members }: TaskCardProps) {
       onClick={() => navigate(`/tasks/${task.id}`)}
     >
       <CardContent className="p-4">
-        {/* Priority badge */}
-        <div className="mb-2">
+        {/* Header: priority badge + delete action */}
+        <div className="mb-2 flex items-start justify-between gap-2">
           <PriorityBadge priority={task.priority} />
+          {canDelete && (
+            <button
+              type="button"
+              aria-label="Delete task"
+              onClick={handleDeleteClick}
+              className="text-muted-foreground transition-colors hover:text-destructive"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          )}
         </div>
 
         {/* Task title */}
@@ -175,6 +205,17 @@ export function TaskCard({ task, projectId, members }: TaskCardProps) {
           </Button>
         </div>
       </CardContent>
+
+      {/* Delete confirmation dialog — rendered in a portal, so it lives outside
+          the card's click-to-navigate area */}
+      {canDelete && (
+        <DeleteTaskDialog
+          taskId={task.id}
+          projectId={projectId}
+          open={deleteOpen}
+          onOpenChange={setDeleteOpen}
+        />
+      )}
     </Card>
   );
 }
