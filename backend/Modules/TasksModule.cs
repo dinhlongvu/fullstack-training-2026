@@ -370,5 +370,36 @@ public class TasksModule : ICarterModule
         .Produces(StatusCodes.Status403Forbidden)
         .Produces(StatusCodes.Status404NotFound)
         .Produces(StatusCodes.Status401Unauthorized);
+
+        // ======== 9. POST /api/tasks/{taskId}/comments ========
+        taskRootGroup.MapPost("/{taskId:int}/comments", async (
+            int taskId,
+            CreateCommentRequest req,
+            HttpContext context,
+            IMediator mediator,
+            CancellationToken ct) =>
+        {
+            var currentUserId = context.User.GetUserId();
+
+            var command = new CreateCommentCommand(taskId, currentUserId, req.Content);
+            var result = await mediator.Send(command, ct);
+
+            if (!result.IsTaskFound)
+                return Results.NotFound(new { error = "Task not found" });
+
+            if (!result.IsAuthorized)
+                return Results.Json(new { error = "Not authorized to comment on this task. Project member access required." },
+                statusCode: StatusCodes.Status403Forbidden);
+
+            return Results.Json(result.Data, statusCode: StatusCodes.Status201Created);
+        })
+        .WithName("CreateComment")
+        .WithSummary("Add a comment to a task")
+        .WithDescription("Creates a new comment. Validates content length and ensures project member authorization.")
+        .Produces<CommentDto>(StatusCodes.Status201Created)
+        .ProducesValidationProblem()
+        .Produces(StatusCodes.Status403Forbidden)
+        .Produces(StatusCodes.Status404NotFound)
+        .Produces(StatusCodes.Status401Unauthorized);
     }
 }
