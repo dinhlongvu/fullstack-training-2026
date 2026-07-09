@@ -93,3 +93,11 @@ export function assignTask(taskId: number, assigneeId: number | null) {
     body: JSON.stringify({ assigneeId }),
   });
 }
+
+// Delete a task
+// DELETE /api/tasks/{taskId} — returns 204 No Content
+export function deleteTask(taskId: number) {
+  return apiClient<void>(`/api/tasks/${taskId}`, {
+    method: "DELETE",
+  });
+}
