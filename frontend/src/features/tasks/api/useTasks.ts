@@ -5,6 +5,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getProjectTasks,
+  getTask,
+  getTaskComments,
   createTask,
   updateTaskStatus,
   assignTask,
@@ -80,5 +82,23 @@ export function useDeleteTaskMutation(projectId: number) {
       // Same invalidation pattern — refresh every filter view so the card disappears
       queryClient.invalidateQueries({ queryKey: ["tasks", projectId] });
     },
+  });
+}
+
+// Hook to fetch a single task's detail
+export function useTaskQuery(taskId: number) {
+  return useQuery({
+    queryKey: ["task", taskId],
+    queryFn: () => getTask(taskId),
+    enabled: taskId > 0,
+  });
+}
+
+// Hook to fetch the comment list for a task
+export function useTaskCommentsQuery(taskId: number) {
+  return useQuery({
+    queryKey: ["comments", taskId],
+    queryFn: () => getTaskComments(taskId),
+    enabled: taskId > 0,
   });
 }
