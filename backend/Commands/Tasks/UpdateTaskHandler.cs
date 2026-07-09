@@ -63,7 +63,9 @@ public class UpdateTaskHandler : IRequestHandler<UpdateTaskCommand, UpdateTaskRe
         if (req.Title is not null) task.Title = req.Title;
         if (req.Description is not null) task.Description = req.Description;
         if (req.Priority.HasValue) task.Priority = req.Priority.Value;
-        if (req.DueDate.HasValue) task.DueDate = req.DueDate;
+        if (req.DueDate.HasValue)
+            // Normalize DueDate to end of day (23:59:59.9999999)
+            task.DueDate = req.DueDate.Value.Date.AddDays(1).AddTicks(-1);
 
         // AssigneeId requires special handling:
         //   - req.AssigneeId has a value  -> assign to that user

@@ -34,8 +34,8 @@ public class UpdateTaskCommandValidator : AbstractValidator<UpdateTaskCommand>
         {
             // Use Must() with a lambda so DateTime.UtcNow is evaluated at request time,
             RuleFor(x => x.DueDate!.Value)
-                .Must(d => d > DateTime.UtcNow)
-                .WithMessage("Due date must be in the future.");
+                .Must(d => d.Date >= DateTime.UtcNow.Date)
+                .WithMessage("Due date must be today or in the future.");
         });
     }
 }
