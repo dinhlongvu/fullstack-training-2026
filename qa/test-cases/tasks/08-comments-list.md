@@ -22,7 +22,7 @@
 | **Test Steps** | 1. Send GET request to `/api/tasks/{id}/comments` with owner token <br> 2. Check response status code and data structure |
 | **Expected Result** | 1. Status 200 OK <br> 2. Returns an array of CommentDto |
 | **Actual Result** | 1. Response returned status 200 OK <br> 2. Data is a valid JSON array |
-| **Status** | Pass |
+| **Status** | ✅Pass |
 | **Bug link** | — |
 
 ---
@@ -39,7 +39,7 @@
 | **Test Steps** | 1. Send GET request to `/api/tasks/{id}/comments` with member token <br> 2. Check response status code |
 | **Expected Result** | 1. Status 200 OK <br> 2. Members are allowed to view task comments |
 | **Actual Result** | 1. Response returned status 200 OK <br> 2. Returned valid array of comments |
-| **Status** | Pass |
+| **Status** |  ✅Pass |
 | **Bug link** | — |
 
 ---
@@ -56,7 +56,7 @@
 | **Test Steps** | 1. Send GET request to `/api/tasks/{id}/comments` without any token <br> 2. Check response status code |
 | **Expected Result** | 1. Status 401 Unauthorized |
 | **Actual Result** | 1. Response returned status 401 Unauthorized |
-| **Status** | Pass |
+| **Status** |  ✅Pass |
 | **Bug link** | — |
 
 ---
@@ -73,7 +73,7 @@
 | **Test Steps** | 1. Send GET request to `/api/tasks/{id}/comments` <br> 2. Check response status code |
 | **Expected Result** | 1. Status 403 Forbidden with proper error message |
 | **Actual Result** | 1. Response returned status 403 Forbidden with `{"error": "Not authorized to view comments. Project member access required."}` |
-| **Status** | Pass |
+| **Status** | ✅Pass |
 | **Bug link** | — |
 
 ---
@@ -90,7 +90,7 @@
 | **Test Steps** | 1. Send GET request to `/api/tasks/999999/comments` <br> 2. Check response status code |
 | **Expected Result** | 1. Status 404 Not Found |
 | **Actual Result** | 1. Response returned status 404 Not Found with `{"error": "Task not found"}` |
-| **Status** | Pass |
+| **Status** | ✅Pass |
 | **Bug link** | — |
 
 ---
@@ -107,7 +107,7 @@
 | **Test Steps** | 1. Send GET request to `/api/tasks/invalid_id/comments` <br> 2. Check response status code |
 | **Expected Result** | 1. Status 404 Not Found (route constraint `{taskId:int}` rejects non-integer) |
 | **Actual Result** | 1. Response returned status 404 Not Found. ASP.NET route constraint matched correctly. |
-| **Status** | Pass |
+| **Status** | ✅Pass |
 | **Bug link** | — |
 
 ---
