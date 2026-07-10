@@ -65,10 +65,12 @@ export function useAssignTaskMutation(projectId: number) {
       taskId: number;
       assigneeId: number | null;
     }) => assignTask(taskId, assigneeId),
-    onSuccess: () => {
-      // Same invalidation pattern — refresh every filter view so the card's
-      // assignee updates without a manual refresh
+    onSuccess: (_data, variables) => {
+      // Refresh every board filter view so the card's assignee updates
       queryClient.invalidateQueries({ queryKey: ["tasks", projectId] });
+      // Also refresh the Task Detail cache for this task, otherwise opening
+      // the detail after an assign/unassign shows stale data
+      queryClient.invalidateQueries({ queryKey: ["task", variables.taskId] });
     },
   });
 }
