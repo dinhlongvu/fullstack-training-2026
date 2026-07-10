@@ -70,7 +70,7 @@ export function TaskDetailPage() {
         </p>
         <button
           type="button"
-          onClick={() => navigate(-1)}
+          onClick={() => navigate("/projects")}
           className="mt-4 inline-flex items-center text-sm underline"
         >
           <ArrowLeft className="mr-1 h-4 w-4" />
@@ -82,10 +82,11 @@ export function TaskDetailPage() {
 
   return (
     <div className="space-y-6">
-      {/* Back link — returns to the project the user navigated from */}
+      {/* Back link — go to the projects list, a safe in-app fallback that
+          works even when the task was opened via a direct URL (no app history) */}
       <button
         type="button"
-        onClick={() => navigate(-1)}
+        onClick={() => navigate("/projects")}
         className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="mr-1 h-4 w-4" />
