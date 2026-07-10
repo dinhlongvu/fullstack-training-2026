@@ -2,6 +2,8 @@
 // Carter module for Project endpoints.
 // Keeps HTTP concerns thin — delegates ALL business logic to MediatR.
 
+using Backend.Commands.Projects;
+using Backend.Domain;
 using Backend.DTOs;
 using Backend.Queries.Projects;
 using Backend.Services.Auth;
@@ -9,10 +11,8 @@ using Carter;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Routing;
-using Backend.Commands.Projects;
 using Microsoft.AspNetCore.Http.HttpResults;
-using Backend.Domain;
+using Microsoft.AspNetCore.Routing;
 
 namespace Backend.Modules;
 
@@ -71,15 +71,9 @@ public class ProjectsModule : ICarterModule
             var result = await mediator.Send(new GetProjectDetailQuery(id, userId), ct);
 
             // Handle 404 not found project
-            if (!result.IsFound)
+            if (!result.IsFound || !result.IsAuthorized)
             {
                 return Results.NotFound(new { error = "Project not found" });
-            }
-
-            // Handle 403 forbidden if the user is not authorized to view the project
-            if (!result.IsAuthorized)
-            {
-                return Results.Json(new { error = "Not authorized to view this project" }, statusCode: StatusCodes.Status403Forbidden);
             }
 
             // Handle 200 OK
@@ -90,7 +84,6 @@ public class ProjectsModule : ICarterModule
         .WithDescription("Returns detailed information about a specific project if the current user is the owner or a member.")
         .Produces<ProjectDetailDto>(StatusCodes.Status200OK)
         .Produces(StatusCodes.Status404NotFound)
-        .Produces(StatusCodes.Status403Forbidden)
         .Produces(StatusCodes.Status401Unauthorized);
 
         // ======== 4. PUT /api/projects/{id} ========
@@ -105,15 +98,9 @@ public class ProjectsModule : ICarterModule
             var result = await mediator.Send(command, ct);
 
             // Handle 404 Not Found
-            if (!result.IsFound)
+            if (!result.IsFound || !result.IsAuthorized)
             {
                 return Results.NotFound(new { error = "Project not found" });
-            }
-
-            // Handle 403 Forbidden
-            if (!result.IsAuthorized)
-            {
-                return Results.Json(new { error = "Not authorized to update this project. Owner access required." }, statusCode: StatusCodes.Status403Forbidden);
             }
 
             // Handle 200 OK
@@ -124,7 +111,6 @@ public class ProjectsModule : ICarterModule
         .WithDescription("Updates the name and description of a project. Can only be performed by the project creator.")
         .Produces<ProjectDto>(StatusCodes.Status200OK)
         .ProducesValidationProblem()
-        .Produces(StatusCodes.Status403Forbidden)
         .Produces(StatusCodes.Status404NotFound)
         .Produces(StatusCodes.Status401Unauthorized);
 
@@ -136,16 +122,9 @@ public class ProjectsModule : ICarterModule
             var command = new DeleteProjectCommand(id, userId);
             var result = await mediator.Send(command, ct);
 
-            if (!result.IsFound)
+            if (!result.IsFound || !result.IsAuthorized)
             {
                 return Results.NotFound(new { error = "Project not found" });
-            }
-
-            if (!result.IsAuthorized)
-            {
-                return Results.Json(
-                    new { error = "Not authorized to delete this project. Owner access required." },
-                    statusCode: StatusCodes.Status403Forbidden);
             }
 
             return Results.NoContent();
@@ -154,7 +133,6 @@ public class ProjectsModule : ICarterModule
         .WithSummary("Delete a project")
         .WithDescription("Deletes a project. Only the project owner can delete it. Cascade deletes all related ProjectMembers, Tasks, and Comments.")
         .Produces(StatusCodes.Status204NoContent)
-        .Produces(StatusCodes.Status403Forbidden)
         .Produces(StatusCodes.Status404NotFound)
         .Produces(StatusCodes.Status401Unauthorized);
 
@@ -169,16 +147,9 @@ public class ProjectsModule : ICarterModule
             var result = await mediator.Send(command, ct);
 
             // Handle 404 Not Found (Project or User)
-            if (!result.IsProjectFound || !result.IsUserFound)
+            if (!result.IsProjectFound || !result.IsUserFound || !result.IsAuthorized)
             {
                 return Results.NotFound(new { error = "Project or User not found" });
-            }
-
-            // Handle 403 Forbidden (Not the owner)
-            if (!result.IsAuthorized)
-            {
-                return Results.Json(new { error = "Not authorized to add members to this project. Owner access required." },
-                statusCode: StatusCodes.Status403Forbidden);
             }
 
             // Handle 409 Conflict (User is already a member)
@@ -196,7 +167,6 @@ public class ProjectsModule : ICarterModule
         .Produces<ProjectMemberDto>(StatusCodes.Status201Created)
         .Produces(StatusCodes.Status404NotFound)
         .Produces(StatusCodes.Status409Conflict)
-        .Produces(StatusCodes.Status403Forbidden)
         .Produces(StatusCodes.Status401Unauthorized);
     }
 }
