@@ -65,7 +65,11 @@ public class CreateTaskHandler : IRequestHandler<CreateTaskCommand, CreateTaskRe
             Title = req.Title,
             Description = req.Description,
             Priority = req.Priority,
-            DueDate = req.DueDate,
+            DueDate = req.DueDate.HasValue
+                ? req.DueDate.Value.Date
+                .AddDays(1)
+                .AddTicks(-1)
+                : null, // Normalize DueDate to end of day (23:59:59.9999999)
             AssigneeId = req.AssigneeId,
             Status = DomainTaskStatus.Todo,
         };

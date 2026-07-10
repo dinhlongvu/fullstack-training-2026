@@ -22,8 +22,8 @@ public class CreateTaskCommandValidator : AbstractValidator<CreateTaskCommand>
             .IsInEnum().WithMessage("Priority must be Low, Medium, or High.");
 
         RuleFor(x => x.DueDate)
-            .GreaterThan(DateTime.UtcNow)
+            .Must(d => d!.Value.Date >= DateTime.UtcNow.Date)
             .When(x => x.DueDate.HasValue)
-            .WithMessage("Due date must be in the future.");
+            .WithMessage("Due date must be today or in the future.");
     }
 }
