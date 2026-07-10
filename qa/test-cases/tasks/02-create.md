@@ -17,8 +17,8 @@
 | **Test Data** | `{ "title": "Fix login bug", "description": "Session token expires too early", "priority": "High", "dueDate": "<future-date>", "assigneeId": <member-id> }` |
 | **Test Steps** | 1. Send POST request to `/api/projects/{projectId}/tasks` with valid Bearer token <br> 2. Provide valid JSON body with all fields <br> 3. Check response status code <br> 4. Check response body |
 | **Expected Result** | 1. Status 201 Created <br> 2. Response contains `id`, `title`, `description`, `status`, `priority`, `dueDate`, `assigneeName`, `commentCount`, `createdAt` <br> 3. `status` defaults to `"Todo"` <br> 4. Task is persisted in the database |
-| **Actual Result** | Works as expected in E2E tests |
-| **Status** | Passed |
+| **Actual Result** | 1. Status 201 Created <br> 2. Response contains `id`, `title`, `description`, `status`, `priority`, `dueDate`, `assigneeName`, `commentCount`, `createdAt` <br> 3. `status` defaults to `"Todo"` <br> 4. Task is persisted in the database |
+| **Status** | ✅ Passed |
 | **Bug link** | — |
 
 ---
@@ -34,8 +34,8 @@
 | **Test Data** | `{ "title": "Minimal Task", "description": "", "priority": "Low" }` |
 | **Test Steps** | 1. Send POST request with only required fields (no `dueDate`, no `assigneeId`) <br> 2. Check response status code <br> 3. Check response body |
 | **Expected Result** | 1. Status 201 Created <br> 2. Task is created successfully <br> 3. `dueDate` is `null`, `assigneeName` is `null` |
-| **Actual Result** | Works as expected in E2E tests |
-| **Status** | Passed |
+| **Actual Result** | 1. Status 201 Created <br> 2. Task is created successfully <br> 3. `dueDate` is `null`, `assigneeName` is `null` |
+| **Status** | ✅ Passed |
 | **Bug link** | — |
 
 ---
@@ -51,8 +51,8 @@
 | **Test Data** | No Authorization header; body: `{ "title": "Unauthorized Task", "description": "", "priority": "Low" }` |
 | **Test Steps** | 1. Send POST request without any Authorization header <br> 2. Check response status code |
 | **Expected Result** | 1. Status 401 Unauthorized <br> 2. Task is NOT created in database |
-| **Actual Result** | Works as expected in E2E tests |
-| **Status** | Passed |
+| **Actual Result** | 1 . Status 401 Unauthorized contains body: `{ "error": "Unauthorized. Please provide a valid Bearer token."}` <br> 2. Task is NOT created in database |
+| **Status** | ✅ Passed |
 | **Bug link** | — |
 
 ---
@@ -68,8 +68,8 @@
 | **Test Data** | Authorization: `Bearer <non-member-token>`; valid projectId belonging to another user |
 | **Test Steps** | 1. Login as a user who does not belong to the project <br> 2. Send POST request to `/api/projects/{projectId}/tasks` <br> 3. Check response status code and body |
 | **Expected Result** | 1. Status 403 Forbidden <br> 2. Response body: `{ "error": "Not authorized to create tasks in this project. Project member access required." }` <br> 3. Task is NOT saved to database |
-| **Actual Result** | Works as expected in E2E tests |
-| **Status** | Passed |
+| **Actual Result** | 1. Status 403 Forbidden contains body: `{ "error": "Not authorized to create tasks in this project. Project member access required."}` <br> 2. Task is NOT saved to database |
+| **Status** | ✅ Passed |
 | **Bug link** | — |
 
 ---
@@ -85,8 +85,8 @@
 | **Test Data** | `{ "title": "", "description": "Some description", "priority": "Medium" }` |
 | **Test Steps** | 1. Send POST request with empty `title` field <br> 2. Check response status code <br> 3. Check response body for validation error |
 | **Expected Result** | 1. Status 400 Bad Request <br> 2. Response contains validation error: `"Title is required."` <br> 3. Task is NOT created |
-| **Actual Result** | Works as expected in E2E tests |
-| **Status** | Passed |
+| **Actual Result** | 1. Status 400 Bad Request contains body: `{ "errors": ["Title is required."]}` <br> 2. Task is NOT created |
+| **Status** | ✅ Passed |
 | **Bug link** | — |
 
 ---
@@ -102,8 +102,8 @@
 | **Test Data** | `{ "title": "<201-character-string>", "description": "", "priority": "Low" }` |
 | **Test Steps** | 1. Send POST request with `title` of 201 characters <br> 2. Check response status code <br> 3. Check response body for validation error |
 | **Expected Result** | 1. Status 400 Bad Request <br> 2. Response contains validation error: `"Title must be 200 characters or less."` <br> 3. Task is NOT created |
-| **Actual Result** | Works as expected in E2E tests |
-| **Status** | Passed |
+| **Actual Result** | 1. Status 400 Bad Request contains body: `{ "errors": ["Title must be 200 characters or less."]}` <br> 2. Task is NOT created |
+| **Status** | ✅ Passed |
 | **Bug link** | — |
 
 ---
@@ -119,8 +119,8 @@
 | **Test Data** | `{ "title": "<200-character-string>", "description": "", "priority": "Low" }` |
 | **Test Steps** | 1. Send POST request with `title` of exactly 200 characters <br> 2. Check response status code |
 | **Expected Result** | 1. Status 201 Created <br> 2. Task is created with the full 200-character title |
-| **Actual Result** | Works as expected in E2E tests |
-| **Status** | Passed |
+| **Actual Result** | 1. Status 201 Created contains body: `{ "id": <generated-id>, "title": "<200-character-string>", "description": null, "status": "Todo", "priority": "Low", "dueDate": null, "assigneeName": null, "commentCount": 0, "createdAt": "<iso-date>" }` <br> 2. Task is created with the full 200-character title |
+| **Status** | ✅ Passed |
 | **Bug link** | — |
 
 ---
@@ -136,8 +136,8 @@
 | **Test Data** | `{ "title": "Valid Title", "description": "<2001-character-string>", "priority": "Low" }` |
 | **Test Steps** | 1. Send POST request with `description` of 2001 characters <br> 2. Check response status code |
 | **Expected Result** | 1. Status 400 Bad Request <br> 2. Response contains validation error: `"Description is too long."` <br> 3. Task is NOT created |
-| **Actual Result** | Works as expected in E2E tests |
-| **Status** | Passed |
+| **Actual Result** | 1. Status 400 Bad Request contains body: `{ "errors": ["Description must be 2000 characters or less."]}` <br> 2. Task is NOT created |
+| **Status** | ✅ Passed |
 | **Bug link** | — |
 
 ---
@@ -153,8 +153,8 @@
 | **Test Data** | `{ "title": "Valid Title", "description": "", "priority": "Critical" }` |
 | **Test Steps** | 1. Send POST request with `priority` set to an invalid enum value `"Critical"` <br> 2. Check response status code |
 | **Expected Result** | 1. Status 400 Bad Request <br> 2. Response contains validation error: `"Priority must be Low, Medium, or High."` <br> 3. Task is NOT created |
-| **Actual Result** | Works as expected in E2E tests |
-| **Status** | Passed |
+| **Actual Result** | 1. Status 400 Bad Request contains body: `{ "errors": ["Priority must be Low, Medium, or High."]}` <br> 2. Task is NOT created |
+| **Status** | ✅ Passed |
 | **Bug link** | — |
 
 ---
@@ -170,8 +170,8 @@
 | **Test Data** | `{ "title": "Past Due Task", "description": "", "priority": "Low", "dueDate": "2020-01-01T00:00:00Z" }` |
 | **Test Steps** | 1. Send POST request with `dueDate` set to a date in the past <br> 2. Check response status code <br> 3. Check response body for validation error |
 | **Expected Result** | 1. Status 400 Bad Request <br> 2. Response contains validation error: `"Due date must be in the future."` <br> 3. Task is NOT created |
-| **Actual Result** | Works as expected in E2E tests |
-| **Status** | Passed |
+| **Actual Result** | 1. Status 400 Bad Request contains body: `{ "errors": ["Due date must be in the future."]}` <br> 2. Task is NOT created |
+| **Status** | ✅ Passed |
 | **Bug link** | — |
 
 ---
@@ -187,8 +187,8 @@
 | **Test Data** | `{ "title": "Future Due Task", "description": "", "priority": "Medium", "dueDate": "<date 30 days from now>" }` |
 | **Test Steps** | 1. Send POST request with `dueDate` set to a future date <br> 2. Check response status code |
 | **Expected Result** | 1. Status 201 Created <br> 2. Task is created with the correct `dueDate` value |
-| **Actual Result** | Works as expected in E2E tests |
-| **Status** | Passed |
+| **Actual Result** | 1. Status 201 Created contains body: `{ "id": <generated-id>, "title": "Future Due Task", "description": null, "status": "Todo", "priority": "Medium", "dueDate": "<iso-date>", "assigneeName": null, "commentCount": 0, "createdAt": "<iso-date>" }` <br> 2. Task is created with the correct `dueDate` value |
+| **Status** | ✅ Passed |
 | **Bug link** | — |
 
 ---
@@ -204,8 +204,8 @@
 | **Test Data** | `{ "title": "Invalid Assign Task", "description": "", "priority": "Low", "assigneeId": <non-member-user-id> }` |
 | **Test Steps** | 1. Send POST request with `assigneeId` set to a user who is not a project member <br> 2. Check response status code |
 | **Expected Result** | 1. Status 400 Bad Request <br> 2. Response body: `{ "error": "Assignee must be a project member" }` <br> 3. Task is NOT created |
-| **Actual Result** | Works as expected in E2E tests |
-| **Status** | Passed |
+| **Actual Result** | 1. Status 400 Bad Request contains body: `{ "errors": ["Assignee must be a project member."]} ` <br> 2. Task is NOT created |
+| **Status** | ✅ Passed |
 | **Bug link** | — |
 
 ---
@@ -221,8 +221,8 @@
 | **Test Data** | `{ "title": "Assign to Owner", "description": "", "priority": "High", "assigneeId": <owner-id> }` |
 | **Test Steps** | 1. Send POST request with `assigneeId` set to the project owner's id <br> 2. Check response status code |
 | **Expected Result** | 1. Status 201 Created <br> 2. Task is created and assigned to the owner <br> 3. `assigneeName` in response matches the owner's full name |
-| **Actual Result** | Works as expected in E2E tests |
-| **Status** | Passed |
+| **Actual Result** | 1. Status 201 Created contains body: `{ "id": <generated-id>, "title": "Assign to Owner", "description": null, "status": "Todo", "priority": "High", "dueDate": null, "assigneeName": "<owner-full-name>", "commentCount": 0, "createdAt": "<iso-date>" }` <br> 2. Task is created and assigned to the owner <br> 3. `assigneeName` in response matches the owner's full name |
+| **Status** | ✅ Passed |
 | **Bug link** | — |
 
 ---
@@ -238,8 +238,8 @@
 | **Test Data** | projectId: `999999`; body: `{ "title": "Ghost Task", "description": "", "priority": "Low" }` |
 | **Test Steps** | 1. Send POST request to `/api/projects/999999/tasks` <br> 2. Check response status code |
 | **Expected Result** | 1. Status 404 Not Found <br> 2. Response body: `{ "error": "Project not found" }` <br> 3. No task is created |
-| **Actual Result** | Works as expected in E2E tests |
-| **Status** | Passed |
+| **Actual Result** | 1. Status 404 Not Found contains body: `{ "errors": ["Project not found."]}` <br> 2. No task is created |
+| **Status** | ✅ Passed |
 | **Bug link** | — |
 
 ---
@@ -255,8 +255,8 @@
 | **Test Data** | `{ "title": "Status Check Task", "description": "", "priority": "Low" }` |
 | **Test Steps** | 1. Send POST request to create a task (no `status` field in body) <br> 2. Check the `status` field in response |
 | **Expected Result** | 1. Status 201 Created <br> 2. Response body has `"status": "Todo"` <br> 3. Task in database has Status = Todo |
-| **Actual Result** | Works as expected in E2E tests |
-| **Status** | Passed |
+| **Actual Result** | 1. Status 201 Created contains body: `{ "id": <generated-id>, "title": "Status Check Task", "description": null, "status": "Todo", "priority": "Low", "dueDate": null, "assigneeName": null, "commentCount": 0, "createdAt": "<iso-date>" }` <br> 2. Task is created with `"status": "Todo"` |
+| **Status** | ✅ Passed |
 | **Bug link** | — |
 
 ---
@@ -271,9 +271,9 @@
 | **Precondition** | User is project member |
 | **Test Data** | `{ "title": "<script>alert('XSS')</script>", "description": "", "priority": "Low" }` |
 | **Test Steps** | 1. Send POST request with XSS payload in `title` field <br> 2. Check response status code <br> 3. Retrieve the created task and check how `title` is stored and returned |
-| **Expected Result** | 1. Status 201 Created (validation passes since it is a non-empty string under 200 chars) <br> 2. The title is stored as a raw string <br> 3. When retrieved, the response returns the string as JSON — NOT executed as script <br> 4. Frontend must escape before rendering (API responsibility: return data as-is; rendering must sanitize) |
-| **Actual Result** | Works as expected in E2E tests |
-| **Status** | Passed |
+| **Expected Result** | 1. Status 201 Created (validation passes since it is a non-empty string under 200 chars) <br> 2. The title is stored as a raw string <br> 3. When retrieved, the response returns the string as JSON — NOT executed as script |
+| **Actual Result** | 1. Status 201 Created contains body: `{ "id": <generated-id>, "title": "<script>alert('XSS')</script>", "description": null, "status": "Todo", "priority": "Low", "dueDate": null, "assigneeName": null, "commentCount": 0, "createdAt": "<iso-date>" }` <br> 2. The title is stored as a raw string |
+| **Status** | ✅ Passed |
 | **Bug link** | — |
 
 ---
@@ -289,8 +289,8 @@
 | **Test Data** | `{ "title": "SQL Test", "description": "'; DROP TABLE Tasks; --", "priority": "Low" }` |
 | **Test Steps** | 1. Send POST request with SQL injection payload in `description` field <br> 2. Check response status code <br> 3. Verify the Tasks table still exists and data is intact |
 | **Expected Result** | 1. Status 201 Created (EF Core uses parameterized queries) <br> 2. Description is stored as a literal string, not executed as SQL <br> 3. Database is unaffected; Tasks table remains intact |
-| **Actual Result** | Works as expected in E2E tests |
-| **Status** | Passed |
+| **Actual Result** | 1. Status 201 Created contains body: `{ "id": <generated-id>, "title": "SQL Test", "description": "'; DROP TABLE Tasks; --", "status": "Todo", "priority": "Low", "dueDate": null, "assigneeName": null, "commentCount": 0, "createdAt": "<iso-date>" }` <br> 2. Description is stored as a literal string |
+| **Status** | ✅ Passed |
 | **Bug link** | — |
 
 ---
