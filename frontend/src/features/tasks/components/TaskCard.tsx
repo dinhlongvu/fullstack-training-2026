@@ -150,15 +150,20 @@ export function TaskCard({ task, projectId, members }: TaskCardProps) {
           <h4 className="text-sm font-medium leading-tight">{task.title}</h4>
 
           {/* Footer: assignee picker + due date */}
-          <div className="mt-3 flex items-center justify-between gap-2 text-xs text-muted-foreground">
+          {/* flex-wrap keeps the due date from being pushed out of the card;
+              the picker flexes/shrinks while the due date stays intact. */}
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
             {/* Assignee picker — stopPropagation so opening it doesn't navigate */}
-            <div onClick={(e) => e.stopPropagation()}>
+            <div
+              className="min-w-[110px] flex-1"
+              onClick={(e) => e.stopPropagation()}
+            >
               <Select
                 value={assigneeValue}
                 onValueChange={handleAssigneeChange}
                 disabled={assignTask.isPending}
               >
-                <SelectTrigger className="h-7 w-[140px] text-xs">
+                <SelectTrigger className="h-7 w-full text-xs">
                   <SelectValue placeholder="Unassigned" />
                 </SelectTrigger>
                 <SelectContent>
@@ -178,10 +183,11 @@ export function TaskCard({ task, projectId, members }: TaskCardProps) {
             {/* Due date */}
             {task.dueDate && (
               <div
-                className={`flex items-center gap-1 ${isOverdue(task.dueDate) && task.status !== "Done"
-                  ? "text-red-500"
-                  : ""
-                  }`}
+                className={`flex shrink-0 items-center gap-1 ${
+                  isOverdue(task.dueDate) && task.status !== "Done"
+                    ? "text-red-500"
+                    : ""
+                }`}
               >
                 <Calendar className="h-3 w-3" />
                 <span>{formatDueDate(task.dueDate)}</span>
@@ -190,10 +196,13 @@ export function TaskCard({ task, projectId, members }: TaskCardProps) {
           </div>
 
           {/* Move Left / Move Right — change status (column) */}
-          <div className="mt-3 flex items-center justify-between gap-2 border-t pt-2">
+          {/* flex-wrap + flex-1 lets buttons resize to share the row, then stack
+              vertically when the column is too narrow to fit both side by side. */}
+          <div className="mt-3 flex flex-wrap items-center gap-2 border-t pt-2">
             <Button
               variant="outline"
               size="sm"
+              className="min-w-[7rem] flex-1"
               disabled={!canMoveLeft || updateStatus.isPending}
               onClick={(e) => handleMove(e, "left")}
             >
@@ -202,6 +211,7 @@ export function TaskCard({ task, projectId, members }: TaskCardProps) {
             <Button
               variant="outline"
               size="sm"
+              className="min-w-[7rem] flex-1"
               disabled={!canMoveRight || updateStatus.isPending}
               onClick={(e) => handleMove(e, "right")}
             >
