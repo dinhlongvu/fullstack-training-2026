@@ -5,6 +5,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getProjectTasks,
+  getTask,
+  getTaskComments,
   createTask,
   updateTaskStatus,
   assignTask,
@@ -45,9 +47,12 @@ export function useUpdateTaskStatusMutation(projectId: number) {
   return useMutation({
     mutationFn: ({ taskId, status }: { taskId: number; status: TaskStatus }) =>
       updateTaskStatus(taskId, status),
-    onSuccess: () => {
-      // Same invalidation pattern as create — refresh every filter view
+    onSuccess: (_data, variables) => {
+      // Refresh every board filter view so the card moves to the new column
       queryClient.invalidateQueries({ queryKey: ["tasks", projectId] });
+      // Also refresh the Task Detail cache for this task, otherwise opening
+      // the detail after a status change shows stale data
+      queryClient.invalidateQueries({ queryKey: ["task", variables.taskId] });
     },
   });
 }
@@ -63,10 +68,12 @@ export function useAssignTaskMutation(projectId: number) {
       taskId: number;
       assigneeId: number | null;
     }) => assignTask(taskId, assigneeId),
-    onSuccess: () => {
-      // Same invalidation pattern — refresh every filter view so the card's
-      // assignee updates without a manual refresh
+    onSuccess: (_data, variables) => {
+      // Refresh every board filter view so the card's assignee updates
       queryClient.invalidateQueries({ queryKey: ["tasks", projectId] });
+      // Also refresh the Task Detail cache for this task, otherwise opening
+      // the detail after an assign/unassign shows stale data
+      queryClient.invalidateQueries({ queryKey: ["task", variables.taskId] });
     },
   });
 }
@@ -80,5 +87,23 @@ export function useDeleteTaskMutation(projectId: number) {
       // Same invalidation pattern — refresh every filter view so the card disappears
       queryClient.invalidateQueries({ queryKey: ["tasks", projectId] });
     },
+  });
+}
+
+// Hook to fetch a single task's detail
+export function useTaskQuery(taskId: number) {
+  return useQuery({
+    queryKey: ["task", taskId],
+    queryFn: () => getTask(taskId),
+    enabled: taskId > 0,
+  });
+}
+
+// Hook to fetch the comment list for a task
+export function useTaskCommentsQuery(taskId: number) {
+  return useQuery({
+    queryKey: ["comments", taskId],
+    queryFn: () => getTaskComments(taskId),
+    enabled: taskId > 0,
   });
 }
