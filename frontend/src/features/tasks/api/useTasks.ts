@@ -47,9 +47,12 @@ export function useUpdateTaskStatusMutation(projectId: number) {
   return useMutation({
     mutationFn: ({ taskId, status }: { taskId: number; status: TaskStatus }) =>
       updateTaskStatus(taskId, status),
-    onSuccess: () => {
-      // Same invalidation pattern as create — refresh every filter view
+    onSuccess: (_data, variables) => {
+      // Refresh every board filter view so the card moves to the new column
       queryClient.invalidateQueries({ queryKey: ["tasks", projectId] });
+      // Also refresh the Task Detail cache for this task, otherwise opening
+      // the detail after a status change shows stale data
+      queryClient.invalidateQueries({ queryKey: ["task", variables.taskId] });
     },
   });
 }
