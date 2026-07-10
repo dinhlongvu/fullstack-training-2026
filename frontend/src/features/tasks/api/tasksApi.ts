@@ -101,3 +101,26 @@ export function deleteTask(taskId: number) {
     method: "DELETE",
   });
 }
+
+// Shape of a comment returned by GET /api/tasks/{id}/comments
+export interface Comment {
+  id: number;
+  content: string;
+  authorId: number;
+  authorName: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Fetch a single task's detail
+// GET /api/tasks/{taskId}
+export function getTask(taskId: number) {
+  return apiClient<Task>(`/api/tasks/${taskId}`);
+}
+
+// Fetch all comments for a task.
+// The API already returns them sorted by createdAt ascending — no client-side sort needed.
+// GET /api/tasks/{taskId}/comments
+export function getTaskComments(taskId: number) {
+  return apiClient<Comment[]>(`/api/tasks/${taskId}/comments`);
+}
