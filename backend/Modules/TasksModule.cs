@@ -60,16 +60,9 @@ public class TasksModule : ICarterModule
             var result = await mediator.Send(
                 new GetTasksQuery(projectId, currentUserId, status, parsedPriority, assigneeId), ct);
 
-            if (!result.IsProjectFound)
+            if (!result.IsProjectFound || !result.IsAuthorized)
             {
                 return Results.NotFound(new { error = "Project not found" });
-            }
-
-            if (!result.IsAuthorized)
-            {
-                return Results.Json(
-                    new { error = "Not authorized to view tasks in this project. Project member access required." },
-                    statusCode: StatusCodes.Status403Forbidden);
             }
 
             return Results.Ok(result.Data);
@@ -78,7 +71,6 @@ public class TasksModule : ICarterModule
         .WithSummary("Get tasks in a project")
         .WithDescription("Returns a list of tasks for a project. Supports filtering by status, priority, and assigneeId. Must be project owner or member.")
         .Produces<List<TaskDto>>(StatusCodes.Status200OK)
-        .Produces(StatusCodes.Status403Forbidden)
         .Produces(StatusCodes.Status404NotFound)
         .Produces(StatusCodes.Status401Unauthorized);
 
@@ -103,22 +95,11 @@ public class TasksModule : ICarterModule
 
             var result = await mediator.Send(command);
 
-            if (!result.IsProjectFound)
-            {
+            if (!result.IsProjectFound || !result.IsAuthorized)
                 return Results.NotFound(new { error = "Project not found" });
-            }
-
-            if (!result.IsAuthorized)
-            {
-                return Results.Json(
-                    new { error = "Not authorized to create tasks in this project. Project member access required." },
-                    statusCode: StatusCodes.Status403Forbidden);
-            }
 
             if (!result.IsAssigneeValid)
-            {
                 return Results.BadRequest(new { error = "Assignee must be a project member" });
-            }
 
             // Points the new task to GET Task Detail endpoint
             return Results.Created($"/api/tasks/{result.Data?.Id}", result.Data);
@@ -129,11 +110,10 @@ public class TasksModule : ICarterModule
         .Produces<TaskDto>(StatusCodes.Status201Created)
         .ProducesValidationProblem()
         .Produces(StatusCodes.Status400BadRequest)
-        .Produces(StatusCodes.Status403Forbidden)
         .Produces(StatusCodes.Status404NotFound)
         .Produces(StatusCodes.Status401Unauthorized);
 
-        // ======== 3. GET /api/projects/{projectId}/tasks/{taskId} ========
+        // ======== 3. GET /api/tasks/{taskId} ========
         // Define a separate group for tasks to avoid the project/{projectId} prefix
         var taskRootGroup = app.MapGroup("/api/tasks")
             .WithTags("Tasks")
@@ -151,16 +131,9 @@ public class TasksModule : ICarterModule
             var result = await mediator.Send(
                 new GetTaskDetailQuery(taskId, currentUserId), ct);
 
-            if (!result.IsFound)
+            if (!result.IsFound || !result.IsAuthorized)
             {
                 return Results.NotFound(new { error = "Task not found" });
-            }
-
-            if (!result.IsAuthorized)
-            {
-                return Results.Json(
-                    new { error = "Not authorized to view this task. Project member access required." },
-                    statusCode: StatusCodes.Status403Forbidden);
             }
 
             return Results.Ok(result.Data);
@@ -169,7 +142,6 @@ public class TasksModule : ICarterModule
         .WithSummary("Get task detail")
         .WithDescription("Returns detailed information about a specific task. Requires project member access.")
         .Produces<TaskDto>(StatusCodes.Status200OK)
-        .Produces(StatusCodes.Status403Forbidden)
         .Produces(StatusCodes.Status404NotFound)
         .Produces(StatusCodes.Status401Unauthorized);
 
@@ -210,13 +182,8 @@ public class TasksModule : ICarterModule
 
             var result = await mediator.Send(command, ct);
 
-            if (!result.IsFound)
+            if (!result.IsFound || !result.IsAuthorized)
                 return Results.NotFound(new { error = "Task not found" });
-
-            if (!result.IsAuthorized)
-                return Results.Json(
-                    new { error = "Not authorized to update this task. Project member access required." },
-                    statusCode: StatusCodes.Status403Forbidden);
 
             if (!result.IsAssigneeValid)
                 return Results.BadRequest(new { error = "Assignee must be a project member" });
@@ -228,7 +195,6 @@ public class TasksModule : ICarterModule
         .WithDescription("Updates task fields (title, description, priority, dueDate, assigneeId). Status is managed via PATCH /status. Requires project member access.")
         .Produces<TaskDto>(StatusCodes.Status200OK)
         .Produces(StatusCodes.Status400BadRequest)
-        .Produces(StatusCodes.Status403Forbidden)
         .Produces(StatusCodes.Status404NotFound)
         .Produces(StatusCodes.Status401Unauthorized);
 
@@ -256,13 +222,8 @@ public class TasksModule : ICarterModule
 
             var result = await mediator.Send(command, ct);
 
-            if (!result.IsFound)
+            if (!result.IsFound || !result.IsAuthorized)
                 return Results.NotFound(new { error = "Task not found" });
-
-            if (!result.IsAuthorized)
-                return Results.Json(
-                    new { error = "Not authorized to update this task's status. Project member access required." },
-                    statusCode: StatusCodes.Status403Forbidden);
 
             return Results.Ok(result.Data);
         })
@@ -271,7 +232,6 @@ public class TasksModule : ICarterModule
         .WithDescription("Updates the status of a task (Todo/InProgress/Done). Requires project member access.")
         .Produces<TaskDto>(StatusCodes.Status200OK)
         .Produces(StatusCodes.Status400BadRequest)
-        .Produces(StatusCodes.Status403Forbidden)
         .Produces(StatusCodes.Status404NotFound)
         .Produces(StatusCodes.Status401Unauthorized);
 
@@ -294,13 +254,8 @@ public class TasksModule : ICarterModule
 
             var result = await mediator.Send(command, ct);
 
-            if (!result.IsFound)
+            if (!result.IsFound || !result.IsAuthorized)
                 return Results.NotFound(new { error = "Task not found" });
-
-            if (!result.IsAuthorized)
-                return Results.Json(
-                    new { error = "Not authorized to assign this task. Project member access required." },
-                    statusCode: StatusCodes.Status403Forbidden);
 
             if (!result.IsAssigneeValid)
                 return Results.BadRequest(new { error = "Assignee must be a project member or project owner" });
@@ -312,7 +267,6 @@ public class TasksModule : ICarterModule
         .WithDescription("Assigns a task to a project member. Pass null to unassign. Requires project member access.")
         .Produces<TaskDto>(StatusCodes.Status200OK)
         .Produces(StatusCodes.Status400BadRequest)
-        .Produces(StatusCodes.Status403Forbidden)
         .Produces(StatusCodes.Status404NotFound)
         .Produces(StatusCodes.Status401Unauthorized);
 
@@ -327,12 +281,8 @@ public class TasksModule : ICarterModule
 
             var result = await mediator.Send(new DeleteTaskCommand(taskId, currentUserId), ct);
 
-            if (!result.IsFound)
+            if (!result.IsFound || !result.IsAuthorized)
                 return Results.NotFound(new { error = "Task not found" });
-
-            if (!result.IsAuthorized)
-                return Results.Json(new { error = "Not authorized to delete this task. Project member access required." },
-                        statusCode: StatusCodes.Status403Forbidden);
 
             return Results.NoContent();
         })
@@ -340,7 +290,6 @@ public class TasksModule : ICarterModule
         .WithSummary("Delete a task")
         .WithDescription("Deletes a task and utilizes DB cascade for comments. Requires project member access.")
         .Produces(StatusCodes.Status204NoContent)
-        .Produces(StatusCodes.Status403Forbidden)
         .Produces(StatusCodes.Status404NotFound)
         .Produces(StatusCodes.Status401Unauthorized);
 
@@ -354,12 +303,8 @@ public class TasksModule : ICarterModule
             var currentUserId = context.User.GetUserId();
             var result = await mediator.Send(new GetTaskCommentsQuery(taskId, currentUserId), ct);
 
-            if (!result.IsTaskFound)
+            if (!result.IsTaskFound || !result.IsAuthorized)
                 return Results.NotFound(new { error = "Task not found" });
-
-            if (!result.IsAuthorized)
-                return Results.Json(new { error = "Not authorized to view comments. Project member access required." },
-                statusCode: StatusCodes.Status403Forbidden);
 
             return Results.Ok(result.Data);
         })
@@ -367,7 +312,6 @@ public class TasksModule : ICarterModule
         .WithSummary("Get all comments for a task")
         .WithDescription("Returns a chronological list of comments for a task, embedded with author names.")
         .Produces<List<CommentDto>>(StatusCodes.Status200OK)
-        .Produces(StatusCodes.Status403Forbidden)
         .Produces(StatusCodes.Status404NotFound)
         .Produces(StatusCodes.Status401Unauthorized);
 
@@ -384,12 +328,8 @@ public class TasksModule : ICarterModule
             var command = new CreateCommentCommand(taskId, currentUserId, req.Content);
             var result = await mediator.Send(command, ct);
 
-            if (!result.IsTaskFound)
+            if (!result.IsTaskFound || !result.IsAuthorized)
                 return Results.NotFound(new { error = "Task not found" });
-
-            if (!result.IsAuthorized)
-                return Results.Json(new { error = "Not authorized to comment on this task. Project member access required." },
-                statusCode: StatusCodes.Status403Forbidden);
 
             return Results.Json(result.Data, statusCode: StatusCodes.Status201Created);
         })
@@ -398,7 +338,6 @@ public class TasksModule : ICarterModule
         .WithDescription("Creates a new comment. Validates content length and ensures project member authorization.")
         .Produces<CommentDto>(StatusCodes.Status201Created)
         .ProducesValidationProblem()
-        .Produces(StatusCodes.Status403Forbidden)
         .Produces(StatusCodes.Status404NotFound)
         .Produces(StatusCodes.Status401Unauthorized);
     }
