@@ -75,6 +75,21 @@ describe('LoginPage', () => {
     expect(login).not.toHaveBeenCalled();
   });
 
+  it('disables the submit button and shows loading text while the request is pending', async () => {
+    const user = userEvent.setup();
+    // Never-resolving promise keeps the mutation in the pending state.
+    vi.mocked(login).mockReturnValue(new Promise(() => {}));
+
+    renderWithProviders(<LoginPage />);
+
+    await user.type(screen.getByLabelText(/email/i), 'a@b.com');
+    await user.type(screen.getByLabelText(/password/i), 'password123');
+    await user.click(screen.getByRole('button', { name: /sign in/i }));
+
+    const submitButton = await screen.findByRole('button', { name: /signing in/i });
+    expect(submitButton).toBeDisabled();
+  });
+
   it('shows an error toast when the server rejects login', async () => {
     const user = userEvent.setup();
     vi.mocked(login).mockRejectedValue(new Error('Invalid credentials'));

@@ -8,6 +8,16 @@ import { renderWithProviders } from '@/test/test-utils';
 vi.mock('@/features/auth/api/authApi');
 vi.mock('@/stores/useAuthStore');
 
+// Replace <Navigate /> with a marker element so tests can assert the redirect
+// target explicitly, instead of only checking that the children are absent.
+vi.mock('react-router-dom', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('react-router-dom')>();
+  return {
+    ...actual,
+    Navigate: ({ to }: { to: string }) => <div data-testid="redirect">{to}</div>,
+  };
+});
+
 function mockAuthState(overrides: Partial<ReturnType<typeof useAuthStore.getState>> = {}) {
   const state = {
     token: null,
@@ -37,6 +47,7 @@ describe('AuthGuard', () => {
       </AuthGuard>,
     );
 
+    expect(screen.getByTestId('redirect')).toHaveTextContent('/login');
     expect(screen.queryByText('Protected content')).not.toBeInTheDocument();
   });
 
@@ -67,6 +78,7 @@ describe('AuthGuard', () => {
     await waitFor(() => {
       expect(state.clearAuth).toHaveBeenCalled();
     });
+    expect(screen.getByTestId('redirect')).toHaveTextContent('/login');
     expect(screen.queryByText('Protected content')).not.toBeInTheDocument();
   });
 

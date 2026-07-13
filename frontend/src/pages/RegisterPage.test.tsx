@@ -56,6 +56,22 @@ describe('RegisterPage', () => {
     expect(register).not.toHaveBeenCalled();
   });
 
+  it('disables the submit button and shows loading text while the request is pending', async () => {
+    const user = userEvent.setup();
+    // Never-resolving promise keeps the mutation in the pending state.
+    vi.mocked(register).mockReturnValue(new Promise(() => {}));
+
+    renderWithProviders(<RegisterPage />);
+
+    await user.type(screen.getByLabelText(/full name/i), 'A B');
+    await user.type(screen.getByLabelText(/email/i), 'a@b.com');
+    await user.type(screen.getByLabelText(/password/i), 'password123');
+    await user.click(screen.getByRole('button', { name: /create account/i }));
+
+    const submitButton = await screen.findByRole('button', { name: /creating account/i });
+    expect(submitButton).toBeDisabled();
+  });
+
   it('shows an error toast when the server rejects registration', async () => {
     const user = userEvent.setup();
     vi.mocked(register).mockRejectedValue(new Error('Email already exists'));
