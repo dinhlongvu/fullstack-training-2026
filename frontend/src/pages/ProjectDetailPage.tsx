@@ -87,7 +87,7 @@ export function ProjectDetailPage() {
       <div className="flex items-start justify-between">
         <div>
           <h2 className="text-2xl font-bold">{project.name}</h2>
-          <p className="mt-1 text-muted-foreground">
+          <p className="mt-1 whitespace-pre-wrap break-words text-muted-foreground">
             {project.description || "No description"}
           </p>
           <div className="mt-3 flex items-center gap-4 text-sm text-muted-foreground">
