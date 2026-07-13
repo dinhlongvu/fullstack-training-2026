@@ -67,8 +67,8 @@
 | **Precondition** | Project exists; authenticated user is NOT a member or owner of the project |
 | **Test Data** | Authorization: `Bearer <non-member-token>`, projectId: valid but foreign project |
 | **Test Steps** | 1. Login as a user who is not a member of the project <br> 2. Send GET request to `/api/projects/{projectId}/tasks` <br> 3. Check response status code and body |
-| **Expected Result** | 1. Status 403 Forbidden <br> 2. Response body: `{ "error": "Not authorized to view tasks in this project. Project member access required." }` <br> 3. No task data is leaked |
-| **Actual Result** | 1. Status 403 Forbidden <br> 2. Response body: `{ "error": "Not authorized to view tasks in this project. Project member access required." }` <br> 3. No task data is leaked |
+| **Expected Result** | 1. Status 404 Not Found (không lộ sự tồn tại của project/task cho người ngoài) <br> 2. No task data is leaked |
+| **Actual Result** | 1. Status 404 Not Found với body `{"error": "Project not found"}` <br> 2. No task data is leaked |
 | **Status** | ✅ Passed |
 | **Bug link** | — |
 

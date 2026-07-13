@@ -67,8 +67,8 @@
 | **Precondition** | Authenticated user is NOT a member or owner of the target project |
 | **Test Data** | Authorization: `Bearer <non-member-token>`; valid projectId belonging to another user |
 | **Test Steps** | 1. Login as a user who does not belong to the project <br> 2. Send POST request to `/api/projects/{projectId}/tasks` <br> 3. Check response status code and body |
-| **Expected Result** | 1. Status 403 Forbidden <br> 2. Response body: `{ "error": "Not authorized to create tasks in this project. Project member access required." }` <br> 3. Task is NOT saved to database |
-| **Actual Result** | 1. Status 403 Forbidden contains body: `{ "error": "Not authorized to create tasks in this project. Project member access required."}` <br> 2. Task is NOT saved to database |
+| **Expected Result** | 1. Status 404 Not Found (không lộ sự tồn tại của project cho người ngoài) <br> 2. Task is NOT saved to database |
+| **Actual Result** | 1. Status 404 Not Found với body `{"error": "Project not found"}` <br> 2. Task is NOT saved to database |
 | **Status** | ✅ Passed |
 | **Bug link** | — |
 

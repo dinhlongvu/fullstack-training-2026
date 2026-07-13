@@ -69,8 +69,8 @@
 | **Precondition** | Authenticated user is NOT a member of the project containing the task |
 | **Test Data** | Authorization: `Bearer <non-member-token>`, taskId: valid but in a foreign project |
 | **Test Steps** | 1. Login as a user not in the project <br> 2. Send PUT request to `/api/tasks/{id}` <br> 3. Check response status code |
-| **Expected Result** | 1. Status 403 Forbidden or 404 Not Found <br> 2. Task is NOT updated |
-| **Actual Result** | 1. Response returned status 404 Not Found with `{"error": "Not found", "message": "Task not found."}`. |
+| **Expected Result** | 1. Status 404 Not Found (không lộ sự tồn tại của task cho người ngoài project) <br> 2. Task is NOT updated |
+| **Actual Result** | 1. Status 404 Not Found với body `{"error": "Task not found"}` <br> 2. Task is NOT updated |
 | **Status** | ✅ Pass |
 | **Bug link** | — |
 

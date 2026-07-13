@@ -69,8 +69,8 @@
 | **Precondition** | Authenticated user is NOT a member of the project containing the task |
 | **Test Data** | Authorization: `Bearer <non-member-token>`; body: `{ "assigneeId": 2 }` |
 | **Test Steps** | 1. Login as a user not in the project <br> 2. Send PATCH request to `/api/tasks/{id}/assign` <br> 3. Check response status code |
-| **Expected Result** | 1. Status 403 Forbidden or 404 Not Found <br> 2. Task assignment is NOT changed |
-| **Actual Result** | 1. Response returned status 403 Forbidden with `{"error":"Not authorized to assign tasks in this project. Project member access required."}` <br> 2. No database changes occurred |
+| **Expected Result** | 1. Status 404 Not Found (không lộ sự tồn tại của task cho người ngoài project) <br> 2. Task assignment is NOT changed |
+| **Actual Result** | 1. Status 404 Not Found với body `{"error": "Task not found"}` <br> 2. No database changes occurred |
 | **Status** | ✅ Pass |
 | **Bug link** | — |
 

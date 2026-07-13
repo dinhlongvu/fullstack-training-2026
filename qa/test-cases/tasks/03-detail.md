@@ -69,8 +69,8 @@
 | **Precondition** | Authenticated user is NOT a member of the project that contains the task |
 | **Test Data** | Authorization: `Bearer <non-member-token>`, taskId: valid but in a foreign project |
 | **Test Steps** | 1. Login as a user not in the project <br> 2. Send GET request to `/api/tasks/{id}` <br> 3. Check response status code |
-| **Expected Result** | 1. Status 403 Forbidden or 404 Not Found (API-design dependent) <br> 2. Task detail is NOT exposed to non-member |
-| **Actual Result** | 1. Status 403 Forbidden with response message: <br> `"error": "Not authorized to view tasks in this project. Project member access required." ` <br> 2. Task detail is NOT exposed to non-member |
+| **Expected Result** | 1. Status 404 Not Found (không lộ sự tồn tại của task cho người ngoài project) <br> 2. Task detail is NOT exposed to non-member |
+| **Actual Result** | 1. Status 404 Not Found với body `{"error": "Task not found"}` <br> 2. Task detail is NOT exposed to non-member |
 | **Status** | ✅ Passed |
 | **Bug link** | — |
 
@@ -233,4 +233,4 @@
 
 | Total TCs | Pass | Fail | Blocked | Not Run |
 |:---:|:---:|:---:|:---:|:---:|
-| 13 | 9 | 0 | 0 | 4 |
+| 13 | 13 | 0 | 0 | 0 |

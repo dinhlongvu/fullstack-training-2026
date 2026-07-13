@@ -71,8 +71,8 @@
 | **Precondition** | Authenticated user is NOT a member of the project containing the task |
 | **Test Data** | Authorization: `Bearer <non-member-token>`, taskId: valid but in a foreign project |
 | **Test Steps** | 1. Send POST request with non-member token <br> 2. Check response status code |
-| **Expected Result** | 1. Status 403 Forbidden |
-| **Actual Result** | 1. Response returned status 403 Forbidden with `{"error": "Not authorized to comment on this task. Project member access required."}` |
+| **Expected Result** | 1. Status 404 Not Found (không lộ sự tồn tại của task cho người ngoài project) <br> 2. Nội dung comment KHÔNG bị lộ cho non-member |
+| **Actual Result** | 1. Status 404 Not Found với body `{"error": "Task not found"}` |
 | **Status** | Pass |
 | **Bug link** | — |
 
