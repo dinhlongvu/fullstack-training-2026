@@ -52,7 +52,7 @@ public class GetMyStatsHandler : IRequestHandler<GetMyStatsQuery, DashboardStats
             .Select(t => new UpcomingDeadlineDto(
                 t.Id,
                 t.Title,
-                t.DueDate.Value,
+                t.DueDate!.Value,
                 t.ProjectId
             ))
             .ToListAsync(ct);
