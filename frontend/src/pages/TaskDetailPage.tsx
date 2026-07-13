@@ -102,7 +102,7 @@ export function TaskDetailPage() {
 
         <h2 className="text-2xl font-bold">{task.title}</h2>
 
-        <p className="text-muted-foreground">
+        <p className="whitespace-pre-wrap break-words text-muted-foreground">
           {task.description || "No description"}
         </p>
 
