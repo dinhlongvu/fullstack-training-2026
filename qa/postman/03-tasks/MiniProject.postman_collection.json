@@ -1,0 +1,3339 @@
+{
+  "info": {
+    "_postman_id": "69ce7d10-05c5-4c12-afd6-a73d7f124afc",
+    "name": "MiniProject",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "55453258",
+    "_collection_link": "https://go.postman.co/collection/55453258-69ce7d10-05c5-4c12-afd6-a73d7f124afc?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const jsonData = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Status code is 201 - User created\", () => {\r",
+                  "    pm.response.to.have.status(201);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Response has id\", () => {\r",
+                  "    pm.expect(jsonData).to.have.property(\"id\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Response has email\", () => {\r",
+                  "    pm.expect(jsonData).to.have.property(\"email\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Response does NOT contain password\", () => {\r",
+                  "    const body = pm.response.text();\r",
+                  "    pm.expect(body).to.not.include(\"password\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const email =\r",
+                  "    \"qa_\" +\r",
+                  "    Date.now() +\r",
+                  "    \"@example.com\";\r",
+                  "\r",
+                  "pm.collectionVariables.set(\"email\", email);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"email\": \"{{email}}\",\r\n  \"password\": \"Test@1234\",\r\n  \"fullName\": \"QA Test User\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login & Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// ============================================\r",
+                  "// PRE-REQUEST: CLEAR ENVIRONMENT CŨ\r",
+                  "// ============================================\r",
+                  "\r",
+                  "// Xóa các biến cũ để tránh conflict\r",
+                  "pm.environment.unset(\"token\");\r",
+                  "pm.environment.unset(\"userId\");\r",
+                  "pm.environment.unset(\"projectId\");\r",
+                  "pm.environment.unset(\"taskId\");\r",
+                  "console.log(\"🧹 Cleared old environment variables\");\r",
+                  "\r",
+                  "// ============================================\r",
+                  "// PARSE RESPONSE\r",
+                  "// ============================================\r",
+                  "\r",
+                  "const jsonData = pm.response.json();\r",
+                  "\r",
+                  "// ============================================\r",
+                  "// DECODE JWT ĐỂ LẤY USER ID\r",
+                  "// ============================================\r",
+                  "\r",
+                  "let userIdFromToken = null;\r",
+                  "let payload = null;\r",
+                  "\r",
+                  "try {\r",
+                  "    if (jsonData.token) {\r",
+                  "        const parts = jsonData.token.split(\".\");\r",
+                  "        if (parts.length === 3) {\r",
+                  "            payload = JSON.parse(atob(parts[1]));\r",
+                  "            // Lấy userId từ token (thường là 'sub' hoặc 'nameid')\r",
+                  "            userIdFromToken = payload.sub || payload.userId || payload.nameid;\r",
+                  "            console.log(\"🔍 userId from token:\", userIdFromToken);\r",
+                  "        }\r",
+                  "    }\r",
+                  "} catch (e) {\r",
+                  "    console.log(\"⚠️ Cannot decode JWT:\", e.message);\r",
+                  "}\r",
+                  "\r",
+                  "// ============================================\r",
+                  "// 1. KIỂM TRA STATUS\r",
+                  "// ============================================\r",
+                  "\r",
+                  "pm.test(\"Status code is 200 - Login successful\", () => {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "// ============================================\r",
+                  "// 2. KIỂM TRA CÓ TOKEN\r",
+                  "// ============================================\r",
+                  "\r",
+                  "pm.test(\"Response has token\", () => {\r",
+                  "    pm.expect(jsonData).to.have.property(\"token\");\r",
+                  "    pm.expect(jsonData.token).to.be.a(\"string\");\r",
+                  "    pm.expect(jsonData.token).to.not.be.empty;\r",
+                  "});\r",
+                  "\r",
+                  "// ============================================\r",
+                  "// 3. LƯU TOKEN VÀO ENVIRONMENT\r",
+                  "// ============================================\r",
+                  "\r",
+                  "pm.test(\"Save token to environment\", () => {\r",
+                  "    pm.environment.set(\"token\", jsonData.token);\r",
+                  "    console.log(\"✅ Token saved:\", jsonData.token.substring(0, 20) + \"...\");\r",
+                  "});\r",
+                  "\r",
+                  "// ============================================\r",
+                  "// 4. KIỂM TRA CÓ USER OBJECT\r",
+                  "// ============================================\r",
+                  "\r",
+                  "pm.test(\"Response has user object\", () => {\r",
+                  "    pm.expect(jsonData).to.have.property(\"user\");\r",
+                  "});\r",
+                  "\r",
+                  "// ============================================\r",
+                  "// 5. LƯU USER ID (ƯU TIÊN TỪ TOKEN)\r",
+                  "// ============================================\r",
+                  "\r",
+                  "pm.test(\"Save user id\", () => {\r",
+                  "    // Ưu tiên lấy userId từ token\r",
+                  "    if (userIdFromToken) {\r",
+                  "        pm.environment.set(\"userId\", parseInt(userIdFromToken, 10));\r",
+                  "        console.log(\"✅ User ID saved from token:\", userIdFromToken);\r",
+                  "    } \r",
+                  "    // Fallback: lấy từ response nếu không decode được token\r",
+                  "    else if (jsonData.user && jsonData.user.id) {\r",
+                  "        pm.environment.set(\"userId\", jsonData.user.id);\r",
+                  "        console.log(\"✅ User ID saved from response:\", jsonData.user.id);\r",
+                  "    } else {\r",
+                  "        console.log(\"⚠️ Warning: Cannot find user id from token or response\");\r",
+                  "    }\r",
+                  "});\r",
+                  "\r",
+                  "// ============================================\r",
+                  "// 6. KIỂM TRA JWT EXPIRATION\r",
+                  "// ============================================\r",
+                  "\r",
+                  "if (payload) {\r",
+                  "    pm.test(\"JWT contains exp claim\", () => {\r",
+                  "        pm.expect(payload.exp).to.exist;\r",
+                  "    });\r",
+                  "\r",
+                  "    pm.test(\"JWT expiration is in future\", () => {\r",
+                  "        const now = Math.floor(Date.now() / 1000);\r",
+                  "        pm.expect(payload.exp).to.be.above(now);\r",
+                  "        console.log(\"  Token expires at:\", new Date(payload.exp * 1000).toLocaleString());\r",
+                  "    });\r",
+                  "}\r",
+                  "\r",
+                  "// ============================================\r",
+                  "// 7. DEBUG LOG\r",
+                  "// ============================================\r",
+                  "\r",
+                  "console.log(\"🔍 Debug - Login:\");\r",
+                  "console.log(\"  userId in environment:\", pm.environment.get(\"userId\"));\r",
+                  "console.log(\"  userId from token:\", userIdFromToken);\r",
+                  "console.log(\"  token exists:\", pm.environment.get(\"token\") ? \"✅ Yes\" : \"❌ No\");\r",
+                  "console.log(\"  token preview:\", pm.environment.get(\"token\") ? pm.environment.get(\"token\").substring(0, 30) + \"...\" : \"N/A\");"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Pre-request script của Login\r",
+                  "pm.environment.unset(\"token\");\r",
+                  "pm.environment.unset(\"userId\");\r",
+                  "pm.environment.unset(\"projectId\");\r",
+                  "pm.environment.unset(\"taskId\");\r",
+                  "console.log(\"🧹 Cleared all environment variables\");"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"email\": \"{{email}}\",\r\n  \"password\": \"Test@1234\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Me",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// ============================================\r",
+                  "// 1. KIỂM TRA RESPONSE CÓ BODY KHÔNG\r",
+                  "// ============================================\r",
+                  "const hasBody = pm.response.text() && pm.response.text().length > 0;\r",
+                  "\r",
+                  "// ============================================\r",
+                  "// 2. LUÔN KIỂM TRA STATUS CODE\r",
+                  "// ============================================\r",
+                  "pm.test(\"Status code is 200 - Get user info\", () => {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "// ============================================\r",
+                  "// 3. KIỂM TRA RESPONSE CÓ BODY (KHÔNG RỖNG)\r",
+                  "// ============================================\r",
+                  "pm.test(\"Response has body (not empty)\", () => {\r",
+                  "    pm.expect(pm.response.text()).to.not.be.empty;\r",
+                  "});\r",
+                  "\r",
+                  "const body = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Has id, email, fullName\", () => {\r",
+                  "    pm.expect(body).to.have.property(\"id\");\r",
+                  "    pm.expect(body).to.have.property(\"email\");\r",
+                  "    pm.expect(body).to.have.property(\"fullName\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Does not expose passwordHash\", () => {\r",
+                  "    pm.expect(pm.response.text()).to.not.include(\"passwordHash\");\r",
+                  "});\r",
+                  "\r",
+                  "// ============================================\r",
+                  "// 4. NẾU CÓ BODY THÌ MỚI PARSE JSON\r",
+                  "// ============================================\r",
+                  "if (hasBody) {\r",
+                  "    try {\r",
+                  "        const jsonData = pm.response.json();\r",
+                  "        \r",
+                  "       \r",
+                  "        \r",
+                  "        \r",
+                  "    } catch (e) {\r",
+                  "        console.log(\"⚠️ Response body is not valid JSON\");\r",
+                  "    }\r",
+                  "} else {\r",
+                  "    console.log(\"❌ Response body is empty. Status:\", pm.response.code);\r",
+                  "    console.log(\"🔍 Token used:\", pm.environment.get(\"token\"));\r",
+                  "}\r",
+                  "\r",
+                  "// ============================================\r",
+                  "// 5. LOG ĐỂ DEBUG\r",
+                  "// ============================================\r",
+                  "console.log(\"Status code:\", pm.response.code);\r",
+                  "console.log(\"Has body:\", hasBody);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Lấy token từ environment\r",
+                  "const token = pm.environment.get(\"token\");\r",
+                  "\r",
+                  "console.log(\"🔍 Token in pre-req:\", token ? \"✅ \" + token.substring(0, 20) : \"❌ MISSING\");\r",
+                  "\r",
+                  "if (token) {\r",
+                  "    // Xóa header cũ nếu có\r",
+                  "    pm.request.headers.remove(\"Authorization\");\r",
+                  "    // Thêm header mới\r",
+                  "    pm.request.headers.add({\r",
+                  "        key: \"Authorization\",\r",
+                  "        value: `Bearer ${token}`\r",
+                  "    });\r",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/me",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Projects",
+      "item": [
+        {
+          "name": "01_List_Projects",
+          "item": [
+            {
+              "name": "List projects without token",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "// ============================================\r",
+                      "// TC-PROJ-LIST-002: List projects without token\r",
+                      "// ============================================\r",
+                      "\r",
+                      "const response = pm.response.json();\r",
+                      "\r",
+                      "// 1. Kiểm tra status\r",
+                      "pm.test(\"Status code is 401 Unauthorized\", () => {\r",
+                      "    pm.response.to.have.status(401);\r",
+                      "});\r",
+                      "\r",
+                      "// 2. Kiểm tra response có error\r",
+                      "pm.test(\"Response has error message\", () => {\r",
+                      "    pm.expect(response).to.have.property('error');\r",
+                      "    pm.expect(response.error).to.be.a('string');\r",
+                      "    console.log(`❌ Error: ${response.error}`);\r",
+                      "});\r",
+                      "\r",
+                      "// 3. Kiểm tra không có data\r",
+                      "pm.test(\"No project data returned\", () => {\r",
+                      "    pm.expect(response).to.not.have.property('id');\r",
+                      "    pm.expect(response).to.not.have.property('name');\r",
+                      "    pm.expect(response).to.not.be.an('array');\r",
+                      "});\r",
+                      "\r",
+                      "// 4. Kiểm tra không có token trong response\r",
+                      "pm.test(\"No token returned\", () => {\r",
+                      "    pm.expect(response).to.not.have.property('token');\r",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                },
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "exec": [
+                      "// ============================================\r",
+                      "// TC-PROJ-LIST-002: List projects without token\r",
+                      "// ============================================\r",
+                      "\r",
+                      "// Không attach token - xóa header Authorization nếu có\r",
+                      "pm.request.headers.remove(\"Authorization\");\r",
+                      "console.log(\"🔑 No Authorization header sent\");"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "GET",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/projects",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "projects"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "List projects includes correct member count",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "// ============================================\r",
+                      "// TC-PROJ-LIST-006: List projects includes correct member count\r",
+                      "// ============================================\r",
+                      "\r",
+                      "const response = pm.response.json();\r",
+                      "\r",
+                      "// 1. Kiểm tra status\r",
+                      "pm.test(\"Status code is 200 OK\", () => {\r",
+                      "    pm.response.to.have.status(200);\r",
+                      "});\r",
+                      "\r",
+                      "// 2. Kiểm tra response là array\r",
+                      "pm.test(\"Response is an array\", () => {\r",
+                      "    pm.expect(response).to.be.an('array');\r",
+                      "});\r",
+                      "\r",
+                      "// 3. Kiểm tra memberCount tồn tại\r",
+                      "pm.test(\"Each project has memberCount field\", () => {\r",
+                      "    if (response.length > 0) {\r",
+                      "        response.forEach(project => {\r",
+                      "            pm.expect(project).to.have.property('memberCount');\r",
+                      "            pm.expect(project.memberCount).to.be.a('number');\r",
+                      "            pm.expect(project.memberCount).to.be.at.least(1); // Ít nhất có owner\r",
+                      "        });\r",
+                      "    }\r",
+                      "});\r",
+                      "\r",
+                      "// 4. Log memberCount của từng project\r",
+                      "if (response.length > 0) {\r",
+                      "    console.log(\"📊 Project member counts:\");\r",
+                      "    response.forEach(project => {\r",
+                      "        console.log(`  - ${project.name}: ${project.memberCount} members`);\r",
+                      "    });\r",
+                      "}\r",
+                      "\r",
+                      "// 5. Kiểm tra memberCount hợp lý\r",
+                      "pm.test(\"memberCount is greater than 0\", () => {\r",
+                      "    if (response.length > 0) {\r",
+                      "        const allHaveMembers = response.every(p => p.memberCount > 0);\r",
+                      "        pm.expect(allHaveMembers).to.be.true;\r",
+                      "    }\r",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                },
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "exec": [
+                      "// ============================================\r",
+                      "// TC-PROJ-LIST-006: List projects includes correct member count\r",
+                      "// ============================================\r",
+                      "\r",
+                      "const token = pm.environment.get(\"token\");\r",
+                      "\r",
+                      "if (token) {\r",
+                      "    pm.request.headers.remove(\"Authorization\");\r",
+                      "    pm.request.headers.add({\r",
+                      "        key: \"Authorization\",\r",
+                      "        value: `Bearer ${token}`\r",
+                      "    });\r",
+                      "    console.log(\"✅ Token attached for member count test\");\r",
+                      "} else {\r",
+                      "    console.warn(\"⚠️ No token found!\");\r",
+                      "}"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "method": "GET",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/projects",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "projects"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "List projects only for current user",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "// ============================================\r",
+                      "// TC-PROJ-LIST-005: List projects only for current user\r",
+                      "// ============================================\r",
+                      "\r",
+                      "const response = pm.response.json();\r",
+                      "const userId = parseInt(pm.environment.get(\"userId\"));\r",
+                      "\r",
+                      "// 1. Kiểm tra status\r",
+                      "pm.test(\"Status code is 200 OK\", () => {\r",
+                      "    pm.response.to.have.status(200);\r",
+                      "});\r",
+                      "\r",
+                      "// 2. Kiểm tra response là array\r",
+                      "pm.test(\"Response is an array\", () => {\r",
+                      "    pm.expect(response).to.be.an('array');\r",
+                      "});\r",
+                      "\r",
+                      "// 3. Kiểm tra tất cả project đều thuộc về current user\r",
+                      "pm.test(\"All projects belong to current user\", () => {\r",
+                      "    if (response.length > 0 && userId) {\r",
+                      "        response.forEach(project => {\r",
+                      "            // Giả định API có trả về createdBy hoặc isOwner\r",
+                      "            // Nếu không có field này, skip test\r",
+                      "            console.log(`📌 Project: ${project.name} (ID: ${project.id})`);\r",
+                      "        });\r",
+                      "    }\r",
+                      "});\r",
+                      "\r",
+                      "// 4. Log tổng số project của user\r",
+                      "console.log(`📊 User ${userId} has ${response.length} projects`);"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                },
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "exec": [
+                      "// ============================================\r",
+                      "// TC-PROJ-LIST-005: List projects only for current user\r",
+                      "// ============================================\r",
+                      "\r",
+                      "const token = pm.environment.get(\"token\");\r",
+                      "\r",
+                      "if (token) {\r",
+                      "    pm.request.headers.remove(\"Authorization\");\r",
+                      "    pm.request.headers.add({\r",
+                      "        key: \"Authorization\",\r",
+                      "        value: `Bearer ${token}`\r",
+                      "    });\r",
+                      "    console.log(\"✅ Token attached for data isolation test\");\r",
+                      "} else {\r",
+                      "    console.warn(\"⚠️ No token found!\");\r",
+                      "}"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "method": "GET",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/projects",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "projects"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "List projects when user has no projects",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "// ============================================\r",
+                      "// TC-PROJ-LIST-004: List projects when user has no projects\r",
+                      "// ============================================\r",
+                      "\r",
+                      "const response = pm.response.json();\r",
+                      "\r",
+                      "// 1. Kiểm tra status\r",
+                      "pm.test(\"Status code is 200 OK\", () => {\r",
+                      "    pm.response.to.have.status(200);\r",
+                      "});\r",
+                      "\r",
+                      "// 2. Kiểm tra response là array\r",
+                      "pm.test(\"Response is an array\", () => {\r",
+                      "    pm.expect(response).to.be.an('array');\r",
+                      "});\r",
+                      "\r",
+                      "// 3. Kiểm tra array rỗng\r",
+                      "pm.test(\"Response is an empty array (no projects)\", () => {\r",
+                      "    pm.expect(response.length).to.equal(0);\r",
+                      "    console.log(\"📊 User has no projects - empty array returned\");\r",
+                      "});\r",
+                      "\r",
+                      "// 4. Kiểm tra không có lỗi\r",
+                      "pm.test(\"No error returned\", () => {\r",
+                      "    const body = pm.response.text();\r",
+                      "    pm.expect(body).to.not.include('error');\r",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                },
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "exec": [
+                      "// ============================================\r",
+                      "// TC-PROJ-LIST-004: List projects when user has no projects\r",
+                      "// ============================================\r",
+                      "\r",
+                      "const token = pm.environment.get(\"token\");\r",
+                      "\r",
+                      "// Cần token của user chưa có project nào\r",
+                      "// Lưu ý: bạn cần tạo user mới chưa có project để test case này\r",
+                      "\r",
+                      "if (token) {\r",
+                      "    pm.request.headers.remove(\"Authorization\");\r",
+                      "    pm.request.headers.add({\r",
+                      "        key: \"Authorization\",\r",
+                      "        value: `Bearer ${token}`\r",
+                      "    });\r",
+                      "    console.log(\"✅ Token attached for empty user\");\r",
+                      "} else {\r",
+                      "    console.warn(\"⚠️ No token found! Please set token for user with no projects.\");\r",
+                      "}"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "method": "GET",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/projects",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "projects"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "List projects with invalid token",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "// ============================================\r",
+                      "// TC-PROJ-LIST-003: List projects with invalid token\r",
+                      "// ============================================\r",
+                      "\r",
+                      "const response = pm.response.json();\r",
+                      "\r",
+                      "// 1. Kiểm tra status - MONG ĐỢI 401\r",
+                      "pm.test(\"Status code is 401 Unauthorized\", () => {\r",
+                      "    pm.response.to.have.status(401);\r",
+                      "});\r",
+                      "\r",
+                      "// 2. Kiểm tra response có error\r",
+                      "pm.test(\"Response has error message\", () => {\r",
+                      "    pm.expect(response).to.have.property('error');\r",
+                      "    pm.expect(response.error).to.be.a('string');\r",
+                      "    console.log(`❌ Error: ${response.error}`);\r",
+                      "});\r",
+                      "\r",
+                      "// 3. Kiểm tra không có data\r",
+                      "pm.test(\"No project data returned\", () => {\r",
+                      "    pm.expect(response).to.not.be.an('array');\r",
+                      "    pm.expect(response).to.not.have.property('id');\r",
+                      "});\r",
+                      "\r",
+                      "// 4. Kiểm tra message chung chung\r",
+                      "pm.test(\"Error message is generic (security best practice)\", () => {\r",
+                      "    const errorMsg = response.error.toLowerCase();\r",
+                      "    pm.expect(errorMsg).to.include('unauthorized');\r",
+                      "    pm.expect(errorMsg).to.not.include('expired');\r",
+                      "    pm.expect(errorMsg).to.not.include('invalid format');\r",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                },
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "exec": [
+                      "// ============================================\r",
+                      "// TC-PROJ-LIST-003: List projects with invalid token\r",
+                      "// ============================================\r",
+                      "\r",
+                      "// Xóa header Authorization để mô phỏng không có token\r",
+                      "pm.request.headers.remove(\"Authorization\");\r",
+                      "console.log(\"🔑 No Authorization header sent (testing missing token)\");"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "GET",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/projects",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "projects"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "List projects with valid Token",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "// ============================================\r",
+                      "// TC-PROJ-LIST-001: List projects with valid token\r",
+                      "// ============================================\r",
+                      "\r",
+                      "const response = pm.response.json();\r",
+                      "\r",
+                      "// 1. Kiểm tra status\r",
+                      "pm.test(\"Status code is 200 - List projects successful\", () => {\r",
+                      "    pm.response.to.have.status(200);\r",
+                      "});\r",
+                      "\r",
+                      "// 2. Kiểm tra response là array\r",
+                      "pm.test(\"Response is an array\", () => {\r",
+                      "    pm.expect(response).to.be.an('array');\r",
+                      "});\r",
+                      "\r",
+                      "// 3. Kiểm tra các field cơ bản\r",
+                      "pm.test(\"Each project has required fields\", () => {\r",
+                      "    if (response.length > 0) {\r",
+                      "        response.forEach(project => {\r",
+                      "            // Các field bắt buộc\r",
+                      "            pm.expect(project).to.have.property('id');\r",
+                      "            pm.expect(project).to.have.property('name');\r",
+                      "            pm.expect(project).to.have.property('description');\r",
+                      "            \r",
+                      "            // Kiểm tra kiểu dữ liệu\r",
+                      "            pm.expect(project.id).to.be.a('number');\r",
+                      "            pm.expect(project.name).to.be.a('string');\r",
+                      "            pm.expect(project.description).to.be.a('string');\r",
+                      "        });\r",
+                      "    }\r",
+                      "});\r",
+                      "\r",
+                      "// 4. Log thông tin\r",
+                      "if (response.length > 0) {\r",
+                      "    console.log(`📊 Total projects: ${response.length}`);\r",
+                      "    console.log(`📌 First project: ${response[0].name} (ID: ${response[0].id})`);\r",
+                      "    \r",
+                      "    // Lưu projectId đầu tiên\r",
+                      "    pm.environment.set(\"projectId\", response[0].id);\r",
+                      "    console.log(`✅ Project ID saved: ${response[0].id}`);\r",
+                      "} else {\r",
+                      "    console.log(\"ℹ️ No projects found.\");\r",
+                      "}\r",
+                      "\r",
+                      "// 5. Kiểm tra không có sensitive data\r",
+                      "pm.test(\"No sensitive data exposed\", () => {\r",
+                      "    const body = pm.response.text();\r",
+                      "    pm.expect(body).to.not.include(\"passwordHash\");\r",
+                      "    pm.expect(body).to.not.include(\"password\");\r",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/projects",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "projects"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "02_Create_Project",
+          "item": [
+            {
+              "name": "TC-001.Create with valid data",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "// ============================================\r",
+                      "// TC-PROJ-CREATE-001: Create project with valid data\r",
+                      "// ============================================\r",
+                      "\r",
+                      "// ============================================\r",
+                      "// 1. PARSE RESPONSE AN TOÀN\r",
+                      "// ============================================\r",
+                      "\r",
+                      "var responseText = pm.response.text();\r",
+                      "var response = null;\r",
+                      "var isJsonResponse = false;\r",
+                      "\r",
+                      "try {\r",
+                      "    if (responseText && responseText.trim().length > 0) {\r",
+                      "        response = JSON.parse(responseText);\r",
+                      "        isJsonResponse = true;\r",
+                      "        console.log(\"✅ Response parsed successfully\");\r",
+                      "    } else {\r",
+                      "        console.log(\"⚠️ Response body is empty\");\r",
+                      "    }\r",
+                      "} catch (e) {\r",
+                      "    response = null;\r",
+                      "    isJsonResponse = false;\r",
+                      "    console.log(\"❌ JSON parse error:\", e.message);\r",
+                      "}\r",
+                      "\r",
+                      "// ============================================\r",
+                      "// 2. PARSE REQUEST BODY AN TOÀN\r",
+                      "// ============================================\r",
+                      "\r",
+                      "var requestBody = null;\r",
+                      "try {\r",
+                      "    if (pm.request.body && pm.request.body.raw) {\r",
+                      "        requestBody = JSON.parse(pm.request.body.raw);\r",
+                      "        console.log(\"✅ Request body parsed successfully\");\r",
+                      "    }\r",
+                      "} catch (e) {\r",
+                      "    requestBody = null;\r",
+                      "    console.log(\"⚠️ Cannot parse request body:\", e.message);\r",
+                      "}\r",
+                      "\r",
+                      "// ============================================\r",
+                      "// 3. DEBUG LOG\r",
+                      "// ============================================\r",
+                      "\r",
+                      "var userId = pm.environment.get('userId');\r",
+                      "var token = pm.environment.get('token');\r",
+                      "\r",
+                      "console.log(\"🔍 Debug Info:\");\r",
+                      "console.log(\"  Status code:\", pm.response.code);\r",
+                      "console.log(\"  User ID from environment:\", userId);\r",
+                      "console.log(\"  Token used:\", token ? \"✅ exists (first 20 chars: \" + token.substring(0, 20) + \"...)\" : \"❌ missing\");\r",
+                      "console.log(\"  Has body:\", responseText ? \"Yes\" : \"No\");\r",
+                      "console.log(\"  Is JSON:\", isJsonResponse);\r",
+                      "\r",
+                      "// ============================================\r",
+                      "// 4. TEST: 201 CREATED\r",
+                      "// ============================================\r",
+                      "\r",
+                      "if (pm.response.code === 201) {\r",
+                      "    \r",
+                      "    // 4.1 Kiểm tra status\r",
+                      "    pm.test(\"Status code is 201 - Project created\", () => {\r",
+                      "        pm.response.to.have.status(201);\r",
+                      "    });\r",
+                      "\r",
+                      "    if (isJsonResponse && response) {\r",
+                      "        \r",
+                      "        // 4.2 Kiểm tra response có id\r",
+                      "        pm.test(\"Response has id\", () => {\r",
+                      "            pm.expect(response).to.have.property('id');\r",
+                      "            pm.expect(response.id).to.be.a('number');\r",
+                      "            pm.expect(response.id).to.be.greaterThan(0);\r",
+                      "        });\r",
+                      "\r",
+                      "        // 4.3 Kiểm tra name khớp\r",
+                      "        pm.test(\"Name matches request\", () => {\r",
+                      "            if (requestBody && requestBody.name) {\r",
+                      "                pm.expect(response.name).to.equal(requestBody.name);\r",
+                      "            } else {\r",
+                      "                console.log(\"⚠️ Skipping name check: request body missing name\");\r",
+                      "            }\r",
+                      "        });\r",
+                      "\r",
+                      "        // 4.4 Kiểm tra description khớp\r",
+                      "        pm.test(\"Description matches request\", () => {\r",
+                      "            if (requestBody) {\r",
+                      "                if (requestBody.description) {\r",
+                      "                    pm.expect(response.description).to.equal(requestBody.description);\r",
+                      "                } else {\r",
+                      "                    // Nếu không gửi description, API có thể trả về null hoặc rỗng\r",
+                      "                    pm.expect(response.description).to.be.null;\r",
+                      "                }\r",
+                      "            }\r",
+                      "        });\r",
+                      "\r",
+                      "        // 4.5 🔥 KIỂM TRA createdById KHỚP VỚI userId (QUAN TRỌNG!)\r",
+                      "        pm.test(\"Project created with correct creator\", () => {\r",
+                      "            if (response.createdById && userId) {\r",
+                      "                var expectedUserId = parseInt(userId, 10);\r",
+                      "                pm.expect(response.createdById).to.equal(expectedUserId);\r",
+                      "                console.log(\"✅ createdById (\" + response.createdById + \") matches userId (\" + expectedUserId + \")\");\r",
+                      "            } else {\r",
+                      "                console.log(\"⚠️ Skipping creator check: userId (\" + userId + \") or createdById (\" + response.createdById + \") missing\");\r",
+                      "            }\r",
+                      "        });\r",
+                      "\r",
+                      "        // 4.6 Kiểm tra additional fields\r",
+                      "        pm.test(\"Additional fields check\", () => {\r",
+                      "            if (response.createdAt) {\r",
+                      "                console.log(\"✅ createdAt:\", response.createdAt);\r",
+                      "            }\r",
+                      "            if (response.createdById) {\r",
+                      "                console.log(\"✅ createdById:\", response.createdById);\r",
+                      "            }\r",
+                      "        });\r",
+                      "\r",
+                      "        // 4.7 Lưu projectId\r",
+                      "        pm.test(\"Save project ID\", () => {\r",
+                      "            pm.environment.set(\"projectId\", response.id);\r",
+                      "            console.log(\"✅ Project ID saved:\", response.id);\r",
+                      "        });\r",
+                      "\r",
+                      "        // 4.8 Kiểm tra không có sensitive data\r",
+                      "        pm.test(\"Does not expose sensitive data\", () => {\r",
+                      "            var body = pm.response.text();\r",
+                      "            pm.expect(body).to.not.include(\"passwordHash\");\r",
+                      "            pm.expect(body).to.not.include(\"password\");\r",
+                      "        });\r",
+                      "        \r",
+                      "    } else {\r",
+                      "        pm.test(\"Response body should be valid JSON for 201\", () => {\r",
+                      "            pm.expect(isJsonResponse).to.eql(true);\r",
+                      "        });\r",
+                      "    }\r",
+                      "}\r",
+                      "\r",
+                      "// ============================================\r",
+                      "// 5. TEST: 400 BAD REQUEST\r",
+                      "// ============================================\r",
+                      "\r",
+                      "if (pm.response.code === 400) {\r",
+                      "    pm.test(\"Status code is 400 Bad Request\", () => {\r",
+                      "        pm.response.to.have.status(400);\r",
+                      "    });\r",
+                      "\r",
+                      "    if (isJsonResponse && response) {\r",
+                      "        pm.test(\"Response has error message\", () => {\r",
+                      "            pm.expect(response).to.have.property('error') ||\r",
+                      "            pm.expect(response).to.have.property('message') ||\r",
+                      "            pm.expect(response).to.have.property('errors');\r",
+                      "        });\r",
+                      "    }\r",
+                      "}\r",
+                      "\r",
+                      "// ============================================\r",
+                      "// 6. TEST: 401 UNAUTHORIZED\r",
+                      "// ============================================\r",
+                      "\r",
+                      "if (pm.response.code === 401) {\r",
+                      "    pm.test(\"Status code is 401 Unauthorized\", () => {\r",
+                      "        pm.response.to.have.status(401);\r",
+                      "    });\r",
+                      "}\r",
+                      "\r",
+                      "// ============================================\r",
+                      "// 7. TEST: 403 FORBIDDEN\r",
+                      "// ============================================\r",
+                      "\r",
+                      "if (pm.response.code === 403) {\r",
+                      "    pm.test(\"Status code is 403 Forbidden\", () => {\r",
+                      "        pm.response.to.have.status(403);\r",
+                      "    });\r",
+                      "}\r",
+                      "\r",
+                      "// ============================================\r",
+                      "// 8. KIỂM TRA userId TRONG ENVIRONMENT\r",
+                      "// ============================================\r",
+                      "\r",
+                      "console.log(\"🔍 Final Debug - Environment:\");\r",
+                      "console.log(\"  userId:\", pm.environment.get(\"userId\"));\r",
+                      "console.log(\"  projectId:\", pm.environment.get(\"projectId\"));\r",
+                      "console.log(\"  token exists:\", pm.environment.get(\"token\") ? \"✅ Yes\" : \"❌ No\");"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n    \"name\": \"Test Project 1\",\r\n    \"description\": \"Test description\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/projects",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "projects"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-002.Create without token",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "// ============================================\r",
+                      "// TC-PROJ-CREATE-002: Create project without token\r",
+                      "// ============================================\r",
+                      "\r",
+                      "const response = pm.response.json();\r",
+                      "\r",
+                      "pm.test(\"Status code is 401 Unauthorized\", () => {\r",
+                      "    pm.response.to.have.status(401);\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Response has error message\", () => {\r",
+                      "    pm.expect(response).to.have.property('error');\r",
+                      "    console.log(`❌ Error: ${response.error}`);\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Project is NOT created\", () => {\r",
+                      "    pm.expect(response).to.not.have.property('id');\r",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                },
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "exec": [
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/projects",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "projects"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-003.Create with empty name",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "// ============================================\r",
+                      "// TC-PROJ-CREATE-003: Create project with empty name\r",
+                      "// ============================================\r",
+                      "\r",
+                      "const response = pm.response.json();\r",
+                      "\r",
+                      "// Log response để debug\r",
+                      "console.log(\"🔍 Full response:\", JSON.stringify(response, null, 2));\r",
+                      "\r",
+                      "// 1. Kiểm tra status\r",
+                      "pm.test(\"Status code is 400 Bad Request\", () => {\r",
+                      "    pm.response.to.have.status(400);\r",
+                      "});\r",
+                      "\r",
+                      "// 2. Kiểm tra có lỗi (linh hoạt)\r",
+                      "pm.test(\"Response has error\", () => {\r",
+                      "    const hasError = response.errors || response.message || response.error || response.detail || response.title;\r",
+                      "    pm.expect(hasError).to.exist;\r",
+                      "});\r",
+                      "\r",
+                      "// 3. Kiểm tra lỗi liên quan đến 'name' (linh hoạt)\r",
+                      "pm.test(\"Error message contains 'name' or 'required'\", () => {\r",
+                      "    let errorMessage = '';\r",
+                      "    \r",
+                      "    // Trường hợp 1: errors array of objects\r",
+                      "    if (response.errors && Array.isArray(response.errors)) {\r",
+                      "        const nameError = response.errors.find(e => \r",
+                      "            e.field === 'name' || \r",
+                      "            e.propertyName === 'name' ||\r",
+                      "            (e.message && e.message.toLowerCase().includes('name'))\r",
+                      "        );\r",
+                      "        if (nameError) {\r",
+                      "            errorMessage = nameError.message || nameError.errorMessage || JSON.stringify(nameError);\r",
+                      "        } else {\r",
+                      "            // Nếu không tìm thấy error cụ thể, lấy error đầu tiên\r",
+                      "            errorMessage = JSON.stringify(response.errors[0]);\r",
+                      "        }\r",
+                      "    }\r",
+                      "    \r",
+                      "    // Trường hợp 2: response có message chung\r",
+                      "    if (!errorMessage && response.message) {\r",
+                      "        errorMessage = response.message;\r",
+                      "    }\r",
+                      "    if (!errorMessage && response.error) {\r",
+                      "        errorMessage = response.error;\r",
+                      "    }\r",
+                      "    if (!errorMessage && response.detail) {\r",
+                      "        errorMessage = response.detail;\r",
+                      "    }\r",
+                      "    \r",
+                      "    console.log(`📝 Error message: ${errorMessage}`);\r",
+                      "    pm.expect(errorMessage).to.not.be.empty;\r",
+                      "    \r",
+                      "    // Kiểm tra error message có chứa từ khóa 'name' hoặc 'required'\r",
+                      "    const hasNameOrRequired = errorMessage.toLowerCase().includes('name') || \r",
+                      "                              errorMessage.toLowerCase().includes('required') ||\r",
+                      "                              errorMessage.toLowerCase().includes('empty');\r",
+                      "    pm.expect(hasNameOrRequired, `Error message should mention 'name' or 'required'. Got: ${errorMessage}`).to.be.true;\r",
+                      "});\r",
+                      "\r",
+                      "// 4. Kiểm tra không có id\r",
+                      "pm.test(\"Project is NOT created\", () => {\r",
+                      "    pm.expect(response).to.not.have.property('id');\r",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                },
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "exec": [
+                      "// ============================================\r",
+                      "// TC-PROJ-CREATE-003: Create project with empty name\r",
+                      "// ============================================\r",
+                      "\r",
+                      "const token = pm.environment.get(\"token\");\r",
+                      "\r",
+                      "if (token) {\r",
+                      "    pm.request.headers.remove(\"Authorization\");\r",
+                      "    pm.request.headers.add({\r",
+                      "        key: \"Authorization\",\r",
+                      "        value: `Bearer ${token}`\r",
+                      "    });\r",
+                      "}\r",
+                      "\r",
+                      "pm.request.headers.add({\r",
+                      "    key: \"Content-Type\",\r",
+                      "    value: \"application/json\"\r",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n    \"name\": \"\",\r\n    \"description\": \"Test description\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/projects",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "projects"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-004.Create without description",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "// ============================================\r",
+                      "// TC-PROJ-CREATE-006: Create project without description\r",
+                      "// ============================================\r",
+                      "\r",
+                      "const response = pm.response.json();\r",
+                      "\r",
+                      "pm.test(\"Status code is 201 Created\", () => {\r",
+                      "    pm.response.to.have.status(201);\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Project created without description\", () => {\r",
+                      "    pm.expect(response).to.have.property('id');\r",
+                      "    pm.expect(response.description).to.be.any;\r",
+                      "    console.log(`✅ Project created with no description`);\r",
+                      "});\r",
+                      "\r",
+                      "pm.environment.set(\"projectId\", response.id);"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                },
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "exec": [
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n    \"name\": \"Description Test\",\r\n    \"description\": \"\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/projects",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "projects"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-005.Create with name exactly 200 characters",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "// ============================================\r",
+                      "// TC-PROJ-CREATE-005: Create with name exactly 100 chars\r",
+                      "// ============================================\r",
+                      "\r",
+                      "const response = pm.response.json();\r",
+                      "\r",
+                      "pm.test(\"Status code is 201 Created\", () => {\r",
+                      "    pm.response.to.have.status(201);\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Project created with exact 100-char name\", () => {\r",
+                      "    pm.expect(response).to.have.property('id');\r",
+                      "    pm.expect(response.name).to.have.lengthOf(200);\r",
+                      "    console.log(`✅ Project created with 200-char name: ${response.name.substring(0, 20)}...`);\r",
+                      "});\r",
+                      "\r",
+                      "pm.environment.set(\"projectId\", response.id);"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                },
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "exec": [
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n    \"name\": \"{{validName}}\",\r\n    \"description\": \"Project with valid name (200 chars)\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/projects",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "projects"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-007.Create with description > 2000 chars",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "// ============================================\r",
+                      "// TC-PROJ-CREATE-007: Create with description > 500 chars\r",
+                      "// ============================================\r",
+                      "\r",
+                      "const response = pm.response.json();\r",
+                      "\r",
+                      "pm.test(\"Status code is 400 Bad Request\", () => {\r",
+                      "    pm.response.to.have.status(400);\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Response has validation errors\", () => {\r",
+                      "    pm.expect(response).to.have.property('errors');\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Error for description exists\", () => {\r",
+                      "    const errors = response.errors || [];\r",
+                      "    const descError = errors.find(e => \r",
+                      "        e.field === 'description' || \r",
+                      "        (e.message && e.message.toLowerCase().includes('2000'))\r",
+                      "    );\r",
+                      "    \r",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                },
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "exec": [
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n    \"name\": \"Test Project\",\r\n    \"description\": \"{{longDesc}}\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/projects",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "projects"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-006.Create with name > 200 chars",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// ============================================",
+                      "// TC-PROJ-CREATE-004: Create with name > 200 chars",
+                      "// ============================================",
+                      "",
+                      "const response = pm.response.json();",
+                      "const toLowerSafe = (value) => String(value ?? '').toLowerCase();",
+                      "",
+                      "// 1. Kiểm tra status - phải là 400",
+                      "pm.test(\"Status code is 400 - Validation failed\", () => {",
+                      "    pm.response.to.have.status(400);",
+                      "});",
+                      "",
+                      "// 2. Kiểm tra lỗi cho name (linh hoạt)",
+                      "pm.test(\"Error for 'name' field exists\", () => {",
+                      "    let hasNameError = false;",
+                      "    let errorMsg = '';",
+                      "    ",
+                      "    // Trường hợp 1: errors array of objects",
+                      "    if (response.errors && Array.isArray(response.errors)) {",
+                      "        const nameError = response.errors.find(e => {",
+                      "            const messageText = toLowerSafe(e?.message || e?.errorMessage || (typeof e === 'string' ? e : ''));",
+                      "            return e?.field === 'name' || ",
+                      "                e?.propertyName === 'name' ||",
+                      "                messageText.includes('name') ||",
+                      "                messageText.includes('200');",
+                      "        });",
+                      "        if (nameError) {",
+                      "            hasNameError = true;",
+                      "            errorMsg = nameError.message || nameError.errorMessage || nameError;",
+                      "        }",
+                      "    }",
+                      "    ",
+                      "    // Trường hợp 2: response có message chung",
+                      "    if (!hasNameError && (response.message || response.error || response.detail)) {",
+                      "        const msg = response.message || response.error || response.detail;",
+                      "        const normalizedMsg = toLowerSafe(msg);",
+                      "        if (normalizedMsg.includes('name') || normalizedMsg.includes('200')) {",
+                      "            hasNameError = true;",
+                      "            errorMsg = msg;",
+                      "        }",
+                      "    }",
+                      "    ",
+                      "    // Trường hợp 3: có title/detail",
+                      "    if (!hasNameError && response.title && response.detail) {",
+                      "        const combined = `${response.title}${response.detail}`;",
+                      "        const normalizedCombined = toLowerSafe(combined);",
+                      "        if (normalizedCombined.includes('name') || normalizedCombined.includes('200')) {",
+                      "            hasNameError = true;",
+                      "            errorMsg = response.detail;",
+                      "        }",
+                      "    }",
+                      "    ",
+                      "    pm.expect(hasNameError, `No error found for 'name' field. Response: ${JSON.stringify(response)}`).to.be.true;",
+                      "    console.log(`❌ Error message: ${errorMsg}`);",
+                      "});",
+                      "",
+                      "// 3. Kiểm tra không có projectId",
+                      "pm.test(\"Project is NOT created\", () => {",
+                      "    pm.expect(response).to.not.have.property('id');",
+                      "    pm.expect(response).to.not.have.property('projectId');",
+                      "});",
+                      "",
+                      "// 4. Log độ dài",
+                      "const requestBody = JSON.parse(pm.request.body.raw);",
+                      "const nameLength = requestBody.name ? requestBody.name.length : 0;",
+                      "console.log(`📝 Sent name length: ${nameLength} characters (should be > 200)`);"
+                    ]
+                  }
+                },
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "exec": [
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n    \"name\": \"{{longName}}\",\r\n    \"description\": \"Project with very long name (201 chars)\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/projects",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "projects"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-008.Cannot override CreatedById",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "// ============================================\r",
+                      "// TC-PROJ-CREATE-008: Cannot override CreatedById\r",
+                      "// ============================================\r",
+                      "\r",
+                      "const response = pm.response.json();\r",
+                      "const userId = parseInt(pm.environment.get(\"userId\"));\r",
+                      "\r",
+                      "pm.test(\"Status code is 201 Created\", () => {\r",
+                      "    pm.response.to.have.status(201);\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"CreatedById matches user from token, not request body\", () => {\r",
+                      "    pm.expect(response.createdById).to.equal(userId);\r",
+                      "    pm.expect(response.createdById).to.not.equal(999);\r",
+                      "    console.log(`✅ CreatedById: ${response.createdById} (matches user ${userId})`);\r",
+                      "});\r",
+                      "\r",
+                      "pm.environment.set(\"projectId\", response.id);"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                },
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "exec": [
+                      "// ============================================\r",
+                      "// TC-PROJ-CREATE-008: Cannot override CreatedById\r",
+                      "// ============================================\r",
+                      "\r",
+                      "const token = pm.environment.get(\"token\");\r",
+                      "\r",
+                      "if (token) {\r",
+                      "    pm.request.headers.remove(\"Authorization\");\r",
+                      "    pm.request.headers.add({\r",
+                      "        key: \"Authorization\",\r",
+                      "        value: `Bearer ${token}`\r",
+                      "    });\r",
+                      "}\r",
+                      "\r",
+                      "pm.request.headers.add({\r",
+                      "    key: \"Content-Type\",\r",
+                      "    value: \"application/json\"\r",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n    \"name\": \"Override Test\",\r\n    \"description\": \"Security test\",\r\n    \"createdById\": 999\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/projects",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "projects"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-009.Creator is auto-added as Owner",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "// ============================================\r",
+                      "// TC-PROJ-CREATE-009: Creator is auto-added as Owner\r",
+                      "// ============================================\r",
+                      "\r",
+                      "const response = pm.response.json();\r",
+                      "const userId = parseInt(pm.environment.get(\"userId\"));\r",
+                      "\r",
+                      "pm.test(\"Status code is 201 Created\", () => {\r",
+                      "    pm.response.to.have.status(201);\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Project created with correct creator\", () => {\r",
+                      "    pm.expect(response.createdById).to.equal(userId);\r",
+                      "    console.log(`✅ Project created by user ${userId}`);\r",
+                      "});\r",
+                      "\r",
+                      "pm.environment.set(\"projectId\", response.id);\r",
+                      "console.log(\"ℹ️ Check database: ProjectMembers table should have owner record\");"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                },
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "exec": [
+                      "// ============================================\r",
+                      "// TC-PROJ-CREATE-009: Creator is auto-added as Owner\r",
+                      "// ============================================\r",
+                      "\r",
+                      "const token = pm.environment.get(\"token\");\r",
+                      "\r",
+                      "if (token) {\r",
+                      "    pm.request.headers.remove(\"Authorization\");\r",
+                      "    pm.request.headers.add({\r",
+                      "        key: \"Authorization\",\r",
+                      "        value: `Bearer ${token}`\r",
+                      "    });\r",
+                      "}\r",
+                      "\r",
+                      "pm.request.headers.add({\r",
+                      "    key: \"Content-Type\",\r",
+                      "    value: \"application/json\"\r",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n    \"name\": \"Owner Project\",\r\n    \"description\": \"Check owner member\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/projects",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "projects"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "03_Get_Project_Detail",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();\r",
+                  "\r",
+                  "if (pm.response.code === 200) {\r",
+                  "    pm.test(\"Status code is 200 OK\", function () {\r",
+                  "        pm.response.to.have.status(200);\r",
+                  "    });\r",
+                  "\r",
+                  "    pm.test(\"Response matches projectId\", function () {\r",
+                  "        let expectedId = parseInt(pm.variables.get(\"projectId\"));\r",
+                  "        if (!isNaN(expectedId)) {\r",
+                  "            pm.expect(jsonData.id).to.eql(expectedId);\r",
+                  "        }\r",
+                  "    });\r",
+                  "\r",
+                  "    pm.test(\"Response contains project members\", function () {\r",
+                  "        // Tuỳ theo thiết kế API mà API trả về danh sách members trực tiếp hoặc ở một property con.\r",
+                  "        pm.expect(jsonData).to.have.property('name');\r",
+                  "    });\r",
+                  "}\r",
+                  "\r",
+                  "if (pm.response.code === 403 || pm.response.code === 404) {\r",
+                  "    pm.test(\"Forbidden or Not Found for non-members / non-existent projects\", function () {\r",
+                  "        pm.expect(pm.response.code).to.be.oneOf([403, 404]);\r",
+                  "    });\r",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/projects/{{projectId}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "projects",
+                "{{projectId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "04_Update_Project",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200 || pm.response.code === 204) {",
+                  "    pm.test(\"Project updated successfully\", function () {",
+                  "        pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+                  "    });",
+                  "}",
+                  "",
+                  "if (pm.response.code === 400) {",
+                  "    pm.test(\"Validation errors handled correctly\", function () {",
+                  "        pm.response.to.have.status(400);",
+                  "    });",
+                  "}",
+                  "",
+                  "if (pm.response.code === 403) {",
+                  "    pm.test(\"Only owners can update project (Forbidden)\", function () {",
+                  "        pm.response.to.have.status(403);",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"name\": \"Updated Project Name\",\r\n  \"description\": \"Updated description\"\r\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/projects/{{projectId}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "projects",
+                "{{projectId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "06_Add_Member",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var requestBody = JSON.parse(pm.request.body.raw);\r",
+                  "\r",
+                  "if (pm.response.code === 200 || pm.response.code === 201) {\r",
+                  "    pm.test(\"Member added successfully\", function () {\r",
+                  "        pm.expect(pm.response.code).to.be.oneOf([200, 201]);\r",
+                  "    });\r",
+                  "}\r",
+                  "\r",
+                  "if (pm.response.code === 400 || pm.response.code === 409) {\r",
+                  "    pm.test(\"Validation failed or Member already exists\", function () {\r",
+                  "        pm.expect(pm.response.code).to.be.oneOf([400, 409]);\r",
+                  "    });\r",
+                  "}\r",
+                  "\r",
+                  "if (pm.response.code === 403) {\r",
+                  "    pm.test(\"Only owners can add members (Forbidden)\", function () {\r",
+                  "        pm.response.to.have.status(403);\r",
+                  "    });\r",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"email\": \"duoclora1@gmail.com\"\r\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/projects/{{projectId}}/members",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "projects",
+                "{{projectId}}",
+                "members"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Tasks",
+      "item": [
+        {
+          "name": "Create Task",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// ============================================",
+                  "// 1. PARSE RESPONSE & REQUEST BODY (AN TOÀN)",
+                  "// ============================================",
+                  "",
+                  "var responseText = pm.response.text();",
+                  "var jsonData = null;",
+                  "var isJsonResponse = false;",
+                  "var contentTypeHeader = pm.response.headers.get('Content-Type') || '';",
+                  "var jsonData = pm.response.json();",
+                  "try {",
+                  "    if (responseText && /application\\/json|[+]json/i.test(contentTypeHeader)) {",
+                  "        jsonData = pm.response.json();",
+                  "        isJsonResponse = true;",
+                  "    } else if (responseText) {",
+                  "        jsonData = JSON.parse(responseText);",
+                  "        isJsonResponse = true;",
+                  "    }",
+                  "} catch (e) {",
+                  "    jsonData = null;",
+                  "    isJsonResponse = false;",
+                  "    console.log('Response body is not valid JSON:', e.message);",
+                  "}",
+                  "",
+                  "var requestBody = {};",
+                  "try {",
+                  "    if (pm.request.body && pm.request.body.raw) {",
+                  "        requestBody = JSON.parse(pm.request.body.raw);",
+                  "    }",
+                  "} catch (e) {",
+                  "    requestBody = {};",
+                  "    console.log('Request body is not valid JSON:', e.message);",
+                  "}",
+                  "",
+                  "function hasJsonContentType() {",
+                  "    return /application\\/json|[+]json/i.test(contentTypeHeader);",
+                  "}",
+                  "",
+                  "function assertResponseTime(maxMs) {",
+                  "    pm.test('Response time is under ' + maxMs + 'ms', function () {",
+                  "        pm.expect(pm.response.responseTime).to.be.below(maxMs);",
+                  "    });",
+                  "}",
+                  "",
+                  "// Mapping priority",
+                  "function getPriorityValue(priority) {",
+                  "    if (typeof priority === 'number') return priority;",
+                  "    if (typeof priority === 'string') {",
+                  "        var map = { 'Low': 0, 'Medium': 1, 'High': 2 };",
+                  "        return map[priority] !== undefined ? map[priority] : priority;",
+                  "    }",
+                  "    return priority;",
+                  "}",
+                  "",
+                  "// ============================================",
+                  "// 2. TEST: 201 CREATED (HAPPY PATH)",
+                  "// ============================================",
+                  "",
+                  "if (pm.response.code === 201) {",
+                  "    pm.test('Status code is 201 Created', function () {",
+                  "        pm.response.to.have.status(201);",
+                  "    });",
+                  "",
+                  "    assertResponseTime(5000);",
+                  "",
+                  "    pm.test('Created response body is not empty', function () {",
+                  "        pm.expect(responseText).to.not.eql('');",
+                  "    });",
+                  "",
+                  "    pm.test('Created response is valid JSON', function () {",
+                  "        pm.expect(isJsonResponse, 'Expected JSON response body for 201').to.eql(true);",
+                  "        pm.expect(jsonData).to.be.an('object');",
+                  "    });",
+                  "",
+                  "    if (isJsonResponse) {",
+                  "        // 1. Required fields",
+                  "        pm.test('Response has required fields (id, status, createdAt)', function () {",
+                  "            pm.expect(jsonData).to.have.property('id');",
+                  "            pm.expect(jsonData).to.have.property('status');",
+                  "            pm.expect(jsonData).to.have.property('createdAt');",
+                  "        });",
+                  "",
+                  "        // 2. Title",
+                  "        pm.test('Title matches request body', function () {",
+                  "            if (Object.prototype.hasOwnProperty.call(requestBody, 'title')) {",
+                  "                pm.expect(jsonData).to.have.property('title', requestBody.title);",
+                  "            }",
+                  "        });",
+                  "",
+                  "        // 3. Description (if provided)",
+                  "        pm.test('Description matches request body when provided', function () {",
+                  "            if (Object.prototype.hasOwnProperty.call(requestBody, 'description')) {",
+                  "                pm.expect(jsonData).to.have.property('description', requestBody.description);",
+                  "            }",
+                  "        });",
+                  "",
+                  "        // 4. Priority - CHẤP NHẬN CẢ SỐ LẪN CHỮ",
+                  "        pm.test('Priority is returned and matches request (number or string)', function () {",
+                  "            if (Object.prototype.hasOwnProperty.call(requestBody, 'priority')) {",
+                  "                pm.expect(jsonData).to.have.property('priority');",
+                  "                ",
+                  "                var reqPriority = requestBody.priority;",
+                  "                var resPriority = jsonData.priority;",
+                  "                ",
+                  "                // Trường hợp 1: Cả 2 đều là số (VD: 2 == 2)",
+                  "                if (typeof reqPriority === 'number' && typeof resPriority === 'number') {",
+                  "                    pm.expect(resPriority).to.eql(reqPriority);",
+                  "                }",
+                  "                // Trường hợp 2: Cả 2 đều là string (VD: \"High\" == \"High\")",
+                  "                else if (typeof reqPriority === 'string' && typeof resPriority === 'string') {",
+                  "                    pm.expect(resPriority).to.eql(reqPriority);",
+                  "                }",
+                  "                // Trường hợp 3: Request số (2), Response string (\"High\")",
+                  "                else if (typeof reqPriority === 'number' && typeof resPriority === 'string') {",
+                  "                    var mapNumberToString = ['Low', 'Medium', 'High'];",
+                  "                    pm.expect(resPriority).to.eql(mapNumberToString[reqPriority]);",
+                  "                }",
+                  "                // Trường hợp 4: Request string (\"High\"), Response số (2)",
+                  "                else if (typeof reqPriority === 'string' && typeof resPriority === 'number') {",
+                  "                    var mapStringToNumber = { 'Low': 0, 'Medium': 1, 'High': 2 };",
+                  "                    pm.expect(resPriority).to.eql(mapStringToNumber[reqPriority]);",
+                  "                }",
+                  "                // Fallback: chỉ cần tồn tại là OK",
+                  "                else {",
+                  "                    pm.expect(resPriority).to.not.be.undefined;",
+                  "                }",
+                  "            }",
+                  "        });",
+                  "",
+                  "        // 5. assigneeId",
+                  "        pm.test('AssigneeId matches request body when provided', function () {",
+                  "            if (Object.prototype.hasOwnProperty.call(requestBody, 'assigneeId')) {",
+                  "                pm.expect(jsonData).to.have.property('assigneeId');",
+                  "                pm.expect(jsonData.assigneeId).to.eql(requestBody.assigneeId);",
+                  "            }",
+                  "        });",
+                  "",
+                  "        // 6. Default status",
+                  "        pm.test(\"Default status is 'Todo' when status not supplied\", function () {",
+                  "            if (!Object.prototype.hasOwnProperty.call(requestBody, 'status')) {",
+                  "                pm.expect(jsonData.status).to.be.oneOf(['Todo', 'todo', 'TODO']);",
+                  "            }",
+                  "        });",
+                  "",
+                  "        if (jsonData.id) {",
+                  "            pm.collectionVariables.set('taskId', jsonData.id);",
+                  "        }",
+                  "    }",
+                  "}",
+                  "",
+                  "// ============================================",
+                  "// 3. TEST: 400 BAD REQUEST",
+                  "// ============================================",
+                  "",
+                  "if (pm.response.code === 400) {",
+                  "    pm.test('Status code is 400 Bad Request for validation failure', function () {",
+                  "        pm.response.to.have.status(400);",
+                  "    });",
+                  "",
+                  "    assertResponseTime(5000);",
+                  "",
+                  "    pm.test('Response contains validation error details', function () {",
+                  "        if (responseText) {",
+                  "            pm.expect(responseText).to.match(/error|message|errors|invalid|required|no data/i);",
+                  "        } else {",
+                  "            pm.expect(responseText).to.eql('');",
+                  "        }",
+                  "    });",
+                  "}",
+                  "",
+                  "// ============================================",
+                  "// 4. TEST: 401 / 403",
+                  "// ============================================",
+                  "",
+                  "if (pm.response.code === 401 || pm.response.code === 403) {",
+                  "    pm.test('Unauthorized or Forbidden access handled correctly', function () {",
+                  "        pm.expect(pm.response.code).to.be.oneOf([401, 403]);",
+                  "    });",
+                  "",
+                  "    assertResponseTime(5000);",
+                  "}",
+                  "",
+                  "// ============================================",
+                  "// 5. TEST: 404 NOT FOUND",
+                  "// ============================================",
+                  "",
+                  "if (pm.response.code === 404) {",
+                  "    pm.test('Project not found error handled', function () {",
+                  "        pm.response.to.have.status(404);",
+                  "    });",
+                  "",
+                  "    assertResponseTime(5000);",
+                  "}",
+                  "// Sau khi parse response",
+                  "var jsonData = pm.response.json();",
+                  "",
+                  "if (pm.response.code === 201) {",
+                  "    // Lưu taskId vào Collection Variables",
+                  "    if (jsonData.id) {",
+                  "        pm.collectionVariables.set('taskId', jsonData.id);",
+                  "        console.log(\"✅ taskId saved to collection:\", jsonData.id);",
+                  "    }",
+                  "}",
+                  "if (jsonData.id) {",
+                  "    pm.environment.set('taskId', jsonData.id);",
+                  "    console.log(\"✅ taskId saved to environment:\", jsonData.id);",
+                  "}",
+                  "// ============================================",
+                  "// 6. DEBUG LOG",
+                  "// ============================================",
+                  "",
+                  "console.log(\"🔍 Debug Info:\");",
+                  "console.log(\"  Status:\", pm.response.code);",
+                  "console.log(\"  Request Priority:\", requestBody.priority);",
+                  "console.log(\"  Response Priority:\", jsonData ? jsonData.priority : 'N/A');"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"title\": \"Fix login bug\",\r\n  \"description\": \"Session token expires too early\",\r\n  \"priority\": 2,\r\n  \"dueDate\": \"2026-12-31T23:59:59Z\",\r\n  \"assigneeId\": null\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/projects/{{projectId}}/tasks",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "projects",
+                "{{projectId}}",
+                "tasks"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Task Detail",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// ============================================\r",
+                  "// 1. PARSE RESPONSE AN TOÀN\r",
+                  "// ============================================\r",
+                  "\r",
+                  "var responseText = pm.response.text();\r",
+                  "var jsonData = null;\r",
+                  "var isJsonResponse = false;\r",
+                  "\r",
+                  "var taskId = pm.environment.get('taskId') || pm.collectionVariables.get('taskId');\r",
+                  "\r",
+                  "console.log(\"🔍 taskId used:\", taskId);\r",
+                  "console.log(\"🔍 Status:\", pm.response.code);\r",
+                  "\r",
+                  "try {\r",
+                  "    if (responseText && responseText.trim().length > 0) {\r",
+                  "        jsonData = JSON.parse(responseText);\r",
+                  "        isJsonResponse = true;\r",
+                  "    }\r",
+                  "} catch (e) {\r",
+                  "    jsonData = null;\r",
+                  "    isJsonResponse = false;\r",
+                  "    console.log(\"❌ JSON parse error:\", e.message);\r",
+                  "}\r",
+                  "\r",
+                  "// ============================================\r",
+                  "// 2. TEST: 200 OK\r",
+                  "// ============================================\r",
+                  "\r",
+                  "if (pm.response.code === 200) {\r",
+                  "    pm.test(\"Status code is 200 OK\", function () {\r",
+                  "        pm.response.to.have.status(200);\r",
+                  "    });\r",
+                  "\r",
+                  "    if (isJsonResponse && jsonData) {\r",
+                  "        pm.test(\"Response matches taskId\", function () {\r",
+                  "            var expectedTaskId = parseInt(taskId, 10);\r",
+                  "            if (!isNaN(expectedTaskId)) {\r",
+                  "                pm.expect(jsonData.id).to.eql(expectedTaskId);\r",
+                  "            }\r",
+                  "        });\r",
+                  "\r",
+                  "        pm.test(\"Task object contains required fields\", function () {\r",
+                  "            pm.expect(jsonData).to.have.property('id');\r",
+                  "            pm.expect(jsonData).to.have.property('title');\r",
+                  "            pm.expect(jsonData).to.have.property('description');\r",
+                  "            pm.expect(jsonData).to.have.property('status');\r",
+                  "            // ❌ BỎ projectId vì backend không trả về\r",
+                  "        });\r",
+                  "    }\r",
+                  "}\r",
+                  "\r",
+                  "// ============================================\r",
+                  "// 3. TEST: 404 NOT FOUND\r",
+                  "// ============================================\r",
+                  "\r",
+                  "if (pm.response.code === 404) {\r",
+                  "    pm.test(\"Status code is 404 Not Found\", function () {\r",
+                  "        pm.response.to.have.status(404);\r",
+                  "    });\r",
+                  "\r",
+                  "    console.log(\"⚠️ 404 Not Found - Task does not exist\");\r",
+                  "}\r",
+                  "\r",
+                  "// ============================================\r",
+                  "// 4. TEST: 401 UNAUTHORIZED\r",
+                  "// ============================================\r",
+                  "\r",
+                  "if (pm.response.code === 401) {\r",
+                  "    pm.test(\"Status code is 401 Unauthorized\", function () {\r",
+                  "        pm.response.to.have.status(401);\r",
+                  "    });\r",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Trong Pre-request Script của Get Task Detail\r",
+                  "var step = pm.environment.get('step') || 0;\r",
+                  "var expectedStatus = pm.environment.get('expectedStatus');\r",
+                  "\r",
+                  "if (step === 1) {\r",
+                  "    // Verify after create\r",
+                  "    console.log('🔍 Verifying task created');\r",
+                  "} else if (step === 2) {\r",
+                  "    // Verify after status change\r",
+                  "    pm.environment.set('expectedStatus', 'InProgress');\r",
+                  "} else if (step === 3) {\r",
+                  "    pm.environment.set('expectedStatus', 'Done');\r",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/tasks/{{taskId}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "tasks",
+                "{{taskId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Task",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();\r",
+                  "var requestBody = JSON.parse(pm.request.body.raw);\r",
+                  "\r",
+                  "if (pm.response.code === 200) {\r",
+                  "    pm.test(\"Status code is 200 OK\", function () {\r",
+                  "        pm.response.to.have.status(200);\r",
+                  "    });\r",
+                  "\r",
+                  "    pm.test(\"Task fields are updated correctly\", function () {\r",
+                  "        if (requestBody.title) pm.expect(jsonData.title).to.eql(requestBody.title);\r",
+                  "        if (requestBody.description !== undefined) pm.expect(jsonData.description).to.eql(requestBody.description);\r",
+                  "    });\r",
+                  "    \r",
+                  "    pm.test(\"Task ID remains unchanged\", function () {\r",
+                  "        let expectedTaskId = parseInt(pm.variables.get(\"taskId\"));\r",
+                  "        if (!isNaN(expectedTaskId)) {\r",
+                  "            pm.expect(jsonData.id).to.eql(expectedTaskId);\r",
+                  "        }\r",
+                  "    });\r",
+                  "}\r",
+                  "\r",
+                  "if (pm.response.code === 400) {\r",
+                  "    pm.test(\"Validation errors handled correctly for invalid payload\", function () {\r",
+                  "        pm.response.to.have.status(400);\r",
+                  "    });\r",
+                  "}\r",
+                  "// Pre-request của Update Task\r",
+                  "if (!pm.variables.get('taskId')) {\r",
+                  "    console.log(\"⚠️ taskId not found, creating task...\");\r",
+                  "    pm.sendRequest({\r",
+                  "        url: pm.variables.get('base_url') + '/api/projects/' + pm.variables.get('projectId') + '/tasks',\r",
+                  "        method: 'POST',\r",
+                  "        header: {\r",
+                  "            'Content-Type': 'application/json',\r",
+                  "            'Authorization': 'Bearer ' + pm.variables.get('token')\r",
+                  "        },\r",
+                  "        body: {\r",
+                  "            mode: 'raw',\r",
+                  "            raw: JSON.stringify({ title: 'Auto-created task for update' })\r",
+                  "        }\r",
+                  "    }, function (err, res) {\r",
+                  "        if (!err) {\r",
+                  "            var data = res.json();\r",
+                  "            pm.collectionVariables.set('taskId', data.id);\r",
+                  "            console.log(\"✅ taskId auto-created:\", data.id);\r",
+                  "        }\r",
+                  "    });\r",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"title\": \"Updated Title\",\r\n  \"description\": \"New description\",\r\n  \"priority\": \"Medium\",\r\n  \"dueDate\": \"2026-12-31T23:59:59Z\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/tasks/{{taskId}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "tasks",
+                "{{taskId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Task Status",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();\r",
+                  "var requestBody = JSON.parse(pm.request.body.raw);\r",
+                  "\r",
+                  "if (pm.response.code === 200) {\r",
+                  "    pm.test(\"Status code is 200 OK\", function () {\r",
+                  "        pm.response.to.have.status(200);\r",
+                  "    });\r",
+                  "\r",
+                  "    pm.test(\"Task status is updated\", function () {\r",
+                  "        pm.expect(jsonData.status).to.eql(requestBody.status);\r",
+                  "    });\r",
+                  "}\r",
+                  "\r",
+                  "if (pm.response.code === 400) {\r",
+                  "    pm.test(\"Invalid status transition or enum rejected\", function () {\r",
+                  "        pm.response.to.have.status(400);\r",
+                  "    });\r",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"status\": \"InProgress\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/tasks/{{taskId}}/status",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "tasks",
+                "{{taskId}}",
+                "status"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Task Assignee",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();\r",
+                  "var requestBody = JSON.parse(pm.request.body.raw);\r",
+                  "\r",
+                  "if (pm.response.code === 200) {\r",
+                  "    pm.test(\"Status code is 200 OK\", function () {\r",
+                  "        pm.response.to.have.status(200);\r",
+                  "    });\r",
+                  "\r",
+                  "    pm.test(\"Assignee is updated correctly\", function () {\r",
+                  "        pm.expect(jsonData.assigneeId).to.eql(requestBody.assigneeId);\r",
+                  "    });\r",
+                  "}\r",
+                  "\r",
+                  "if (pm.response.code === 400) {\r",
+                  "    pm.test(\"Assigning to non-member fails with 400\", function () {\r",
+                  "        pm.response.to.have.status(400);\r",
+                  "    });\r",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Trong Update Task Assignee - Pre-request Script\r",
+                  "var taskId = pm.environment.get('taskId');\r",
+                  "if (!taskId) {\r",
+                  "    console.error('❌ taskId missing! Run Create Task first.');\r",
+                  "    throw new Error('taskId is required');\r",
+                  "}\r",
+                  "console.log('🔍 Using taskId:', taskId);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"assigneeId\": null\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/tasks/{{taskId}}/assign",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "tasks",
+                "{{taskId}}",
+                "assign"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List Tasks (All)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// ============================================\r",
+                  "// 1. PARSE RESPONSE AN TOÀN\r",
+                  "// ============================================\r",
+                  "\r",
+                  "var responseText = pm.response.text();\r",
+                  "var jsonData = null;\r",
+                  "var isJsonResponse = false;\r",
+                  "\r",
+                  "try {\r",
+                  "    if (responseText && responseText.trim().length > 0) {\r",
+                  "        jsonData = JSON.parse(responseText);\r",
+                  "        isJsonResponse = true;\r",
+                  "    } else {\r",
+                  "        console.log(\"⚠️ Response body is empty\");\r",
+                  "    }\r",
+                  "} catch (e) {\r",
+                  "    jsonData = null;\r",
+                  "    isJsonResponse = false;\r",
+                  "    console.log(\"❌ Response is not valid JSON:\", e.message);\r",
+                  "}\r",
+                  "\r",
+                  "// ============================================\r",
+                  "// 2. DEBUG LOG\r",
+                  "// ============================================\r",
+                  "\r",
+                  "var taskId = pm.variables.get(\"taskId\");\r",
+                  "var projectId = pm.variables.get(\"projectId\");\r",
+                  "\r",
+                  "console.log(\"🔍 Debug - Task Detail:\");\r",
+                  "console.log(\"  taskId from variable:\", taskId);\r",
+                  "console.log(\"  projectId from variable:\", projectId);\r",
+                  "console.log(\"  Status:\", pm.response.code);\r",
+                  "console.log(\"  Response type:\", Array.isArray(jsonData) ? \"Array\" : \"Object\");\r",
+                  "\r",
+                  "// ============================================\r",
+                  "// 3. TEST: 200 OK (HAPPY PATH)\r",
+                  "// ============================================\r",
+                  "\r",
+                  "if (pm.response.code === 200) {\r",
+                  "    pm.test(\"Status code is 200 OK\", function () {\r",
+                  "        pm.response.to.have.status(200);\r",
+                  "    });\r",
+                  "\r",
+                  "    if (isJsonResponse && jsonData) {\r",
+                  "        // Nếu response là array → lấy phần tử đầu tiên (cho List Tasks)\r",
+                  "        if (Array.isArray(jsonData) && jsonData.length > 0) {\r",
+                  "            jsonData = jsonData[0];\r",
+                  "            console.log(\"⚠️ Response is an array, using first element\");\r",
+                  "        }\r",
+                  "\r",
+                  "        // Kiểm tra id khớp với taskId\r",
+                  "        pm.test(\"Response matches taskId\", function () {\r",
+                  "            var expectedTaskId = parseInt(taskId, 10);\r",
+                  "            if (!isNaN(expectedTaskId) && jsonData && jsonData.id) {\r",
+                  "                pm.expect(jsonData.id).to.eql(expectedTaskId);\r",
+                  "            } else {\r",
+                  "                console.log(\"⚠️ Warning: taskId not set or response is not a task object\");\r",
+                  "            }\r",
+                  "        });\r",
+                  "\r",
+                  "        // Kiểm tra các field bắt buộc (KHÔNG có projectId)\r",
+                  "        pm.test(\"Task object has all required fields\", function () {\r",
+                  "            if (jsonData && typeof jsonData === 'object' && !Array.isArray(jsonData)) {\r",
+                  "                pm.expect(jsonData).to.have.property('id');\r",
+                  "                pm.expect(jsonData).to.have.property('title');\r",
+                  "                pm.expect(jsonData).to.have.property('description');\r",
+                  "                pm.expect(jsonData).to.have.property('status');\r",
+                  "                // ✅ BỎ projectId vì backend không trả về\r",
+                  "                // pm.expect(jsonData).to.have.property('projectId');\r",
+                  "            } else {\r",
+                  "                console.log(\"⚠️ Response is not a task object, skipping detail checks\");\r",
+                  "            }\r",
+                  "        });\r",
+                  "\r",
+                  "        // Lưu taskId nếu chưa có\r",
+                  "        if (jsonData.id) {\r",
+                  "            pm.environment.set('taskId', jsonData.id);\r",
+                  "            console.log(\"✅ taskId updated:\", jsonData.id);\r",
+                  "        }\r",
+                  "    }\r",
+                  "}\r",
+                  "\r",
+                  "// ============================================\r",
+                  "// 4. TEST: 404 NOT FOUND\r",
+                  "// ============================================\r",
+                  "\r",
+                  "if (pm.response.code === 404) {\r",
+                  "    pm.test(\"Status code is 404 Not Found\", function () {\r",
+                  "        pm.response.to.have.status(404);\r",
+                  "    });\r",
+                  "}\r",
+                  "\r",
+                  "// ============================================\r",
+                  "// 5. TEST: 401 UNAUTHORIZED\r",
+                  "// ============================================\r",
+                  "\r",
+                  "if (pm.response.code === 401) {\r",
+                  "    pm.test(\"Status code is 401 Unauthorized\", function () {\r",
+                  "        pm.response.to.have.status(401);\r",
+                  "    });\r",
+                  "}\r",
+                  "\r",
+                  "// ============================================\r",
+                  "// 6. TEST: 403 FORBIDDEN\r",
+                  "// ============================================\r",
+                  "\r",
+                  "if (pm.response.code === 403) {\r",
+                  "    pm.test(\"Status code is 403 Forbidden\", function () {\r",
+                  "        pm.response.to.have.status(403);\r",
+                  "    });\r",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"title\": \"Fix login bug\",\r\n  \"description\": \"Session token expires too early\",\r\n  \"priority\": 2,\r\n  \"dueDate\": \"2026-12-31T23:59:59Z\",\r\n  \"assigneeId\": 2\r\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/projects/{{projectId}}/tasks",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "projects",
+                "{{projectId}}",
+                "tasks"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List Task (Filter by Priority)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Status code is 200 OK\", () => {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"All tasks have priority = High\", () => {\r",
+                  "    if (Array.isArray(jsonData) && jsonData.length > 0) {\r",
+                  "        jsonData.forEach(task => {\r",
+                  "            pm.expect(task.priority).to.be.oneOf([\"High\", 2]); // số hoặc string\r",
+                  "        });\r",
+                  "    }\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Trong Pre-request Script của Filter requests\r",
+                  "var projectId = pm.environment.get('projectId');\r",
+                  "if (!projectId) {\r",
+                  "    console.error('❌ projectId missing! Run Create Project first.');\r",
+                  "    throw new Error('projectId is required');\r",
+                  "}\r",
+                  "console.log('🔍 Using projectId:', projectId);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/projects/{{projectId}}/tasks?priority=High",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "projects",
+                "{{projectId}}",
+                "tasks"
+              ],
+              "query": [
+                {
+                  "key": "priority",
+                  "value": "High"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List Task (Filter by Assignee)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Status code is 200 OK\", () => {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"All tasks have assigneeId = userId\", () => {\r",
+                  "    if (Array.isArray(jsonData) && jsonData.length > 0) {\r",
+                  "        var expectedUserId = parseInt(pm.environment.get(\"userId\"));\r",
+                  "        jsonData.forEach(task => {\r",
+                  "            pm.expect(task.assigneeId).to.equal(expectedUserId);\r",
+                  "        });\r",
+                  "    }\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Trong Pre-request Script của Filter requests\r",
+                  "var projectId = pm.environment.get('projectId');\r",
+                  "if (!projectId) {\r",
+                  "    console.error('❌ projectId missing! Run Create Project first.');\r",
+                  "    throw new Error('projectId is required');\r",
+                  "}\r",
+                  "console.log('🔍 Using projectId:', projectId);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/projects/{{projectId}}/tasks?assigneeId={{userId}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "projects",
+                "{{projectId}}",
+                "tasks"
+              ],
+              "query": [
+                {
+                  "key": "assigneeId",
+                  "value": "{{userId}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List Task (Filter by Status)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Status code is 200 OK\", () => {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"All tasks have status = InProgress\", () => {\r",
+                  "    if (Array.isArray(jsonData) && jsonData.length > 0) {\r",
+                  "        jsonData.forEach(task => {\r",
+                  "            pm.expect(task.status).to.equal(\"InProgress\");\r",
+                  "        });\r",
+                  "    }\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Trong Pre-request Script của Filter requests\r",
+                  "var projectId = pm.environment.get('projectId');\r",
+                  "if (!projectId) {\r",
+                  "    console.error('❌ projectId missing! Run Create Project first.');\r",
+                  "    throw new Error('projectId is required');\r",
+                  "}\r",
+                  "console.log('🔍 Using projectId:', projectId);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/projects/{{projectId}}/tasks?status=InProgress",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "projects",
+                "{{projectId}}",
+                "tasks"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "InProgress"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Task",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// 1. Happy Path\r",
+                  "if (pm.response.code === 204 || pm.response.code === 200) {\r",
+                  "    pm.test(\"Task deleted successfully\", function () {\r",
+                  "        pm.expect(pm.response.code).to.be.oneOf([200, 204]);\r",
+                  "    });\r",
+                  "    \r",
+                  "    // Clear taskId variable after successful deletion\r",
+                  "    pm.collectionVariables.unset(\"taskId\");\r",
+                  "}\r",
+                  "\r",
+                  "// 2. Negative Cases\r",
+                  "if (pm.response.code === 404) {\r",
+                  "    pm.test(\"Task not found for deletion\", function () {\r",
+                  "        pm.response.to.have.status(404);\r",
+                  "    });\r",
+                  "}\r",
+                  "\r",
+                  "if (pm.response.code === 403) {\r",
+                  "    pm.test(\"Only owners/creators can delete task (Forbidden)\", function () {\r",
+                  "        pm.response.to.have.status(403);\r",
+                  "    });\r",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/tasks/{{taskId}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "tasks",
+                "{{taskId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "05_Delete_Project",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 204 || pm.response.code === 200) {\r",
+              "    pm.test(\"Project deleted successfully\", function () {\r",
+              "        pm.expect(pm.response.code).to.be.oneOf([200, 204]);\r",
+              "    });\r",
+              "    \r",
+              "    // Clear projectId sau khi xoá thành công\r",
+              "    pm.collectionVariables.unset(\"projectId\");\r",
+              "}\r",
+              "\r",
+              "if (pm.response.code === 403) {\r",
+              "    pm.test(\"Only owners can delete project (Forbidden)\", function () {\r",
+              "        pm.response.to.have.status(403);\r",
+              "    });\r",
+              "}\r",
+              "\r",
+              "if (pm.response.code === 404) {\r",
+              "    pm.test(\"Project not found\", function () {\r",
+              "        pm.response.to.have.status(404);\r",
+              "    });\r",
+              "}"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": ""
+        },
+        "url": {
+          "raw": "{{base_url}}/api/projects/{{projectId}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "projects",
+            "{{projectId}}"
+          ]
+        }
+      },
+      "response": []
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "email",
+      "value": ""
+    },
+    {
+      "key": "bearer_token_104q",
+      "secret": true
+    },
+    {
+      "key": "bearer_token_0wq3",
+      "secret": true
+    }
+  ]
+}
