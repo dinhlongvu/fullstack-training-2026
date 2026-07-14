@@ -46,7 +46,6 @@ public class GetMyStatsHandler : IRequestHandler<GetMyStatsQuery, DashboardStats
             .Where(t => t.AssigneeId == req.CurrentUserId
                     && t.Status != DomainTaskStatus.Done
                     && t.DueDate.HasValue
-                    && t.DueDate.Value >= now
                     && t.DueDate.Value <= inThreeDays)
             .OrderBy(t => t.DueDate)
             .Select(t => new UpcomingDeadlineDto(
