@@ -126,9 +126,24 @@ export function TaskCard({ task, projectId, members }: TaskCardProps) {
 
   return (
     <>
+      {/* The card is a non-native clickable, so expose it to keyboard/AT users:
+          role + tabIndex make it focusable and announced as a button, and
+          onKeyDown activates it with Enter/Space (WCAG 2.1.1). The
+          target === currentTarget guard ensures Enter/Space fired on an inner
+          control (move/delete/assignee) doesn't ALSO navigate to the detail. */}
       <Card
-        className="cursor-pointer transition-shadow hover:shadow-md"
+        className="cursor-pointer transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        role="button"
+        tabIndex={0}
+        aria-label={`View details for ${task.title}`}
         onClick={() => navigate(`/tasks/${task.id}`)}
+        onKeyDown={(e) => {
+          if (e.target !== e.currentTarget) return;
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            navigate(`/tasks/${task.id}`);
+          }
+        }}
       >
         <CardContent className="p-4">
           {/* Header: priority badge + delete action */}
