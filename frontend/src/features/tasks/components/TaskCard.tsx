@@ -183,11 +183,10 @@ export function TaskCard({ task, projectId, members }: TaskCardProps) {
             {/* Due date */}
             {task.dueDate && (
               <div
-                className={`flex shrink-0 items-center gap-1 ${
-                  isOverdue(task.dueDate) && task.status !== "Done"
+                className={`flex shrink-0 items-center gap-1 ${isOverdue(task.dueDate) && task.status !== "Done"
                     ? "text-red-500"
                     : ""
-                }`}
+                  }`}
               >
                 <Calendar className="h-3 w-3" />
                 <span>{formatDueDate(task.dueDate)}</span>
@@ -195,29 +194,38 @@ export function TaskCard({ task, projectId, members }: TaskCardProps) {
             )}
           </div>
 
-          {/* Move Left / Move Right — change status (column) */}
+          {/* Move Left / Move Right — change status (column). */}
           {/* flex-wrap + flex-1 lets buttons resize to share the row, then stack
               vertically when the column is too narrow to fit both side by side. */}
-          <div className="mt-3 flex flex-wrap items-center gap-2 border-t pt-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="min-w-[7rem] flex-1"
-              disabled={!canMoveLeft || updateStatus.isPending}
-              onClick={(e) => handleMove(e, "left")}
+          {(canMoveLeft || canMoveRight) && (
+            <div
+              className="mt-3 flex flex-wrap items-center gap-2 border-t pt-2"
+              onClick={(e) => e.stopPropagation()}
             >
-              ← Move Left
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="min-w-[7rem] flex-1"
-              disabled={!canMoveRight || updateStatus.isPending}
-              onClick={(e) => handleMove(e, "right")}
-            >
-              Move Right →
-            </Button>
-          </div>
+              {canMoveLeft && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="min-w-[7rem] flex-1"
+                  disabled={updateStatus.isPending}
+                  onClick={(e) => handleMove(e, "left")}
+                >
+                  ← Move Left
+                </Button>
+              )}
+              {canMoveRight && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="min-w-[7rem] flex-1"
+                  disabled={updateStatus.isPending}
+                  onClick={(e) => handleMove(e, "right")}
+                >
+                  Move Right →
+                </Button>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 
