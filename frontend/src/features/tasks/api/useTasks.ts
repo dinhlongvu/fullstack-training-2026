@@ -3,6 +3,7 @@
 // useQuery for reading, useMutation for creating.
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import {
   getProjectTasks,
   getTask,
@@ -11,6 +12,7 @@ import {
   updateTaskStatus,
   assignTask,
   deleteTask,
+  type Task,
   type TaskFilters,
   type CreateTaskRequest,
   type TaskStatus,
@@ -41,17 +43,50 @@ export function useCreateTaskMutation(projectId: number) {
   });
 }
 
-// Hook to move a task to a new status (Kanban column toggle)
+// Hook to move a task to a new status (Kanban column toggle).
+// Uses an OPTIMISTIC UPDATE: the card jumps to the new column immediately,
+// the PATCH runs in the background, and we roll back if it fails.
 export function useUpdateTaskStatusMutation(projectId: number) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ taskId, status }: { taskId: number; status: TaskStatus }) =>
       updateTaskStatus(taskId, status),
-    onSuccess: (_data, variables) => {
-      // Refresh every board filter view so the card moves to the new column
+
+    // 1. onMutate — runs BEFORE the request. Update the cache right away so the
+    //    card moves without waiting for the server.
+    onMutate: async ({ taskId, status }) => {
+      // Cancel in-flight board refetches so a late response can't overwrite our
+      // optimistic change with stale data.
+      await queryClient.cancelQueries({ queryKey: ["tasks", projectId] });
+
+      // Snapshot every cached board view (all filter combinations) for rollback.
+      const previousTasks = queryClient.getQueriesData<Task[]>({
+        queryKey: ["tasks", projectId],
+      });
+
+      // Write the new status into every cached board view.
+      queryClient.setQueriesData<Task[]>(
+        { queryKey: ["tasks", projectId] },
+        (old) =>
+          old?.map((task) => (task.id === taskId ? { ...task, status } : task)),
+      );
+
+      // Pass the snapshot to onError via the mutation context.
+      return { previousTasks };
+    },
+
+    // 2. onError — restore the snapshot and tell the user.
+    onError: (error, _variables, context) => {
+      context?.previousTasks.forEach(([queryKey, data]) => {
+        queryClient.setQueryData(queryKey, data);
+      });
+      toast.error(error.message);
+    },
+
+    // 3. onSettled — success or failure, refetch to guarantee the cache matches
+    //    the server (source of truth).
+    onSettled: (_data, _error, variables) => {
       queryClient.invalidateQueries({ queryKey: ["tasks", projectId] });
-      // Also refresh the Task Detail cache for this task, otherwise opening
-      // the detail after a status change shows stale data
       queryClient.invalidateQueries({ queryKey: ["task", variables.taskId] });
     },
   });

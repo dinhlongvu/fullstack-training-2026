@@ -81,18 +81,14 @@ export function TaskCard({ task, projectId, members }: TaskCardProps) {
 
   // Move task to the previous/next column.
   // stopPropagation prevents the card's own onClick (navigate to detail) from firing.
+  // Error handling (rollback + toast) lives in the mutation hook.
   function handleMove(event: React.MouseEvent, direction: "left" | "right") {
     event.stopPropagation();
     const nextIndex =
       direction === "left" ? currentIndex - 1 : currentIndex + 1;
     const nextStatus = TASK_STATUS_ORDER[nextIndex];
 
-    updateStatus.mutate(
-      { taskId: task.id, status: nextStatus },
-      {
-        onError: (error) => toast.error(error.message),
-      },
-    );
+    updateStatus.mutate({ taskId: task.id, status: nextStatus });
   }
 
   // Open the delete confirmation dialog.
@@ -127,7 +123,7 @@ export function TaskCard({ task, projectId, members }: TaskCardProps) {
   return (
     <>
       <Card
-        className="cursor-pointer transition-shadow hover:shadow-md"
+        className="cursor-pointer transition-shadow hover:shadow-md animate-in fade-in-0 zoom-in-95 duration-200"
         onClick={() => navigate(`/tasks/${task.id}`)}
       >
         <CardContent className="p-4">
