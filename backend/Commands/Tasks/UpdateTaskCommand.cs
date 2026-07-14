@@ -15,7 +15,8 @@ public record UpdateTaskCommand(
     Priority? Priority,
     DateTime? DueDate,
     int? AssigneeId,
-    bool ClearAssignee  // true when caller explicitly wants to remove assignee
+    bool ClearAssignee,  // true when caller explicitly wants to remove assignee
+    bool ClearDueDate   // true when caller explicitly wants to remove due date
 ) : IRequest<UpdateTaskResult>;
 
 public record UpdateTaskResult(
@@ -33,6 +34,8 @@ public record UpdateTaskRequest
     public DateTime? DueDate { get; init; }
     public int? AssigneeId { get; init; }
 
-    // Default false — only true when caller explicitly sends "clearAssignee": true
+    // Default false — only true when caller explicitly sends 
+    // "clearAssignee": true or "clearDueDate": true
     public bool ClearAssignee { get; init; } = false;
+    public bool ClearDueDate { get; init; } = false;
 }

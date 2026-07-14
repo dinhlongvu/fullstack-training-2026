@@ -177,7 +177,8 @@ public class TasksModule : ICarterModule
                 parsedPriority,
                 req.DueDate,
                 req.AssigneeId,
-                req.ClearAssignee
+                req.ClearAssignee,
+                req.ClearDueDate
             );
 
             var result = await mediator.Send(command, ct);
