@@ -1,15 +1,58 @@
-// pages/DashboardPage.tsx — My stats + upcoming deadlines.
-// TODO: Intern will implement.
+// pages/DashboardPage.tsx — Current user's task stats
+// Fetches GET /api/dashboard/my-stats via React Query and renders 3 stat cards
+
+import { CheckCircle2, ListTodo, Timer } from "lucide-react";
+import { useMyStatsQuery } from "@/features/dashboard/api/useDashboard";
+import { StatsCard } from "@/features/dashboard/components/StatsCard";
+import { DashboardStatsSkeleton } from "@/features/dashboard/components/DashboardStatsSkeleton";
 
 export function DashboardPage() {
+  const { data: stats, isLoading, error } = useMyStatsQuery();
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <h2 className="text-2xl font-bold">Dashboard</h2>
-      <p className="text-muted-foreground">
-        TODO: Show task counts by status, upcoming deadlines (due within 3 days).
-        <br />
-        Fetch from GET /api/dashboard/my-stats.
-      </p>
+
+      {/* Loading state — skeleton cards */}
+      {isLoading && <DashboardStatsSkeleton />}
+
+      {/* Error state */}
+      {error && (
+        <p className="text-center text-sm text-destructive">
+          Failed to load dashboard: {error.message}
+        </p>
+      )}
+
+      {/* Empty state — user has no tasks assigned */}
+      {stats && stats.totalAssigned === 0 && (
+        <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed py-12 text-center">
+          <ListTodo className="h-12 w-12 text-muted-foreground" />
+          <p className="text-base font-medium">
+            No tasks yet — create your first project!
+          </p>
+        </div>
+      )}
+
+      {/* Stats cards */}
+      {stats && stats.totalAssigned > 0 && (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <StatsCard
+            label="Total Tasks"
+            value={stats.totalAssigned}
+            icon={ListTodo}
+          />
+          <StatsCard
+            label="In Progress"
+            value={stats.tasksByStatus.inProgress}
+            icon={Timer}
+          />
+          <StatsCard
+            label="Done"
+            value={stats.tasksByStatus.done}
+            icon={CheckCircle2}
+          />
+        </div>
+      )}
     </div>
   );
 }
