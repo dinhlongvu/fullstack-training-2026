@@ -17,6 +17,7 @@ import {
 import { PriorityBadge } from "@/features/tasks/components/PriorityBadge";
 import { StatusBadge } from "@/features/tasks/components/StatusBadge";
 import { CommentList } from "@/features/tasks/components/CommentList";
+import { CommentForm } from "@/features/tasks/components/CommentForm";
 
 // Format a date for display (e.g., "Jul 9, 2026")
 function formatDate(dateString: string): string {
@@ -137,6 +138,9 @@ export function TaskDetailPage() {
             isLoading={isCommentsLoading}
             error={commentsError}
           />
+          <div className="mt-6 border-t pt-6">
+            <CommentForm taskId={taskId} />
+          </div>
         </CardContent>
       </Card>
     </div>
