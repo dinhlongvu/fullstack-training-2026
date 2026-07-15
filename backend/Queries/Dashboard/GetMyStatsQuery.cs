@@ -48,7 +48,8 @@ public class GetMyStatsHandler : IRequestHandler<GetMyStatsQuery, DashboardStats
                     && t.DueDate.HasValue
                     && t.DueDate.Value <= inThreeDays)
             .OrderBy(t => t.DueDate)
-            .ThenByDescending(t => t.Priority)
+            .ThenByDescending(t => t.Priority == Domain.Priority.High ? 2
+                                : t.Priority == Domain.Priority.Medium ? 1 : 0)
             .Take(20)
             .Select(t => new UpcomingDeadlineDto(
                 t.Id,
