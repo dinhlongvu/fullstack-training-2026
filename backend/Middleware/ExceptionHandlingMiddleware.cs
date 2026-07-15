@@ -4,8 +4,8 @@
 
 using System.Net;
 using System.Text.Json;
-using FluentValidation;
 using Backend.Exceptions; // Custom exceptions can be defined here for more specific error handling.
+using FluentValidation;
 
 namespace Backend.Middleware;
 
@@ -25,6 +25,18 @@ public class ExceptionHandlingMiddleware
         try
         {
             await _next(context);
+
+            // Getting 404 error from ASP.NET Core when calling Endpoint/URL does not exist (Route not found)
+            if (context.Response.StatusCode == (int)HttpStatusCode.NotFound && !context.Response.HasStarted)
+            {
+                context.Response.ContentType = "application/json";
+                var response = new
+                {
+                    error = "Resource not found",
+                    traceId = context.TraceIdentifier
+                };
+                await context.Response.WriteAsync(JsonSerializer.Serialize(response));
+            }
         }
         catch (Exception ex)
         {
@@ -49,15 +61,19 @@ public class ExceptionHandlingMiddleware
         context.Response.ContentType = "application/json";
         context.Response.StatusCode = (int)statusCode;
 
+        var traceId = context.TraceIdentifier;
+
         // 2. Format Body returns (Validation returns array 'errors', otherwise returns 'error')
         object response = exception switch
         {
-            ValidationException ve => new { errors = ve.Errors.Select(e => e.ErrorMessage) },
-            ConflictException ce => new { error = ce.Message },
-            UnauthorizedException ue => new { error = ue.Message }, // Returns the error message from the LoginCommand handler
-            UnauthorizedAccessException => new { error = "Unauthorized." },
-            KeyNotFoundException ke => new { error = ke.Message },
-            _ => new { error = "An unexpected error occurred." } // Does not return specific errors, avoiding data disclosure
+            ValidationException ve => new { errors = ve.Errors.Select(e => e.ErrorMessage), traceId },
+            ConflictException ce => new { error = ce.Message, traceId },
+            UnauthorizedException ue => new { error = ue.Message, traceId }, // Returns the error message from the LoginCommand handler
+            UnauthorizedAccessException => new { error = "Unauthorized.", traceId },
+            KeyNotFoundException ke => new { error = ke.Message, traceId },
+
+            // Error 500 (Unexpected errors)
+            _ => new { error = "Internal server error", traceId }
         };
 
         await context.Response.WriteAsync(JsonSerializer.Serialize(response));
