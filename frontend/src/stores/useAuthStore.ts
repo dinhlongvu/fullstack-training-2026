@@ -9,6 +9,10 @@ const TOKEN_STORAGE_KEY = "taskboard_token";
 const REFRESH_TOKEN_STORAGE_KEY = "taskboard_refresh_token";
 const USER_STORAGE_KEY = "taskboard_current_user";
 
+// A JWT is three base64url segments separated by dots, and the backend never
+const JWT_PATTERN = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/;
+const MAX_TOKEN_LENGTH = 4096;
+
 // Represents the authenticated user returned by the API
 export interface AuthUser {
   id: number;
@@ -25,6 +29,30 @@ interface AuthState {
   setAuth: (token: string, refreshToken: string, currentUser: AuthUser) => void;
   setTokens: (token: string, refreshToken: string) => void;
   clearAuth: () => void;
+}
+
+// Remove every stored auth value.
+// Used on logout, and whenever stored data turns out to be untrustworthy.
+function clearStoredAuth() {
+  localStorage.removeItem(TOKEN_STORAGE_KEY);
+  localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
+  localStorage.removeItem(USER_STORAGE_KEY);
+}
+
+// Read the JWT from localStorage.
+// Returns null if the stored value is not a well-formed JWT — in that case the
+// whole session is dropped, so AuthGuard sends the user back to /login.
+function getStoredToken(): string | null {
+  const value = localStorage.getItem(TOKEN_STORAGE_KEY);
+
+  if (!value) return null;
+
+  if (value.length > MAX_TOKEN_LENGTH || !JWT_PATTERN.test(value)) {
+    clearStoredAuth();
+    return null;
+  }
+
+  return value;
 }
 
 // Read user information from localStorage
@@ -44,8 +72,12 @@ function getStoredCurrentUser(): AuthUser | null {
   }
 }
 
+// Validate the token first: a corrupted one wipes the whole stored session,
+// so the reads below must happen after this line, not before.
+const initialToken = getStoredToken();
+
 export const useAuthStore = create<AuthState>((set) => ({
-  token: localStorage.getItem(TOKEN_STORAGE_KEY),
+  token: initialToken,
   refreshToken: localStorage.getItem(REFRESH_TOKEN_STORAGE_KEY),
   currentUser: getStoredCurrentUser(),
 
@@ -65,9 +97,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   clearAuth: () => {
-    localStorage.removeItem(TOKEN_STORAGE_KEY);
-    localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
-    localStorage.removeItem(USER_STORAGE_KEY);
+    clearStoredAuth();
     set({ token: null, refreshToken: null, currentUser: null });
   },
 }));
