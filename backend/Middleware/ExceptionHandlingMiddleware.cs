@@ -2,10 +2,12 @@
 // Catches ALL unhandled exceptions and returns consistent JSON error responses.
 // Prevents leaking stack traces to the client in production.
 
+using System.Diagnostics;
 using System.Net;
 using System.Text.Json;
 using Backend.Exceptions; // Custom exceptions can be defined here for more specific error handling.
 using FluentValidation;
+using Microsoft.AspNetCore.Http.Json;
 
 namespace Backend.Middleware;
 
@@ -27,13 +29,14 @@ public class ExceptionHandlingMiddleware
             await _next(context);
 
             // Getting 404 error from ASP.NET Core when calling Endpoint/URL does not exist (Route not found)
-            if (context.Response.StatusCode == (int)HttpStatusCode.NotFound && !context.Response.HasStarted)
+            if (context.Response.StatusCode == StatusCodes.Status404NotFound && !context.Response.HasStarted)
             {
+                var traceId = Activity.Current?.Id ?? context.TraceIdentifier;
                 context.Response.ContentType = "application/json";
                 var response = new
                 {
                     error = "Resource not found",
-                    traceId = context.TraceIdentifier
+                    traceId
                 };
                 await context.Response.WriteAsync(JsonSerializer.Serialize(response));
             }
@@ -41,6 +44,14 @@ public class ExceptionHandlingMiddleware
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unhandled exception for {Method} {Path}", context.Request.Method, context.Request.Path);
+
+            if (context.Response.HasStarted)
+            {
+                // Log warnings and disconnect safely
+                _logger.LogWarning("Response has already started. Skipping global error formatting");
+                context.Abort();
+                return;
+            }
             await HandleExceptionAsync(context, ex);
         }
     }
@@ -61,12 +72,18 @@ public class ExceptionHandlingMiddleware
         context.Response.ContentType = "application/json";
         context.Response.StatusCode = (int)statusCode;
 
-        var traceId = context.TraceIdentifier;
+        // Get traceId from the system
+        var traceId = Activity.Current?.Id ?? context.TraceIdentifier;
 
         // 2. Format Body returns (Validation returns array 'errors', otherwise returns 'error')
         object response = exception switch
         {
-            ValidationException ve => new { errors = ve.Errors.Select(e => e.ErrorMessage), traceId },
+            ValidationException ve => new
+            {
+                errors = "Validation failed",
+                traceId,
+                details = ve.Errors.Select(e => new { e.PropertyName, e.ErrorMessage })
+            },
             ConflictException ce => new { error = ce.Message, traceId },
             UnauthorizedException ue => new { error = ue.Message, traceId }, // Returns the error message from the LoginCommand handler
             UnauthorizedAccessException => new { error = "Unauthorized.", traceId },
@@ -75,8 +92,8 @@ public class ExceptionHandlingMiddleware
             // Error 500 (Unexpected errors)
             _ => new { error = "Internal server error", traceId }
         };
-
-        await context.Response.WriteAsync(JsonSerializer.Serialize(response));
+        var jsonOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+        await context.Response.WriteAsync(JsonSerializer.Serialize(response, jsonOptions));
     }
 }
 
