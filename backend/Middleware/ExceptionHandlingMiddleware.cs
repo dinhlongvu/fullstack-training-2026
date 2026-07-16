@@ -7,7 +7,6 @@ using System.Net;
 using System.Text.Json;
 using Backend.Exceptions; // Custom exceptions can be defined here for more specific error handling.
 using FluentValidation;
-using Microsoft.AspNetCore.Http.Json;
 
 namespace Backend.Middleware;
 
@@ -15,6 +14,11 @@ public class ExceptionHandlingMiddleware
 {
     private readonly RequestDelegate _next;
     private readonly ILogger<ExceptionHandlingMiddleware> _logger;
+
+    private static readonly JsonSerializerOptions _jsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
 
     public ExceptionHandlingMiddleware(RequestDelegate next, ILogger<ExceptionHandlingMiddleware> logger)
     {
@@ -38,7 +42,7 @@ public class ExceptionHandlingMiddleware
                     error = "Resource not found",
                     traceId
                 };
-                await context.Response.WriteAsync(JsonSerializer.Serialize(response));
+                await context.Response.WriteAsync(JsonSerializer.Serialize(response, _jsonOptions));
             }
         }
         catch (Exception ex)
@@ -80,9 +84,8 @@ public class ExceptionHandlingMiddleware
         {
             ValidationException ve => new
             {
-                errors = "Validation failed",
-                traceId,
-                details = ve.Errors.Select(e => new { e.PropertyName, e.ErrorMessage })
+                errors = ve.Errors.Select(e => e.ErrorMessage),
+                traceId
             },
             ConflictException ce => new { error = ce.Message, traceId },
             UnauthorizedException ue => new { error = ue.Message, traceId }, // Returns the error message from the LoginCommand handler
@@ -92,8 +95,7 @@ public class ExceptionHandlingMiddleware
             // Error 500 (Unexpected errors)
             _ => new { error = "Internal server error", traceId }
         };
-        var jsonOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
-        await context.Response.WriteAsync(JsonSerializer.Serialize(response, jsonOptions));
+        await context.Response.WriteAsync(JsonSerializer.Serialize(response, _jsonOptions));
     }
 }
 
