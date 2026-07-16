@@ -36,14 +36,14 @@ export function KanbanBoard({ projectId, members }: KanbanBoardProps) {
   const rawPriority = searchParams.get("priority");
 
   let priorityFilter: TaskPriority | null = null;
-  let needsUrlCleanup = false;
+  let needsPriorityCleanup = false;
   let validPriorityToSet: string | null = null;
 
   if (rawPriority) {
     if (PRIORITY_OPTIONS.includes(rawPriority as TaskPriority)) {
       priorityFilter = rawPriority as TaskPriority;
     } else {
-      needsUrlCleanup = true;
+      needsPriorityCleanup = true;
       // Split by comma and find the first valid priority
       const firstValid = rawPriority
         .split(",")
@@ -57,28 +57,42 @@ export function KanbanBoard({ projectId, members }: KanbanBoardProps) {
     }
   }
 
-  // Automatically clean up the URL without a full page reload
+  // An assignee is valid only if it matches a current project member.
+  // An unknown value (typo, stale share link, hand-edited URL) is ignored.
+  const rawAssignee = searchParams.get("assigneeId");
+  const validAssigneeIds = new Set(members.map((m) => String(m.userId)));
+  const assigneeFilter =
+    rawAssignee && validAssigneeIds.has(rawAssignee) ? rawAssignee : null;
+  const needsAssigneeCleanup = rawAssignee !== null && assigneeFilter === null;
+
+  // Automatically strip invalid filter params from the URL without a full
+  // page reload, so the address bar always reflects the active filters.
   useEffect(() => {
-    if (needsUrlCleanup) {
-      setSearchParams(
-        (prev) => {
-          const next = new URLSearchParams(prev);
+    if (!needsPriorityCleanup && !needsAssigneeCleanup) return;
+
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (needsPriorityCleanup) {
           if (validPriorityToSet) {
             next.set("priority", validPriorityToSet);
           } else {
             next.delete("priority");
           }
-          return next;
-        },
-        { replace: true },
-      );
-    }
-  }, [needsUrlCleanup, validPriorityToSet, setSearchParams]);
-
-  const rawAssignee = searchParams.get("assigneeId");
-  const validAssigneeIds = new Set(members.map((m) => String(m.userId)));
-  const assigneeFilter =
-    rawAssignee && validAssigneeIds.has(rawAssignee) ? rawAssignee : null;
+        }
+        if (needsAssigneeCleanup) {
+          next.delete("assigneeId");
+        }
+        return next;
+      },
+      { replace: true },
+    );
+  }, [
+    needsPriorityCleanup,
+    validPriorityToSet,
+    needsAssigneeCleanup,
+    setSearchParams,
+  ]);
 
   // Fetch tasks — filters passed to API via query params
   const {
