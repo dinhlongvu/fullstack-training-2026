@@ -9,12 +9,14 @@ import {
   getTask,
   getTaskComments,
   createTask,
+  createComment,
   updateTaskStatus,
   assignTask,
   deleteTask,
   type Task,
   type TaskFilters,
   type CreateTaskRequest,
+  type CreateCommentRequest,
   type TaskStatus,
 } from "./tasksApi";
 
@@ -140,5 +142,20 @@ export function useTaskCommentsQuery(taskId: number) {
     queryKey: ["comments", taskId],
     queryFn: () => getTaskComments(taskId),
     enabled: taskId > 0,
+  });
+}
+
+// Hook to add a comment to a task
+export function useCreateCommentMutation(taskId: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (request: CreateCommentRequest) =>
+      createComment(taskId, request),
+    onSuccess: () => {
+      // Refresh the comment list so the new comment appears
+      queryClient.invalidateQueries({ queryKey: ["comments", taskId] });
+      // Also refresh the task detail — its header shows the comment count
+      queryClient.invalidateQueries({ queryKey: ["task", taskId] });
+    },
   });
 }

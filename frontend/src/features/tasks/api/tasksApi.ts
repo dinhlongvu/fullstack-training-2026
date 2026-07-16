@@ -124,3 +124,17 @@ export function getTask(taskId: number) {
 export function getTaskComments(taskId: number) {
   return apiClient<Comment[]>(`/api/tasks/${taskId}/comments`);
 }
+
+// Shape of the request body for POST /api/tasks/{id}/comments
+export interface CreateCommentRequest {
+  content: string;
+}
+
+// Add a comment to a task.
+// POST /api/tasks/{taskId}/comments — returns 201 with the created comment
+export function createComment(taskId: number, request: CreateCommentRequest) {
+  return apiClient<Comment>(`/api/tasks/${taskId}/comments`, {
+    method: "POST",
+    body: JSON.stringify({ content: request.content }),
+  });
+}
