@@ -1,7 +1,7 @@
 // pages/DashboardPage.tsx — Current user's task stats
-// Fetches GET /api/dashboard/my-stats via React Query and renders 3 stat cards
+// Fetches GET /api/dashboard/my-stats via React Query and renders 4 stat cards
 
-import { CheckCircle2, ListTodo, Timer } from "lucide-react";
+import { CheckCircle2, Circle, ListTodo, Timer } from "lucide-react";
 import { useMyStatsQuery } from "@/features/dashboard/api/useDashboard";
 import { StatsCard } from "@/features/dashboard/components/StatsCard";
 import { DashboardStatsSkeleton } from "@/features/dashboard/components/DashboardStatsSkeleton";
@@ -35,11 +35,16 @@ export function DashboardPage() {
 
       {/* Stats cards */}
       {stats && stats.totalAssigned > 0 && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatsCard
             label="Total Tasks"
             value={stats.totalAssigned}
             icon={ListTodo}
+          />
+          <StatsCard
+            label="Todo"
+            value={stats.tasksByStatus.todo}
+            icon={Circle}
           />
           <StatsCard
             label="In Progress"

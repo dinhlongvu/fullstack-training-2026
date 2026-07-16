@@ -1,5 +1,5 @@
 // features/dashboard/components/DashboardStatsSkeleton.tsx
-// Skeleton loading state for the dashboard stat cards (3 placeholders)
+// Skeleton loading state for the dashboard stat cards (4 placeholders)
 
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -20,7 +20,8 @@ function StatsCardSkeleton() {
 
 export function DashboardStatsSkeleton() {
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <StatsCardSkeleton />
       <StatsCardSkeleton />
       <StatsCardSkeleton />
       <StatsCardSkeleton />
