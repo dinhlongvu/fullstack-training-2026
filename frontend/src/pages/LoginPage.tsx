@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useForm } from "react-hook-form";
@@ -31,6 +31,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 export function LoginPage() {
   const navigate = useNavigate();
   const setAuth = useAuthStore((s) => s.setAuth);
+  const queryClient = useQueryClient();
 
   // Initialize React Hook Form with Zod resolver
   const form = useForm<LoginFormValues>({
@@ -45,6 +46,11 @@ export function LoginPage() {
   const loginMutation = useMutation({
     mutationFn: login,
     onSuccess: (data) => {
+      // Drop every cached query from the previous session before switching user.
+      // Logging in without signing out first (e.g. opening /login directly) would
+      // otherwise leave the old user's data in the cache, and staleTime keeps it
+      // "fresh" — so the new user would read someone else's projects/tasks/stats.
+      queryClient.clear();
       setAuth(data.token, data.refreshToken, data.user);
       navigate("/projects");
     },

@@ -41,6 +41,8 @@ export function useCreateTaskMutation(projectId: number) {
       // Invalidate ALL task queries for this project (regardless of filters)
       // so every filter view gets fresh data
       queryClient.invalidateQueries({ queryKey: ["tasks", projectId] });
+      // Dashboard stats count this user's tasks across all projects
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     },
   });
 }
@@ -90,6 +92,8 @@ export function useUpdateTaskStatusMutation(projectId: number) {
     onSettled: (_data, _error, variables) => {
       queryClient.invalidateQueries({ queryKey: ["tasks", projectId] });
       queryClient.invalidateQueries({ queryKey: ["task", variables.taskId] });
+      // Dashboard stats group tasks by status — the counts just changed
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     },
   });
 }
@@ -111,6 +115,9 @@ export function useAssignTaskMutation(projectId: number) {
       // Also refresh the Task Detail cache for this task, otherwise opening
       // the detail after an assign/unassign shows stale data
       queryClient.invalidateQueries({ queryKey: ["task", variables.taskId] });
+      // Dashboard stats only count tasks assigned to the current user,
+      // so assigning/unassigning changes the totals
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     },
   });
 }
@@ -123,6 +130,8 @@ export function useDeleteTaskMutation(projectId: number) {
     onSuccess: () => {
       // Same invalidation pattern — refresh every filter view so the card disappears
       queryClient.invalidateQueries({ queryKey: ["tasks", projectId] });
+      // Dashboard stats count this user's tasks across all projects
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     },
   });
 }
