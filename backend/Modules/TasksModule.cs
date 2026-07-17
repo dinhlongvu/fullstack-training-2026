@@ -341,5 +341,27 @@ public class TasksModule : ICarterModule
         .ProducesValidationProblem()
         .Produces(StatusCodes.Status404NotFound)
         .Produces(StatusCodes.Status401Unauthorized);
+
+        // ======== 10. DELETE /api/tasks/{taskId}/comments/{commentId} ========
+        taskRootGroup.MapDelete("/{taskId:int}/comments/{commentId:int}", async (
+            int taskId,
+            int commentId,
+            HttpContext context,
+            IMediator mediator,
+            CancellationToken ct) =>
+        {
+            var currentUserId = context.User.GetUserId();
+
+            var command = new DeleteCommentCommand(taskId, commentId, currentUserId);
+            await mediator.Send(command, ct);
+
+            return Results.NoContent();
+        })
+        .WithName("DeleteComment")
+        .WithSummary("Delete a comment within a task")
+        .WithDescription("Allows users to delete their own comments, and Project Managers to delete any comment within their projects.")
+        .Produces(StatusCodes.Status204NoContent)
+        .Produces(StatusCodes.Status404NotFound)
+        .Produces(StatusCodes.Status401Unauthorized);
     }
 }
