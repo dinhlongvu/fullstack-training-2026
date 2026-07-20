@@ -23,6 +23,11 @@ function formatCreatedAt(dateString: string): string {
   });
 }
 
+// Normalize Windows-style CRLF (and any stray CR) to LF.
+function normalizeNewlines(text: string): string {
+  return text.replace(/\r\n?/g, "\n");
+}
+
 export function CommentList({ comments, isLoading, error }: CommentListProps) {
   // Loading state
   if (isLoading) {
@@ -63,7 +68,7 @@ export function CommentList({ comments, isLoading, error }: CommentListProps) {
             </span>
           </div>
           <p className="mt-1 whitespace-pre-wrap text-sm text-muted-foreground">
-            {comment.content}
+            {normalizeNewlines(comment.content)}
           </p>
         </li>
       ))}
