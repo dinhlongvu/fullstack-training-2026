@@ -1,11 +1,8 @@
 // features/dashboard/components/UpcomingDeadlines.tsx
-// Dashboard widget: tasks due within the next 3 days.
-// Presentational only — data is passed in by the page. The deadline list itself
-// comes from #57's my-stats query (no extra query); project names are resolved
-// from the shared, already-cached projects list.
+// Dashboard widget: tasks due soon, split into Overdue (red) and Upcoming (yellow).
 
 import { Link } from "react-router-dom";
-import { CalendarClock } from "lucide-react";
+import { CalendarClock, AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { type UpcomingDeadline } from "../api/dashboardApi";
 import { type Project } from "@/features/projects/api/projectsApi";
@@ -15,8 +12,7 @@ interface UpcomingDeadlinesProps {
   projects: Project[];
 }
 
-// Whole days from today to the given date, compared by local calendar date
-// (not raw timestamps). Negative = overdue, 0 = today, positive = upcoming.
+// Whole days from today to the given date, compared by local calendar date. Negative = overdue, 0 = today, positive = upcoming.
 function daysUntil(dateString: string): number {
   const due = new Date(dateString);
   const dueOnly = new Date(due.getFullYear(), due.getMonth(), due.getDate());
@@ -27,8 +23,7 @@ function daysUntil(dateString: string): number {
   return Math.round((dueOnly.getTime() - todayOnly.getTime()) / msPerDay);
 }
 
-// Human-friendly due label: relative for the nearest days so urgency reads at a
-// glance, absolute otherwise (e.g. "Yesterday", "Today", "Tomorrow", "Jun 30").
+// Human-friendly due label: relative for the nearest days so urgency reads at a glance, absolute otherwise (e.g. "Yesterday", "Today", "Tomorrow", "Jun 30").
 function formatDueLabel(dateString: string): string {
   const days = daysUntil(dateString);
   if (days === -1) return "Yesterday";
@@ -48,14 +43,51 @@ export function UpcomingDeadlines({
   // Resolve projectId -> name. Lists are small, so building the map on render is fine.
   const projectNameById = new Map(projects.map((p) => [p.id, p.name]));
 
-  // Drop any entry without a due date before sorting/formatting. A task with no
-  // due date has no deadline to show, and this guards localeCompare/new Date
-  // against dirty or future backend data — this component is not wrapped in an
-  // ErrorBoundary, so an unguarded throw here would blank the whole dashboard.
   // dueDate is an ISO 8601 string, so a lexicographic compare is chronological.
   const sorted = [...deadlines]
     .filter((deadline) => deadline.dueDate)
     .sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+
+  // Split by calendar day: strictly-past days = overdue (red), today-or-later = upcoming (yellow). 
+  const overdue = sorted.filter((deadline) => daysUntil(deadline.dueDate) < 0);
+  const upcoming = sorted.filter(
+    (deadline) => daysUntil(deadline.dueDate) >= 0,
+  );
+
+  // One row, shared by both sections. `tone` drives only the due-date color so the markup stays identical between Overdue and Upcoming.
+  const renderItem = (
+    deadline: UpcomingDeadline,
+    tone: "overdue" | "upcoming",
+  ) => (
+    <li
+      key={deadline.taskId}
+      className="flex items-center justify-between gap-3 py-3"
+    >
+      {/* Title + project name */}
+      <div className="min-w-0">
+        <p className="truncate text-sm font-medium">{deadline.title}</p>
+        <p className="truncate text-xs text-muted-foreground">
+          {projectNameById.get(deadline.projectId) ?? "Unknown project"}
+        </p>
+      </div>
+
+      {/* Due date + View link */}
+      <div className="flex shrink-0 items-center gap-3">
+        <span
+          className={`text-xs font-medium ${tone === "overdue" ? "text-destructive" : "text-yellow-600"
+            }`}
+        >
+          {formatDueLabel(deadline.dueDate)}
+        </span>
+        <Link
+          to={`/tasks/${deadline.taskId}`}
+          className="text-sm font-medium text-primary hover:underline"
+        >
+          View
+        </Link>
+      </div>
+    </li>
+  );
 
   return (
     <Card>
@@ -70,51 +102,33 @@ export function UpcomingDeadlines({
             No upcoming deadlines 🎉
           </p>
         ) : (
-          // Cap the height and scroll instead of letting the list grow down the
-          // page — keeps the widget compact even when many deadlines are due.
-          <ul className="max-h-80 divide-y overflow-y-auto">
-            {sorted.map((deadline) => {
-              // Overdue or due today → surface as urgent (red).
-              const isUrgent = daysUntil(deadline.dueDate) <= 0;
+          // Cap the height and scroll instead of letting the list grow down the page — keeps the widget compact even when many deadlines are due.
+          <div className="max-h-80 space-y-4 overflow-y-auto">
+            {/* Overdue section first so missed work is impossible to miss. */}
+            {overdue.length > 0 && (
+              <section>
+                <h3 className="mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-destructive">
+                  <AlertTriangle className="h-3.5 w-3.5" />
+                  Overdue ({overdue.length})
+                </h3>
+                <ul className="divide-y">
+                  {overdue.map((deadline) => renderItem(deadline, "overdue"))}
+                </ul>
+              </section>
+            )}
 
-              return (
-                <li
-                  key={deadline.taskId}
-                  className="flex items-center justify-between gap-3 py-3"
-                >
-                  {/* Title + project name */}
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">
-                      {deadline.title}
-                    </p>
-                    <p className="truncate text-xs text-muted-foreground">
-                      {projectNameById.get(deadline.projectId) ??
-                        "Unknown project"}
-                    </p>
-                  </div>
-
-                  {/* Due date + View link */}
-                  <div className="flex shrink-0 items-center gap-3">
-                    <span
-                      className={`text-xs ${
-                        isUrgent
-                          ? "font-medium text-destructive"
-                          : "text-muted-foreground"
-                      }`}
-                    >
-                      {formatDueLabel(deadline.dueDate)}
-                    </span>
-                    <Link
-                      to={`/tasks/${deadline.taskId}`}
-                      className="text-sm font-medium text-primary hover:underline"
-                    >
-                      View
-                    </Link>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
+            {/* Upcoming section — due today or within the next 3 days. */}
+            {upcoming.length > 0 && (
+              <section>
+                <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-yellow-600">
+                  Upcoming ({upcoming.length})
+                </h3>
+                <ul className="divide-y">
+                  {upcoming.map((deadline) => renderItem(deadline, "upcoming"))}
+                </ul>
+              </section>
+            )}
+          </div>
         )}
       </CardContent>
     </Card>
