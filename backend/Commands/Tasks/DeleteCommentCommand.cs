@@ -5,7 +5,12 @@ using MediatR;
 namespace Backend.Commands.Tasks;
 
 public record DeleteCommentCommand(
-int TaskId,
-int CommentId,
-int CurrentUserId
-) : IRequest;
+    int TaskId,
+    int CommentId,
+    int CurrentUserId
+) : IRequest<DeleteCommentResult>;
+
+public record DeleteCommentResult(
+    bool IsFound,
+    bool IsAuthorized
+);

@@ -351,9 +351,12 @@ public class TasksModule : ICarterModule
             CancellationToken ct) =>
         {
             var currentUserId = context.User.GetUserId();
-
             var command = new DeleteCommentCommand(taskId, commentId, currentUserId);
-            await mediator.Send(command, ct);
+
+            var result = await mediator.Send(command, ct);
+
+            if (!result.IsFound || !result.IsAuthorized)
+                return Results.NotFound(new { error = "Comment not found" });
 
             return Results.NoContent();
         })
