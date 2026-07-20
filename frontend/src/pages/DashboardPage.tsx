@@ -1,13 +1,19 @@
 // pages/DashboardPage.tsx — Current user's task stats
-// Fetches GET /api/dashboard/my-stats via React Query and renders 4 stat cards
+// Fetches GET /api/dashboard/my-stats via React Query and renders stat cards
+// plus an Upcoming Deadlines widget (both reuse the same my-stats query).
 
 import { CheckCircle2, Circle, ListTodo, Timer } from "lucide-react";
 import { useMyStatsQuery } from "@/features/dashboard/api/useDashboard";
 import { StatsCard } from "@/features/dashboard/components/StatsCard";
 import { DashboardStatsSkeleton } from "@/features/dashboard/components/DashboardStatsSkeleton";
+import { UpcomingDeadlines } from "@/features/dashboard/components/UpcomingDeadlines";
+import { useProjectsQuery } from "@/features/projects/api/useProjects";
 
 export function DashboardPage() {
   const { data: stats, isLoading, error } = useMyStatsQuery();
+  // Shared, already-cached query reused only to resolve project names for the
+  // deadlines widget — the deadline list itself comes from my-stats (no new query).
+  const { data: projects } = useProjectsQuery();
 
   return (
     <div className="space-y-6">
@@ -33,30 +39,37 @@ export function DashboardPage() {
         </div>
       )}
 
-      {/* Stats cards */}
+      {/* Stats cards + upcoming deadlines */}
       {stats && stats.totalAssigned > 0 && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatsCard
-            label="Total Tasks"
-            value={stats.totalAssigned}
-            icon={ListTodo}
+        <>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <StatsCard
+              label="Total Tasks"
+              value={stats.totalAssigned}
+              icon={ListTodo}
+            />
+            <StatsCard
+              label="Todo"
+              value={stats.tasksByStatus.todo}
+              icon={Circle}
+            />
+            <StatsCard
+              label="In Progress"
+              value={stats.tasksByStatus.inProgress}
+              icon={Timer}
+            />
+            <StatsCard
+              label="Done"
+              value={stats.tasksByStatus.done}
+              icon={CheckCircle2}
+            />
+          </div>
+
+          <UpcomingDeadlines
+            deadlines={stats.upcomingDeadlines}
+            projects={projects ?? []}
           />
-          <StatsCard
-            label="Todo"
-            value={stats.tasksByStatus.todo}
-            icon={Circle}
-          />
-          <StatsCard
-            label="In Progress"
-            value={stats.tasksByStatus.inProgress}
-            icon={Timer}
-          />
-          <StatsCard
-            label="Done"
-            value={stats.tasksByStatus.done}
-            icon={CheckCircle2}
-          />
-        </div>
+        </>
       )}
     </div>
   );
