@@ -23,9 +23,13 @@ function formatCreatedAt(dateString: string): string {
   });
 }
 
-// Normalize Windows-style CRLF (and any stray CR) to LF.
+// Normalize newlines for display: collapse any run of consecutive line breaks
+// (CRLF, lone CR, or repeated LF) into a single "\n". Under `whitespace-pre-wrap`
+// every preserved newline becomes a forced line break, so multiple consecutive
+// newlines render as a large vertical gap ("excessive blank space"). Collapsing
+// runs keeps line breaks but guarantees normal single-line spacing.
 function normalizeNewlines(text: string): string {
-  return text.replace(/\r\n?/g, "\n");
+  return text.replace(/[\r\n]+/g, "\n");
 }
 
 export function CommentList({ comments, isLoading, error }: CommentListProps) {
