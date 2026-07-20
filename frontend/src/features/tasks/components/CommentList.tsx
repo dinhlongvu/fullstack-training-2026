@@ -62,7 +62,7 @@ export function CommentList({ comments, isLoading, error }: CommentListProps) {
               {formatCreatedAt(comment.createdAt)}
             </span>
           </div>
-          <p className="mt-1 whitespace-pre-wrap text-sm text-muted-foreground">
+          <p className="mt-1 whitespace-pre-wrap break-words text-sm text-muted-foreground">
             {comment.content}
           </p>
         </li>
