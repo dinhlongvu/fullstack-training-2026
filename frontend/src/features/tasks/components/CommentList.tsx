@@ -23,6 +23,13 @@ function formatCreatedAt(dateString: string): string {
   });
 }
 
+// Normalize newlines for display. Two steps:
+//   1. Convert Windows CRLF (and any lone CR) to LF so line endings are uniform.
+//   2. Collapse any run of 3+ consecutive newlines down to 2 — i.e. allow AT MOST one blank line between paragraphs.
+function normalizeNewlines(text: string): string {
+  return text.replace(/\r\n?/g, "\n").replace(/\n{3,}/g, "\n\n");
+}
+
 export function CommentList({ comments, isLoading, error }: CommentListProps) {
   // Loading state
   if (isLoading) {
@@ -63,7 +70,7 @@ export function CommentList({ comments, isLoading, error }: CommentListProps) {
             </span>
           </div>
           <p className="mt-1 whitespace-pre-wrap break-words text-sm text-muted-foreground">
-            {comment.content}
+            {normalizeNewlines(comment.content)}
           </p>
         </li>
       ))}
