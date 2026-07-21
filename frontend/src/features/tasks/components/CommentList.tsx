@@ -23,13 +23,11 @@ function formatCreatedAt(dateString: string): string {
   });
 }
 
-// Normalize newlines for display: collapse any run of consecutive line breaks
-// (CRLF, lone CR, or repeated LF) into a single "\n". Under `whitespace-pre-wrap`
-// every preserved newline becomes a forced line break, so multiple consecutive
-// newlines render as a large vertical gap ("excessive blank space"). Collapsing
-// runs keeps line breaks but guarantees normal single-line spacing.
+// Normalize newlines for display. Two steps:
+//   1. Convert Windows CRLF (and any lone CR) to LF so line endings are uniform.
+//   2. Collapse any run of 3+ consecutive newlines down to 2 — i.e. allow AT MOST one blank line between paragraphs.
 function normalizeNewlines(text: string): string {
-  return text.replace(/[\r\n]+/g, "\n");
+  return text.replace(/\r\n?/g, "\n").replace(/\n{3,}/g, "\n\n");
 }
 
 export function CommentList({ comments, isLoading, error }: CommentListProps) {
@@ -71,7 +69,7 @@ export function CommentList({ comments, isLoading, error }: CommentListProps) {
               {formatCreatedAt(comment.createdAt)}
             </span>
           </div>
-          <p className="mt-1 whitespace-pre-wrap text-sm text-muted-foreground">
+          <p className="mt-1 whitespace-pre-wrap break-words text-sm text-muted-foreground">
             {normalizeNewlines(comment.content)}
           </p>
         </li>
