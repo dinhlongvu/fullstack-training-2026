@@ -8,9 +8,9 @@
 
 | Total TC | Pass | Fail | Blocked |
 |----------|------|------|---------|
-| 23 | 23 | 0 | 0 |
+| 25 | 23 | 2 | 0 |
 
-*(Ghi chú: Toàn bộ 23 test cases kịch bản chức năng (functional) đều pass 100%. Tuy nhiên, 2 bug UI/UX liệt kê bên dưới được phát hiện thêm trong lúc kiểm thử thăm dò (exploratory testing) với các trường hợp nhập liệu ngẫu nhiên (chuỗi quá dài, nhiều khoảng trắng). Do các lỗi này thuần túy về layout và trải nghiệm hiển thị chứ không làm gãy luồng logic của chức năng chính, nên số lượng TC Fail được ghi nhận là 0, nhưng bug vẫn được log lại để cải thiện UI.)*
+*(Ghi chú: 23 test cases chức năng (functional) ban đầu đều pass 100%. Tuy nhiên, trong quá trình kiểm thử thăm dò (exploratory testing) với các trường hợp nhập liệu ngẫu nhiên, mình đã phát hiện thêm 2 bug UI/UX nên đã bổ sung thành 2 test cases mới (TC-11 và TC-12) và đánh Fail để ghi nhận lỗi layout/hiển thị.)*
 
 ## Bugs Found on UI/UX
 | Bug | Severity | Issue | Fix PR | Status |
