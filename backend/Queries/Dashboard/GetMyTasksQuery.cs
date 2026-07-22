@@ -55,8 +55,8 @@ public class GetMyTasksHandler : IRequestHandler<GetMyTasksQuery, PaginatedList<
                 t.Id,
                 t.Title,
                 t.Description,
-                (int)t.Status,
-                (int)t.Priority,
+                t.Status.ToString(),
+                t.Priority.ToString(),
                 t.DueDate,
                 t.ProjectId,
                 t.AssigneeId

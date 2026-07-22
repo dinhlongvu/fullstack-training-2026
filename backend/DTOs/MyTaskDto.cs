@@ -6,8 +6,8 @@ public record MyTaskDto(
     int Id,
     string Title,
     string Description,
-    int Status,
-    int Priority,
+    string Status,
+    string Priority,
     DateTime? DueDate,
     int ProjectId,
     int? AssigneeId

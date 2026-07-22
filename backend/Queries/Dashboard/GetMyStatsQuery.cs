@@ -56,7 +56,7 @@ public class GetMyStatsHandler : IRequestHandler<GetMyStatsQuery, DashboardStats
                 t.Title,
                 t.DueDate!.Value,
                 t.ProjectId,
-                t.Priority
+                t.Priority.ToString()
             ))
             .ToListAsync(ct);
 

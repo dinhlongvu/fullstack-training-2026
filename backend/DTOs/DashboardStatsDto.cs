@@ -13,7 +13,7 @@ public record UpcomingDeadlineDto(
     string Title,
     DateTime DueDate,
     int ProjectId,
-    Backend.Domain.Priority Priority
+    string Priority
 );
 
 public record DashboardStatsDto(
