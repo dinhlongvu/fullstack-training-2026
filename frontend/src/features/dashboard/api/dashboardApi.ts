@@ -4,7 +4,7 @@
 
 import { apiClient } from "@/lib/api";
 
-// Task counts grouped by status 
+// Task counts grouped by status
 export interface TasksByStatus {
   todo: number;
   inProgress: number;
@@ -25,10 +25,11 @@ export interface DashboardStats {
   tasksByStatus: TasksByStatus;
   upcomingDeadlines: UpcomingDeadline[];
   totalAssigned: number;
+  overdueCount: number;
 }
 
 // Fetch the current user's dashboard stats
-// GET /api/dashboard/my-stats — requires Bearer token 
+// GET /api/dashboard/my-stats — requires Bearer token
 export function getMyStats() {
   return apiClient<DashboardStats>("/api/dashboard/my-stats");
 }
