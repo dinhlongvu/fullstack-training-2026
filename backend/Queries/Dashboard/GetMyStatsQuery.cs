@@ -41,9 +41,9 @@ public class GetMyStatsHandler : IRequestHandler<GetMyStatsQuery, DashboardStats
 
         int totalAssigned = todoCount + inProgressCount + doneCount;
 
-        // Overdue = open tasks whose (end-of-day UTC) due date has already passed.
+        // Overdue = open tasks whose (end-of-day) due date has already passed.
         // Counted separately and WITHOUT a cap, so a large overdue backlog can
-        // never crowd upcoming tasks out of the widget list (PR #195 QA issue #1).
+        // never push upcoming tasks out of the capped list below.
         var overdueCount = await _db.Tasks
             .Where(t => t.AssigneeId == req.CurrentUserId
                     && t.Status != DomainTaskStatus.Done

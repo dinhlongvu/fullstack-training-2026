@@ -7,6 +7,7 @@
 import { Link } from "react-router-dom";
 import { CalendarClock, AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { daysUntil } from "@/lib/date";
 import { type UpcomingDeadline } from "../api/dashboardApi";
 import { type Project } from "@/features/projects/api/projectsApi";
 
@@ -16,29 +17,8 @@ interface UpcomingDeadlinesProps {
   overdueCount: number;
 }
 
-// Whole days from today to the given date. Both sides use UTC calendar days so
-// this matches the backend, which stores due dates at end-of-day UTC — comparing
-// by local day would shift the label by ±1 for users far from UTC (issue #3).
-function daysUntil(dateString: string): number {
-  const due = new Date(dateString);
-  const dueUtc = Date.UTC(
-    due.getUTCFullYear(),
-    due.getUTCMonth(),
-    due.getUTCDate(),
-  );
-  const now = new Date();
-  const todayUtc = Date.UTC(
-    now.getUTCFullYear(),
-    now.getUTCMonth(),
-    now.getUTCDate(),
-  );
-
-  const msPerDay = 1000 * 60 * 60 * 24;
-  return Math.round((dueUtc - todayUtc) / msPerDay);
-}
-
-// Human-friendly due label. The absolute date is formatted in UTC for the same
-// reason as daysUntil above.
+// Human-friendly due label: relative for the nearest days so urgency reads at a
+// glance, absolute otherwise (e.g. "Today", "Tomorrow", "Jun 30").
 function formatDueLabel(dateString: string): string {
   const days = daysUntil(dateString);
   if (days === 0) return "Today";
@@ -47,7 +27,6 @@ function formatDueLabel(dateString: string): string {
   return new Date(dateString).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
-    timeZone: "UTC",
   });
 }
 
@@ -81,7 +60,8 @@ export function UpcomingDeadlines({
           </div>
         )}
 
-        {/* Upcoming — always rendered so the widget never looks broken (issue #2). */}
+        {/* Always render the upcoming block so the widget never looks half-empty
+            when there are overdue tasks but nothing coming up. */}
         {sorted.length === 0 ? (
           <p className="py-6 text-center text-sm text-muted-foreground">
             No upcoming deadlines 🎉
@@ -108,7 +88,7 @@ export function UpcomingDeadlines({
 
                 {/* Due date + View link */}
                 <div className="flex shrink-0 items-center gap-3">
-                  <span className="text-xs font-medium text-yellow-600">
+                  <span className="text-xs font-medium text-muted-foreground">
                     {formatDueLabel(deadline.dueDate)}
                   </span>
                   <Link

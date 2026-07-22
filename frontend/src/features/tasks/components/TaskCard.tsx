@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/Select";
+import { daysUntil } from "@/lib/date";
 import { PriorityBadge } from "./PriorityBadge";
 import { DeleteTaskDialog } from "./DeleteTaskDialog";
 import {
@@ -44,17 +45,7 @@ function formatDueDate(dateString: string): string {
 
 // Check if a due date is overdue — compares calendar dates, not raw timestamps
 function isOverdue(dateString: string): boolean {
-  const due = new Date(dateString);
-  const dueDateOnly = new Date(
-    due.getFullYear(),
-    due.getMonth(),
-    due.getDate(),
-  );
-
-  const now = new Date();
-  const todayOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-  return dueDateOnly < todayOnly;
+  return daysUntil(dateString) < 0;
 }
 
 export function TaskCard({ task, projectId, members }: TaskCardProps) {
@@ -194,10 +185,11 @@ export function TaskCard({ task, projectId, members }: TaskCardProps) {
             {/* Due date */}
             {task.dueDate && (
               <div
-                className={`flex shrink-0 items-center gap-1 ${isOverdue(task.dueDate) && task.status !== "Done"
+                className={`flex shrink-0 items-center gap-1 ${
+                  isOverdue(task.dueDate) && task.status !== "Done"
                     ? "text-red-500"
                     : ""
-                  }`}
+                }`}
               >
                 <Calendar className="h-3 w-3" />
                 <span>{formatDueDate(task.dueDate)}</span>
