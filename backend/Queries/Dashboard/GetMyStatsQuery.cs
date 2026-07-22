@@ -41,11 +41,23 @@ public class GetMyStatsHandler : IRequestHandler<GetMyStatsQuery, DashboardStats
 
         int totalAssigned = todoCount + inProgressCount + doneCount;
 
-        // Get the Upcoming Deadlines list
+        // Overdue = open tasks whose (end-of-day) due date has already passed.
+        // Counted separately and WITHOUT a cap, so a large overdue backlog can
+        // never push upcoming tasks out of the capped list below.
+        var overdueCount = await _db.Tasks
+            .Where(t => t.AssigneeId == req.CurrentUserId
+                    && t.Status != DomainTaskStatus.Done
+                    && t.DueDate.HasValue
+                    && t.DueDate.Value < now)
+            .CountAsync(ct);
+
+        // Upcoming = open tasks due from now up to 3 days out. Overdue is excluded
+        // here, so Take(20) only ever trims far-future items, not today's work.
         var upcomming = await _db.Tasks
             .Where(t => t.AssigneeId == req.CurrentUserId
                     && t.Status != DomainTaskStatus.Done
                     && t.DueDate.HasValue
+                    && t.DueDate.Value >= now
                     && t.DueDate.Value <= inThreeDays)
             .OrderBy(t => t.DueDate)
             .ThenByDescending(t => t.Priority == Domain.Priority.High ? 2
@@ -63,7 +75,8 @@ public class GetMyStatsHandler : IRequestHandler<GetMyStatsQuery, DashboardStats
         return new DashboardStatsDto(
             new TaskStatsByStatusDto(todoCount, inProgressCount, doneCount),
             upcomming,
-            totalAssigned
+            totalAssigned,
+            overdueCount
         );
     }
 }

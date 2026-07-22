@@ -68,6 +68,7 @@ export function DashboardPage() {
           <UpcomingDeadlines
             deadlines={stats.upcomingDeadlines}
             projects={projects ?? []}
+            overdueCount={stats.overdueCount}
           />
         </>
       )}

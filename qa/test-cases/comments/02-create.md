@@ -176,8 +176,42 @@
 
 ---
 
+## TC-TASK-COMMENTS-CREATE-011: Long unspaced string (UI/UX edge case)
+
+| Field | Content |
+|-------|----------|
+| **Test Case ID** | TC-TASK-COMMENTS-CREATE-011 |
+| **Type** | Negative (UI) |
+| **Technique** | Exploratory / Edge Case |
+| **Precondition** | User has valid Bearer token |
+| **Test Data** | content: `"ThisIsAVeryLongStringWithoutAnySpacesThatKeepsGoingAndGoing..."` |
+| **Test Steps** | 1. Send POST request with long unspaced string <br> 2. Open UI and verify comment rendering |
+| **Expected Result** | 1. Comment is created successfully <br> 2. UI breaks words or wraps text to prevent layout overflow |
+| **Actual Result** | 1. Comment created successfully <br> 2. UI does NOT wrap text, causing layout overflow and breaking page width |
+| **Status** | Fail |
+| **Bug link** | #192 |
+
+---
+
+## TC-TASK-COMMENTS-CREATE-012: Consecutive newlines (UI/UX edge case)
+
+| Field | Content |
+|-------|----------|
+| **Test Case ID** | TC-TASK-COMMENTS-CREATE-012 |
+| **Type** | Negative (UI) |
+| **Technique** | Exploratory / Edge Case |
+| **Precondition** | User has valid Bearer token |
+| **Test Data** | content: `"Line 1\n\n\n\n\nLine 2"` (multiple consecutive newlines) |
+| **Test Steps** | 1. Send POST request with consecutive newlines <br> 2. Open UI and verify comment rendering |
+| **Expected Result** | 1. Comment is created successfully <br> 2. UI collapses consecutive newlines or renders them without excessive gaps |
+| **Actual Result** | 1. Comment created successfully <br> 2. UI renders all newlines, creating a huge unexpected gap in the comment content |
+| **Status** | Fail |
+| **Bug link** | #193 |
+
+---
+
 ## Summary
 
 | Total TCs | Pass | Fail | Blocked | Not Run |
 |:---:|:---:|:---:|:---:|:---:|
-| 10 | 10 | 0 | 0 | 0 |
+| 12 | 10 | 2 | 0 | 0 |

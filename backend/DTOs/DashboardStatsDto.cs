@@ -19,5 +19,6 @@ public record UpcomingDeadlineDto(
 public record DashboardStatsDto(
     TaskStatsByStatusDto TasksByStatus,
     List<UpcomingDeadlineDto> UpcomingDeadlines,
-    int TotalAssigned
+    int TotalAssigned,
+    int OverdueCount
 );
