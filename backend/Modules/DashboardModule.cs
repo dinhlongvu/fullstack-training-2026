@@ -19,6 +19,7 @@ public class DashboardModule : ICarterModule
             .WithTags("Dashboard")
             .RequireAuthorization();
 
+        //======== 1. GET /api/dashboard/my-stats ========
         group.MapGet("/my-stats", async (
             HttpContext context,
             IMediator mediator,
@@ -33,6 +34,28 @@ public class DashboardModule : ICarterModule
         .WithSummary("Get current user task statistics")
         .WithDescription("Returns task count by status, total assigned tasks, and upcoming deadlines (due within 3 days).")
         .Produces<DashboardStatsDto>(StatusCodes.Status200OK)
+        .Produces(StatusCodes.Status401Unauthorized);
+
+        // ======== 2. GET /api/dashboard/my-tasks ========  
+        group.MapGet("/my-tasks", async (
+            HttpContext context,
+            IMediator mediator,
+            int page = 1,
+            int pageSize = 20,
+            bool isUrgentOnly = false,
+            CancellationToken ct = default) =>
+        {
+            var CurrentUserId = context.User.GetUserId();
+            var query = new GetMyTasksQuery(CurrentUserId, page, pageSize, isUrgentOnly);
+
+            var result = await mediator.Send(query, ct);
+
+            return Results.Ok(result);
+        })
+        .WithName("GetMyTasks")
+        .WithSummary("Get a paginated list of tasks assigned to the current user")
+        .WithDescription("Returns all tasks assigned to the authenticated user, across all projects. Supports filtering by urgency.")
+        .Produces<PaginatedList<MyTaskDto>>(StatusCodes.Status200OK)
         .Produces(StatusCodes.Status401Unauthorized);
     }
 }
