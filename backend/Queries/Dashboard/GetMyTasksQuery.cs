@@ -45,7 +45,8 @@ public class GetMyTasksHandler : IRequestHandler<GetMyTasksQuery, PaginatedList<
 
         // Sort, paginate, map to DTO
         var items = await query
-            .OrderBy(t => t.DueDate)
+            .OrderBy(t => t.DueDate == null) // CASE WHEN DueDate IS NULL THEN 1 ELSE 0 END
+            .ThenBy(t => t.DueDate) // Upcoming/Overdue deadlines first
             .ThenByDescending(t => t.Priority == DomainPriority.High ? 2
                                  : t.Priority == DomainPriority.Medium ? 1 : 0)
             .Skip((req.Page - 1) * req.PageSize)
