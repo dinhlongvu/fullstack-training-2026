@@ -52,10 +52,7 @@ export function TaskDetailPage() {
     error: commentsError,
   } = useTaskCommentsQuery(taskId);
 
-  // Edit dialog state + members needed for the assignee dropdown.
-  // Hooks must run before any early return (rules of hooks). `task` may be
-  // undefined here, so fall back to 0 — useProjectDetailQuery is `enabled: id > 0`
-  // and won't fire until the project id is known.
+  // Edit dialog state + members needed for the assignee dropdown
   const [editOpen, setEditOpen] = useState(false);
   const currentUser = useAuthStore((s) => s.currentUser);
   const { data: project } = useProjectDetailQuery(task?.projectId ?? 0);

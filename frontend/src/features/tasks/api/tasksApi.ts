@@ -10,7 +10,7 @@ export type TaskPriority = "Low" | "Medium" | "High";
 // Shape of a task returned by GET /api/projects/{id}/tasks
 export interface Task {
   id: number;
-  projectId: number; // returned by GET /api/tasks/{id} since #200; needed to fetch members on the detail page
+  projectId: number;
   title: string;
   description: string;
   status: TaskStatus;
@@ -76,12 +76,6 @@ export function createTask(projectId: number, request: CreateTaskRequest) {
 }
 
 // Shape of the request body for PUT /api/tasks/{taskId}.
-// This is a PARTIAL update: every field is optional.
-//  - Omit a field  -> backend keeps the current value.
-//  - dueDate/assigneeId are ambiguous (null could mean "keep" or "clear"),
-//    so the API uses explicit flags to express "clear to null":
-//      clearDueDate: true   -> set dueDate  = null
-//      clearAssignee: true  -> set assignee = null
 export interface UpdateTaskRequest {
   title?: string;
   description?: string;

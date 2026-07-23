@@ -49,7 +49,7 @@ export function useCreateTaskMutation(projectId: number) {
   });
 }
 
-// Hook to update a task's details (title, description, priority, dueDate, assignee).
+// Hook to update a task's details
 export function useUpdateTaskMutation(projectId: number) {
   const queryClient = useQueryClient();
   return useMutation({

@@ -128,9 +128,7 @@ export function EditTaskDialog({
   };
 
   const onSubmit = (values: EditTaskFormValues) => {
-    // Build a PARTIAL request: only send fields that actually changed.
-    // This is what lets us edit an OVERDUE task's title without the backend
-    // rejecting its (unchanged) past due date.
+    // Build a PARTIAL request: only send fields that actually changed
     const request: UpdateTaskRequest = {};
 
     if (values.title !== task.title) request.title = values.title;
