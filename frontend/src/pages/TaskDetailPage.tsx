@@ -2,8 +2,10 @@
 // Fetches task detail and comments via React Query (separate cache keys).
 // Renders task info (status/priority badges, assignee, dates) + CommentList below.
 
+import { useState } from "react";
 import { useParams, Navigate, useNavigate } from "react-router-dom";
-import { Loader2, ArrowLeft, Calendar, User } from "lucide-react";
+import { Loader2, ArrowLeft, Calendar, User, Pencil } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 import {
   Card,
   CardContent,
@@ -14,8 +16,11 @@ import {
   useTaskQuery,
   useTaskCommentsQuery,
 } from "@/features/tasks/api/useTasks";
+import { useProjectDetailQuery } from "@/features/projects/api/useProjects";
+import { useAuthStore } from "@/stores/useAuthStore";
 import { PriorityBadge } from "@/features/tasks/components/PriorityBadge";
 import { StatusBadge } from "@/features/tasks/components/StatusBadge";
+import { EditTaskDialog } from "@/features/tasks/components/EditTaskDialog";
 import { CommentList } from "@/features/tasks/components/CommentList";
 import { CommentForm } from "@/features/tasks/components/CommentForm";
 
@@ -46,6 +51,17 @@ export function TaskDetailPage() {
     isLoading: isCommentsLoading,
     error: commentsError,
   } = useTaskCommentsQuery(taskId);
+
+  // Edit dialog state + members needed for the assignee dropdown.
+  // Hooks must run before any early return (rules of hooks). `task` may be
+  // undefined here, so fall back to 0 — useProjectDetailQuery is `enabled: id > 0`
+  // and won't fire until the project id is known.
+  const [editOpen, setEditOpen] = useState(false);
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const { data: project } = useProjectDetailQuery(task?.projectId ?? 0);
+  const members = project?.members ?? [];
+  const canEdit =
+    currentUser !== null && members.some((m) => m.userId === currentUser.id);
 
   // Invalid ID in URL (e.g., /tasks/abc)
   if (isNaN(taskId)) {
@@ -101,7 +117,20 @@ export function TaskDetailPage() {
           <PriorityBadge priority={task.priority} />
         </div>
 
-        <h2 className="text-2xl font-bold">{task.title}</h2>
+        <div className="flex items-start justify-between gap-2">
+          <h2 className="text-2xl font-bold">{task.title}</h2>
+          {canEdit && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="shrink-0"
+              onClick={() => setEditOpen(true)}
+            >
+              <Pencil className="mr-2 h-4 w-4" />
+              Edit
+            </Button>
+          )}
+        </div>
 
         <p className="whitespace-pre-wrap break-words text-muted-foreground">
           {task.description || "No description"}
@@ -143,6 +172,16 @@ export function TaskDetailPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Edit dialog — only for project members */}
+      {canEdit && (
+        <EditTaskDialog
+          task={task}
+          members={members}
+          open={editOpen}
+          onOpenChange={setEditOpen}
+        />
+      )}
     </div>
   );
 }
