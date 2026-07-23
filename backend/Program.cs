@@ -2,7 +2,11 @@
 // Registers ALL services: Carter, MediatR, EF Core, JWT, FluentValidation, AutoMapper, Swagger, and Custom Services.
 // Order matters! Authentication → Authorization → Carter modules.
 
+using System.IdentityModel.Tokens.Jwt;
+using System.Reflection;
+using System.Text;
 using Backend.Infrastructure.Data;
+using Backend.Infrastructure.Interceptors;
 using Backend.Middleware;
 using Backend.Services.Auth;
 using Backend.Validation;
@@ -12,9 +16,6 @@ using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Text;
-using Backend.Infrastructure.Interceptors;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -113,6 +114,11 @@ builder.Services.AddAuthorization();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
+    // Read the Comments XML file to display description and example on Swagger UI
+    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    options.IncludeXmlComments(xmlPath);
+
     // Configure Token input interface (Bearer) for Swagger UI
     options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
     {
@@ -121,7 +127,7 @@ builder.Services.AddSwaggerGen(options =>
         Scheme = "Bearer",
         BearerFormat = "JWT",
         In = Microsoft.OpenApi.Models.ParameterLocation.Header,
-        Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\""
+        Description = "JWT Authorization header using the Bearer scheme. \r\n\r\n Get token from /api/auth/login"
     });
 
     // Apply security requirement globally to enforce JWT input requirements on Swagger UI

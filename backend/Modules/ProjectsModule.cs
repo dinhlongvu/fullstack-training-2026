@@ -18,13 +18,10 @@ namespace Backend.Modules;
 
 public class ProjectsModule : ICarterModule
 {
-    // Add a ? to Description to mark optional
-    public record CreateProjectRequest(string Name, string? Description);
-    public record UpdateProjectRequest(string Name, string? Description);
-
     public void AddRoutes(IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/projects")
+            .WithTags("Projects")
             .RequireAuthorization(); // All endpoints require JWT Bearer
 
         // ======== 1. GET /api/projects ========

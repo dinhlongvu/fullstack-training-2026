@@ -7,10 +7,15 @@ using MediatR;
 
 namespace Backend.Commands.Auth;
 
-// The request payload expecting only the refresh token string
-public record RefreshTokenCommand(
-    string RefreshToken
-) : IRequest<RefreshTokenResponseDto>;
+/// <summary>
+/// Request payload to exchange a refresh token for a new access token.
+/// </summary>
+public record RefreshTokenCommand : IRequest<RefreshTokenResponseDto>
+{
+    /// <summary>The refresh token received from a previous login or refresh call.</summary>
+    /// <example>eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...</example>
+    public string RefreshToken { get; init; } = string.Empty;
+}
 
 // FluentValidation rule to ensure the refresh token is provided
 public class RefreshTokenCommandValidator : AbstractValidator<RefreshTokenCommand>

@@ -24,6 +24,7 @@ public class TasksModule : ICarterModule
     public void AddRoutes(IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/projects/{projectId:int}/tasks")
+            .WithTags("Tasks")
             .RequireAuthorization();
 
         // ======== 1. GET /api/projects/{projectId}/tasks ========
