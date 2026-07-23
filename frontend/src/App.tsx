@@ -4,6 +4,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { AuthGuard } from "@/components/AuthGuard";
 import { Layout } from "@/components/Layout";
+import { RootErrorBoundary } from "@/components/ErrorBoundary";
 import { LoginPage } from "@/pages/LoginPage";
 import { RegisterPage } from "@/pages/RegisterPage";
 import { ProjectsPage } from "@/pages/ProjectsPage";
@@ -15,7 +16,7 @@ import { Toaster } from "@/components/ui/Sonner";
 
 export default function App() {
   return (
-    <>
+    <RootErrorBoundary>
       <Routes>
         {/* Public routes */}
         <Route path="/login" element={<LoginPage />} />
@@ -41,6 +42,6 @@ export default function App() {
       </Routes>
 
       <Toaster />
-    </>
+    </RootErrorBoundary>
   );
 }

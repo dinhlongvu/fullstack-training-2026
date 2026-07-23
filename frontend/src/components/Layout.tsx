@@ -1,14 +1,16 @@
 // components/Layout.tsx
 // Main app shell: sidebar navigation + header + content area.
 
-import { Link, Outlet, useNavigate } from "react-router-dom";
+import { Link, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { PageErrorBoundary } from "@/components/ErrorBoundary";
 
 export function Layout() {
   const currentUser = useAuthStore((s) => s.currentUser);
   const clearAuth = useAuthStore((s) => s.clearAuth);
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
 
   const handleLogout = () => {
@@ -52,7 +54,10 @@ export function Layout() {
           </button>
         </header>
         <main className="flex-1 p-6">
-          <Outlet />
+          {/* Reset the boundary on route change */}
+          <PageErrorBoundary key={location.pathname}>
+            <Outlet />
+          </PageErrorBoundary>
         </main>
       </div>
     </div>
