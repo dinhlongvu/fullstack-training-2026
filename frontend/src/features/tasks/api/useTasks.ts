@@ -10,12 +10,14 @@ import {
   getTaskComments,
   createTask,
   createComment,
+  updateTask,
   updateTaskStatus,
   assignTask,
   deleteTask,
   type Task,
   type TaskFilters,
   type CreateTaskRequest,
+  type UpdateTaskRequest,
   type CreateCommentRequest,
   type TaskStatus,
 } from "./tasksApi";
@@ -42,6 +44,28 @@ export function useCreateTaskMutation(projectId: number) {
       // so every filter view gets fresh data
       queryClient.invalidateQueries({ queryKey: ["tasks", projectId] });
       // Dashboard stats count this user's tasks across all projects
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    },
+  });
+}
+
+// Hook to update a task's details (title, description, priority, dueDate, assignee).
+export function useUpdateTaskMutation(projectId: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      taskId,
+      data,
+    }: {
+      taskId: number;
+      data: UpdateTaskRequest;
+    }) => updateTask(taskId, data),
+    onSuccess: (_data, variables) => {
+      // Kanban board — every filter view
+      queryClient.invalidateQueries({ queryKey: ["tasks", projectId] });
+      // Task detail — if the detail page is open
+      queryClient.invalidateQueries({ queryKey: ["task", variables.taskId] });
+      // Dashboard stats — priority/dueDate/assignee changes affect the counts
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     },
   });
