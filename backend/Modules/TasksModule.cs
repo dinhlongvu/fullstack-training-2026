@@ -84,11 +84,22 @@ public class TasksModule : ICarterModule
         {
             var currentUserId = context.User.GetUserId();
 
+            Priority parsedPriority = Priority.Medium;
+            if (!string.IsNullOrWhiteSpace(req.Priority))
+            {
+                if (int.TryParse(req.Priority, out _)
+                    || !Enum.TryParse<Priority>(req.Priority, ignoreCase: true, out var p))
+                {
+                    return Results.BadRequest(new { error = "Priority must be 'Low', 'Medium', or 'High'." });
+                }
+                parsedPriority = p;
+            }
+
             var command = new CreateTaskCommand(
                 projectId,
                 req.Title,
                 req.Description,
-                req.Priority,
+                parsedPriority,
                 req.DueDate,
                 currentUserId,
                 req.AssigneeId
@@ -124,8 +135,7 @@ public class TasksModule : ICarterModule
             int taskId,
             HttpContext context,
             IMediator mediator,
-            CancellationToken ct
-        ) =>
+            CancellationToken ct) =>
         {
             var currentUserId = context.User.GetUserId();
 
