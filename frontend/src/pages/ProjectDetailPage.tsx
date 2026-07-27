@@ -4,8 +4,10 @@
 
 import { useState } from "react";
 import { useParams, Navigate, Link } from "react-router-dom";
-import { Loader2, ArrowLeft, UserPlus, Pencil, Trash2, Users, Calendar } from "lucide-react";
+import { ArrowLeft, UserPlus, Pencil, Trash2, Users, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { ErrorState } from "@/components/ErrorState";
+import { ProjectDetailSkeleton } from "@/features/projects/components/ProjectDetailSkeleton";
 import {
   Card,
   CardContent,
@@ -34,40 +36,50 @@ export function ProjectDetailPage() {
   const projectId = Number(id);
 
   // Fetch project detail via React Query
-  const { data: project, isLoading, error } = useProjectDetailQuery(projectId);
+  const {
+    data: project,
+    isLoading,
+    error,
+    refetch,
+    isFetching,
+  } = useProjectDetailQuery(projectId);
 
   // Check if current user is the project owner
-  const isOwner = project !== undefined && currentUser !== null && project.createdById === currentUser.id;
+  const isOwner =
+    project !== undefined &&
+    currentUser !== null &&
+    project.createdById === currentUser.id;
 
-  // Invalid ID in URL (e.g., /projects/abc)
-  if (isNaN(projectId)) {
+  // Invalid ID in the URL (/projects/abc, /projects/0, /projects/1.5).
+  // Non-positive ids also matter: useProjectDetailQuery is `enabled: id > 0`,
+  // so a disabled query would sit in a permanent "no data, no error" state
+  // and the retry button below would do nothing.
+  if (!Number.isInteger(projectId) || projectId <= 0) {
     return <Navigate to="/projects" replace />;
   }
 
   // Loading state
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <ProjectDetailSkeleton />;
   }
 
-  // Error state — 404 not found or 403 not authorized
+  // Error state — network failure, 404 not found, or 403 not authorized.
+  // The back link stays outside the alert so the user is never trapped.
   if (error || !project) {
     return (
-      <div className="flex flex-col items-center justify-center py-12">
-        <h2 className="text-2xl font-bold">Project not found</h2>
-        <p className="mt-2 text-muted-foreground">
-          This project doesn't exist or you don't have access.
-        </p>
+      <div className="space-y-4">
         <Link
           to="/projects"
-          className="mt-4 inline-flex items-center text-sm underline"
+          className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="mr-1 h-4 w-4" />
           Back to projects
         </Link>
+        <ErrorState
+          message="Couldn't load this project. It may have been deleted, or you may not have access."
+          retry={() => void refetch()}
+          isRetrying={isFetching}
+        />
       </div>
     );
   }

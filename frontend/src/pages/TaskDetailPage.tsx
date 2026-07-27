@@ -4,7 +4,7 @@
 
 import { useState } from "react";
 import { useParams, Navigate, useNavigate } from "react-router-dom";
-import { Loader2, ArrowLeft, Calendar, User, Pencil } from "lucide-react";
+import { ArrowLeft, Calendar, User, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import {
   Card,
@@ -21,6 +21,8 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import { PriorityBadge } from "@/features/tasks/components/PriorityBadge";
 import { StatusBadge } from "@/features/tasks/components/StatusBadge";
 import { EditTaskDialog } from "@/features/tasks/components/EditTaskDialog";
+import { TaskDetailSkeleton } from "@/features/tasks/components/TaskDetailSkeleton";
+import { ErrorState } from "@/components/ErrorState";
 import { CommentList } from "@/features/tasks/components/CommentList";
 import { CommentForm } from "@/features/tasks/components/CommentForm";
 
@@ -45,11 +47,15 @@ export function TaskDetailPage() {
     data: task,
     isLoading: isTaskLoading,
     error: taskError,
+    refetch: refetchTask,
+    isFetching: isTaskFetching,
   } = useTaskQuery(taskId);
   const {
     data: comments,
     isLoading: isCommentsLoading,
     error: commentsError,
+    refetch: refetchComments,
+    isFetching: isCommentsFetching,
   } = useTaskCommentsQuery(taskId);
 
   // Edit dialog state + members needed for the assignee dropdown
@@ -60,36 +66,35 @@ export function TaskDetailPage() {
   const canEdit =
     currentUser !== null && members.some((m) => m.userId === currentUser.id);
 
-  // Invalid ID in URL (e.g., /tasks/abc)
-  if (isNaN(taskId)) {
+  // Invalid id in the URL (/tasks/abc, /tasks/0). Both task queries are
+  // `enabled: taskId > 0`, so a non-positive id would leave the page with no
+  // data, no error and a retry button that cannot do anything.
+  if (!Number.isInteger(taskId) || taskId <= 0) {
     return <Navigate to="/projects" replace />;
   }
 
   // Loading state — task detail
   if (isTaskLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <TaskDetailSkeleton />;
   }
 
-  // Error state — 404 not found or 403 not authorized
+  // Error state — network failure, 404 not found, or 403 not authorized
   if (taskError || !task) {
     return (
-      <div className="flex flex-col items-center justify-center py-12">
-        <h2 className="text-2xl font-bold">Task not found</h2>
-        <p className="mt-2 text-muted-foreground">
-          This task doesn't exist or you don't have access.
-        </p>
+      <div className="space-y-4">
         <button
           type="button"
           onClick={() => navigate("/projects")}
-          className="mt-4 inline-flex items-center text-sm underline"
+          className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="mr-1 h-4 w-4" />
           Back to project
         </button>
+        <ErrorState
+          message="Couldn't load this task. It may have been deleted, or you may not have access."
+          retry={() => void refetchTask()}
+          isRetrying={isTaskFetching}
+        />
       </div>
     );
   }
@@ -163,6 +168,8 @@ export function TaskDetailPage() {
             comments={comments}
             isLoading={isCommentsLoading}
             error={commentsError}
+            onRetry={() => void refetchComments()}
+            isRetrying={isCommentsFetching}
           />
           <div className="mt-6 border-t pt-6">
             <CommentForm taskId={taskId} />

@@ -3,13 +3,19 @@
 // Handles its own loading, error, and empty states.
 // Comments arrive already sorted (createdAt ascending) from the API.
 
-import { Loader2 } from "lucide-react";
+import { MessageSquare } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
+import { ErrorState } from "@/components/ErrorState";
+import { CommentListSkeleton } from "./CommentListSkeleton";
 import { type Comment } from "../api/tasksApi";
 
 interface CommentListProps {
   comments: Comment[] | undefined;
   isLoading: boolean;
   error: Error | null;
+  // Owned by the page, which holds the query.
+  onRetry?: () => void;
+  isRetrying?: boolean;
 }
 
 // Format a timestamp for display (e.g., "Jul 9, 2026, 2:30 PM")
@@ -30,31 +36,37 @@ function normalizeNewlines(text: string): string {
   return text.replace(/\r\n?/g, "\n").replace(/\n{3,}/g, "\n\n");
 }
 
-export function CommentList({ comments, isLoading, error }: CommentListProps) {
+export function CommentList({
+  comments,
+  isLoading,
+  error,
+  onRetry,
+  isRetrying,
+}: CommentListProps) {
   // Loading state
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-6">
-        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <CommentListSkeleton />;
   }
 
   // Error state
   if (error) {
     return (
-      <p className="py-6 text-center text-sm text-destructive">
-        Failed to load comments.
-      </p>
+      <ErrorState
+        message="Failed to load comments."
+        retry={onRetry}
+        isRetrying={isRetrying}
+      />
     );
   }
 
   // Empty state
   if (!comments || comments.length === 0) {
     return (
-      <p className="py-6 text-center text-sm text-muted-foreground">
-        No comments yet.
-      </p>
+      <EmptyState
+        icon={MessageSquare}
+        title="No comments yet"
+        description="Be the first to comment on this task."
+      />
     );
   }
 
