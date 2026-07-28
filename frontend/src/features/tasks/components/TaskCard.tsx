@@ -5,7 +5,7 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Calendar, Trash2 } from "lucide-react";
+import { Calendar, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
@@ -19,6 +19,7 @@ import {
 import { daysUntil } from "@/lib/date";
 import { PriorityBadge } from "./PriorityBadge";
 import { DeleteTaskDialog } from "./DeleteTaskDialog";
+import { EditTaskDialog } from "./EditTaskDialog";
 import {
   useUpdateTaskStatusMutation,
   useAssignTaskMutation,
@@ -53,13 +54,14 @@ export function TaskCard({ task, projectId, members }: TaskCardProps) {
   const updateStatus = useUpdateTaskStatusMutation(projectId);
   const assignTask = useAssignTaskMutation(projectId);
 
-  // Local UI state for the delete confirmation dialog
+  // Local UI state for the edit + delete dialogs
+  const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
-  // Only project members (owner included) may delete a task — mirror the
+  // Only project members (owner included) may edit or delete a task — mirror the
   // membership-based access rules used elsewhere in the app.
   const currentUser = useAuthStore((s) => s.currentUser);
-  const canDelete =
+  const canModify =
     currentUser !== null &&
     members.some((member) => member.userId === currentUser.id);
 
@@ -133,18 +135,31 @@ export function TaskCard({ task, projectId, members }: TaskCardProps) {
         }}
       >
         <CardContent className="p-4">
-          {/* Header: priority badge + delete action */}
+          {/* Header: priority badge + edit/delete actions */}
           <div className="mb-2 flex items-start justify-between gap-2">
             <PriorityBadge priority={task.priority} />
-            {canDelete && (
-              <button
-                type="button"
-                aria-label="Delete task"
-                onClick={handleDeleteClick}
-                className="text-muted-foreground transition-colors hover:text-destructive"
+            {canModify && (
+              <div
+                className="flex items-center gap-1"
+                onClick={(e) => e.stopPropagation()}
               >
-                <Trash2 className="h-4 w-4" />
-              </button>
+                <button
+                  type="button"
+                  aria-label="Edit task"
+                  onClick={() => setEditOpen(true)}
+                  className="text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <Pencil className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  aria-label="Delete task"
+                  onClick={handleDeleteClick}
+                  className="text-muted-foreground transition-colors hover:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
             )}
           </div>
 
@@ -232,16 +247,24 @@ export function TaskCard({ task, projectId, members }: TaskCardProps) {
         </CardContent>
       </Card>
 
-      {/* Delete confirmation dialog — kept OUTSIDE <Card> so its (portaled)
+      {/* Edit + delete dialogs — kept OUTSIDE <Card> so their (portaled)
           button clicks don't bubble through the React tree into the card's
           navigate handler. */}
-      {canDelete && (
-        <DeleteTaskDialog
-          taskId={task.id}
-          projectId={projectId}
-          open={deleteOpen}
-          onOpenChange={setDeleteOpen}
-        />
+      {canModify && (
+        <>
+          <EditTaskDialog
+            task={task}
+            members={members}
+            open={editOpen}
+            onOpenChange={setEditOpen}
+          />
+          <DeleteTaskDialog
+            taskId={task.id}
+            projectId={projectId}
+            open={deleteOpen}
+            onOpenChange={setDeleteOpen}
+          />
+        </>
       )}
     </>
   );

@@ -10,6 +10,7 @@ export type TaskPriority = "Low" | "Medium" | "High";
 // Shape of a task returned by GET /api/projects/{id}/tasks
 export interface Task {
   id: number;
+  projectId: number;
   title: string;
   description: string;
   status: TaskStatus;
@@ -63,6 +64,28 @@ export function createTask(projectId: number, request: CreateTaskRequest) {
       dueDate: request.dueDate,
       assigneeId: request.assigneeId,
     }),
+  });
+}
+
+// Shape of the request body for PUT /api/tasks/{taskId}.
+export interface UpdateTaskRequest {
+  title?: string;
+  description?: string;
+  priority?: TaskPriority; // IMPORTANT: PUT expects the STRING "Low"/"Medium"/"High" and REJECTS numbers (unlike POST)
+  dueDate?: string | null;
+  assigneeId?: number | null;
+  clearAssignee?: boolean;
+  clearDueDate?: boolean;
+}
+
+// Update a task's details.
+// PUT /api/tasks/{taskId} — returns the updated task.
+export function updateTask(taskId: number, request: UpdateTaskRequest) {
+  return apiClient<Task>(`/api/tasks/${taskId}`, {
+    method: "PUT",
+    // Send priority as-is (string). Do NOT use PRIORITY_TO_NUMBER here —
+    // the PUT endpoint parses a string and 400s on numeric input.
+    body: JSON.stringify(request),
   });
 }
 
