@@ -19,7 +19,7 @@ export function ProjectsPage() {
   // Fetch projects via React Query
   const {
     data: projects,
-    isLoading,
+    isPending,
     error,
     refetch,
     isFetching,
@@ -36,8 +36,10 @@ export function ProjectsPage() {
         </Button>
       </div>
 
-      {/* Loading state */}
-      {isLoading && <ProjectListSkeleton />}
+      {/* Loading state — isPending, not isLoading: an offline query is paused
+          with isFetching=false, so isLoading stays false and the page would
+          otherwise render blank (no skeleton, no error, no data). */}
+      {isPending && <ProjectListSkeleton />}
 
       {/* Error state — only when there is nothing to show. A background
           refetch that fails leaves `error` set while the cached list is

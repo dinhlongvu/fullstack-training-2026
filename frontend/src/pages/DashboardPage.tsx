@@ -14,7 +14,7 @@ import { useProjectsQuery } from "@/features/projects/api/useProjects";
 export function DashboardPage() {
   const {
     data: stats,
-    isLoading,
+    isPending,
     error,
     refetch,
     isFetching,
@@ -27,8 +27,10 @@ export function DashboardPage() {
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">Dashboard</h2>
 
-      {/* Loading state — stat cards + deadlines widget */}
-      {isLoading && <DashboardSkeleton />}
+      {/* Loading state — stat cards + deadlines widget.
+          isPending, not isLoading: an offline query is paused with
+          isFetching=false, so isLoading stays false and the page goes blank. */}
+      {isPending && <DashboardSkeleton />}
 
       {/* Error state — only when there are no cached stats to show */}
       {error && !stats && (

@@ -99,7 +99,7 @@ export function KanbanBoard({ projectId, members }: KanbanBoardProps) {
   // Fetch tasks — filters passed to API via query params
   const {
     data: tasks,
-    isLoading,
+    isPending,
     error,
     refetch,
     isFetching,
@@ -184,8 +184,10 @@ export function KanbanBoard({ projectId, members }: KanbanBoardProps) {
         </Button>
       </div>
 
-      {/* Loading — skeleton columns, toolbar above stays usable */}
-      {isLoading && <KanbanBoardSkeleton />}
+      {/* Loading — skeleton columns, toolbar above stays usable.
+          isPending, not isLoading: a paused offline query keeps isLoading
+          false, which would leave this area blank. */}
+      {isPending && <KanbanBoardSkeleton />}
 
       {/* Error — only when there is no cached board to fall back to */}
       {error && !tasks && (
