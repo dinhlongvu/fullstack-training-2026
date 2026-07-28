@@ -11,37 +11,52 @@ const MEMBER_ROW_COUNT = 3;
 
 export function ProjectDetailSkeleton() {
   return (
-    <div className="space-y-6">
-      {/* Back link */}
-      <Skeleton className="h-4 w-32" />
+    <div role="status" aria-busy="true" aria-live="polite" className="space-y-6">
+      <span className="sr-only">Loading project...</span>
 
-      {/* Project name + description + meta row */}
-      <div className="space-y-3">
-        <Skeleton className="h-8 w-1/2" />
-        <Skeleton className="h-4 w-3/4" />
-        <div className="flex gap-4">
-          <Skeleton className="h-4 w-40" />
-          <Skeleton className="h-4 w-24" />
+      <div aria-hidden="true" className="space-y-6">
+        {/* Back link */}
+        <Skeleton className="h-4 w-32" />
+
+        {/* Project name + description + meta row */}
+        <div className="space-y-3">
+          <Skeleton className="h-8 w-1/2" />
+          <Skeleton className="h-4 w-3/4" />
+          <div className="flex gap-4">
+            <Skeleton className="h-4 w-40" />
+            <Skeleton className="h-4 w-24" />
+          </div>
         </div>
-      </div>
 
-      {/* Members card */}
-      <Card>
-        <CardHeader className="space-y-2">
+        {/* Members card */}
+        <Card>
+          <CardHeader className="space-y-2">
+            <Skeleton className="h-5 w-24" />
+            <Skeleton className="h-4 w-64" />
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {Array.from({ length: MEMBER_ROW_COUNT }, (_, index) => (
+              <Skeleton key={index} className="h-9 w-full" />
+            ))}
+          </CardContent>
+        </Card>
+
+        {/* Task board — section title + toolbar row + columns, matching the
+            real board so the columns don't jump down once the toolbar renders.
+            The toolbar skeleton lives here (not in KanbanBoardSkeleton) because
+            the real KanbanBoard already renders its toolbar above the board
+            skeleton — putting one there too would double it. */}
+        <div className="space-y-3">
           <Skeleton className="h-5 w-24" />
-          <Skeleton className="h-4 w-64" />
-        </CardHeader>
-        <CardContent className="space-y-2">
-          {Array.from({ length: MEMBER_ROW_COUNT }, (_, index) => (
-            <Skeleton key={index} className="h-9 w-full" />
-          ))}
-        </CardContent>
-      </Card>
-
-      {/* Task board — reuse the board's own skeleton, no duplication */}
-      <div className="space-y-3">
-        <Skeleton className="h-5 w-24" />
-        <KanbanBoardSkeleton />
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <Skeleton className="h-8 w-32" />
+              <Skeleton className="h-8 w-32" />
+              <Skeleton className="ml-auto h-9 w-28" />
+            </div>
+            <KanbanBoardSkeleton />
+          </div>
+        </div>
       </div>
     </div>
   );
