@@ -39,7 +39,6 @@ export function ProjectDetailPage() {
   const {
     data: project,
     isLoading,
-    error,
     refetch,
     isFetching,
   } = useProjectDetailQuery(projectId);
@@ -63,9 +62,8 @@ export function ProjectDetailPage() {
     return <ProjectDetailSkeleton />;
   }
 
-  // Error state — network failure, 404 not found, or 403 not authorized.
-  // The back link stays outside the alert so the user is never trapped.
-  if (error || !project) {
+  // Only take over the whole page when there is genuinely nothing to show
+  if (!project) {
     return (
       <div className="space-y-4">
         <Link

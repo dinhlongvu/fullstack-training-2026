@@ -46,7 +46,6 @@ export function TaskDetailPage() {
   const {
     data: task,
     isLoading: isTaskLoading,
-    error: taskError,
     refetch: refetchTask,
     isFetching: isTaskFetching,
   } = useTaskQuery(taskId);
@@ -78,8 +77,8 @@ export function TaskDetailPage() {
     return <TaskDetailSkeleton />;
   }
 
-  // Error state — network failure, 404 not found, or 403 not authorized
-  if (taskError || !task) {
+  // Only take over the whole page when there is genuinely nothing to show
+  if (!task) {
     return (
       <div className="space-y-4">
         <button
