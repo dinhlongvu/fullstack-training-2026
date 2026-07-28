@@ -48,8 +48,10 @@ export function CommentList({
     return <CommentListSkeleton />;
   }
 
-  // Error state
-  if (error) {
+  // Error state — only when there is nothing cached left to show. A failed
+  // background refetch (e.g. after posting a comment invalidates the query)
+  // still sets `error`, but the already-loaded thread is fine to keep.
+  if (error && !comments) {
     return (
       <ErrorState
         message="Failed to load comments."
