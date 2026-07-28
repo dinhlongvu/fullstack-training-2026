@@ -125,6 +125,16 @@ export function KanbanBoard({ projectId, members }: KanbanBoardProps) {
     });
   }
 
+  // Clear only the two filters this board owns 
+  function clearFilters() {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.delete("priority");
+      next.delete("assigneeId");
+      return next;
+    });
+  }
+
   // Group tasks by status for column display
   function getTasksByStatus(status: string): Task[] {
     if (!tasks) return [];
@@ -166,7 +176,7 @@ export function KanbanBoard({ projectId, members }: KanbanBoardProps) {
         {/* Clear all filters */}
         {(priorityFilter || assigneeFilter) && (
           <button
-            onClick={() => setSearchParams({})}
+            onClick={clearFilters}
             className="text-sm text-muted-foreground underline hover:text-foreground"
           >
             Clear filters
@@ -209,7 +219,7 @@ export function KanbanBoard({ projectId, members }: KanbanBoardProps) {
             title="No tasks match these filters"
             description="Try a different priority or assignee, or clear the filters."
             action={
-              <Button variant="outline" onClick={() => setSearchParams({})}>
+              <Button variant="outline" onClick={clearFilters}>
                 Clear filters
               </Button>
             }
