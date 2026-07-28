@@ -29,7 +29,7 @@ export function ErrorState({
 }: ErrorStateProps) {
   return (
     <Alert variant="destructive" className="mx-auto my-8 max-w-xl">
-      <AlertTriangle className="h-4 w-4" />
+      <AlertTriangle className="h-4 w-4" aria-hidden="true" />
       <AlertTitle>Something went wrong</AlertTitle>
       <AlertDescription className="space-y-4">
         <p className="break-words">{message}</p>
@@ -40,7 +40,10 @@ export function ErrorState({
             onClick={retry}
             disabled={isRetrying}
           >
-            <RefreshCw className={cn("h-4 w-4", isRetrying && "animate-spin")} />
+            <RefreshCw
+              className={cn("h-4 w-4", isRetrying && "animate-spin")}
+              aria-hidden="true"
+            />
             {isRetrying ? "Retrying..." : "Try again"}
           </Button>
         )}

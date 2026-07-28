@@ -26,9 +26,17 @@ function ProjectCardSkeleton() {
 
 export function ProjectListSkeleton() {
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div
+      role="status"
+      aria-busy="true"
+      aria-live="polite"
+      className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+    >
+      <span className="sr-only">Loading projects...</span>
       {Array.from({ length: PLACEHOLDER_COUNT }, (_, index) => (
-        <ProjectCardSkeleton key={index} />
+        <div key={index} aria-hidden="true">
+          <ProjectCardSkeleton />
+        </div>
       ))}
     </div>
   );
