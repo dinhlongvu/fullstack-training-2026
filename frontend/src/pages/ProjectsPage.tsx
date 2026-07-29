@@ -1,12 +1,15 @@
 // pages/ProjectsPage.tsx — Project list + create button.
-// Displays the user's projects list with create funtionality
-// Uses React Query for data fetching and shadcn/ui for layou
+// Displays the user's projects list with create functionality.
+// Loading -> skeleton, failed fetch -> ErrorState, no projects -> EmptyState.
 
 import { useState } from "react";
-import { Loader2, Plus, FolderOpen } from "lucide-react";
+import { Plus, FolderOpen } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { EmptyState } from "@/components/EmptyState";
+import { ErrorState } from "@/components/ErrorState";
 import { useProjectsQuery } from "@/features/projects/api/useProjects";
 import { ProjectCard } from "@/features/projects/components/ProjectCard";
+import { ProjectListSkeleton } from "@/features/projects/components/ProjectListSkeleton";
 import { CreateProjectDialog } from "@/features/projects/components/CreateProjectDialog";
 
 export function ProjectsPage() {
@@ -14,7 +17,13 @@ export function ProjectsPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
 
   // Fetch projects via React Query
-  const { data: projects, isLoading, error } = useProjectsQuery();
+  const {
+    data: projects,
+    isPending,
+    error,
+    refetch,
+    isFetching,
+  } = useProjectsQuery();
 
   return (
     <div className="space-y-6">
@@ -26,28 +35,39 @@ export function ProjectsPage() {
           Create Project
         </Button>
       </div>
-      {/* Loading state */}
-      {isLoading && (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-        </div>
+
+      {/* Loading state — isPending, not isLoading: an offline query is paused
+          with isFetching=false, so isLoading stays false and the page would
+          otherwise render blank (no skeleton, no error, no data). */}
+      {isPending && <ProjectListSkeleton />}
+
+      {/* Error state — only when there is nothing to show. A background
+          refetch that fails leaves `error` set while the cached list is
+          still on screen; hiding a working list behind a red box is worse
+          than showing slightly stale data. */}
+      {error && !projects && (
+        <ErrorState
+          message="Failed to load your projects. Check your connection and try again."
+          retry={() => void refetch()}
+          isRetrying={isFetching}
+        />
       )}
-      {/* Error state */}
-      {error && (
-        <p className="text-center text-sm text-destructive">
-          Failed to load projects: {error.message}
-        </p>
-      )}
+
       {/* Empty state */}
       {projects && projects.length === 0 && (
-        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-12">
-          <FolderOpen className="mb-4 h-12 w-12 text-muted-foreground" />
-          <p className="text-lg font-medium">No projects yet</p>
-          <p className="text-sm text-muted-foreground">
-            Create your first project to get started.
-          </p>
-        </div>
+        <EmptyState
+          icon={FolderOpen}
+          title="No projects yet"
+          description="Create your first project to get started."
+          action={
+            <Button onClick={() => setDialogOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Create Project
+            </Button>
+          }
+        />
       )}
+
       {/* Project list */}
       {projects && projects.length > 0 && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -56,6 +76,7 @@ export function ProjectsPage() {
           ))}
         </div>
       )}
+
       {/* Create project dialog */}
       <CreateProjectDialog open={dialogOpen} onOpenChange={setDialogOpen} />
     </div>
