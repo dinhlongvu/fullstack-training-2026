@@ -4,8 +4,10 @@
 
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Plus } from "lucide-react";
+import { Plus, ListTodo, FilterX } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { EmptyState } from "@/components/EmptyState";
+import { ErrorState } from "@/components/ErrorState";
 import { KanbanColumn } from "./KanbanColumn";
 import { KanbanBoardSkeleton } from "./KanbanBoardSkeleton";
 import { CreateTaskDialog } from "./CreateTaskDialog";
@@ -97,12 +99,18 @@ export function KanbanBoard({ projectId, members }: KanbanBoardProps) {
   // Fetch tasks — filters passed to API via query params
   const {
     data: tasks,
-    isLoading,
+    isPending,
     error,
+    refetch,
+    isFetching,
   } = useProjectTasksQuery(projectId, {
     priority: priorityFilter ?? undefined,
     assigneeId: assigneeFilter ?? undefined,
   });
+
+  // Whether the user is looking at a filtered view — changes what an empty
+  // result MEANS, and therefore what the empty state must say.
+  const hasActiveFilters = priorityFilter !== null || assigneeFilter !== null;
 
   // Update a single filter while preserving other params
   function setFilter(key: string, value: string | null) {
@@ -117,24 +125,20 @@ export function KanbanBoard({ projectId, members }: KanbanBoardProps) {
     });
   }
 
+  // Clear only the two filters this board owns 
+  function clearFilters() {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.delete("priority");
+      next.delete("assigneeId");
+      return next;
+    });
+  }
+
   // Group tasks by status for column display
   function getTasksByStatus(status: string): Task[] {
     if (!tasks) return [];
     return tasks.filter((task) => task.status === status);
-  }
-
-  // Loading state
-  if (isLoading) {
-    return <KanbanBoardSkeleton />;
-  }
-
-  // Error state
-  if (error) {
-    return (
-      <p className="py-8 text-center text-sm text-destructive">
-        Failed to load tasks. Please try again.
-      </p>
-    );
   }
 
   return (
@@ -172,7 +176,7 @@ export function KanbanBoard({ projectId, members }: KanbanBoardProps) {
         {/* Clear all filters */}
         {(priorityFilter || assigneeFilter) && (
           <button
-            onClick={() => setSearchParams({})}
+            onClick={clearFilters}
             className="text-sm text-muted-foreground underline hover:text-foreground"
           >
             Clear filters
@@ -190,19 +194,65 @@ export function KanbanBoard({ projectId, members }: KanbanBoardProps) {
         </Button>
       </div>
 
-      {/* 3-column Kanban layout: responsive (stack on mobile) */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        {COLUMNS.map((col) => (
-          <KanbanColumn
-            key={col.status}
-            title={col.title}
-            status={col.status}
-            tasks={getTasksByStatus(col.status)}
-            projectId={projectId}
-            members={members}
+      {/* Loading — skeleton columns, toolbar above stays usable.
+          isPending, not isLoading: a paused offline query keeps isLoading
+          false, which would leave this area blank. */}
+      {isPending && <KanbanBoardSkeleton />}
+
+      {/* Error — only when there is no cached board to fall back to */}
+      {error && !tasks && (
+        <ErrorState
+          message="Failed to load tasks for this project."
+          retry={() => void refetch()}
+          isRetrying={isFetching}
+        />
+      )}
+
+      {/* Empty — a filtered empty board is NOT the same as an empty project.
+          Saying "No tasks yet" while a filter is on makes the user think
+          their tasks were deleted. */}
+      {tasks &&
+        tasks.length === 0 &&
+        (hasActiveFilters ? (
+          <EmptyState
+            icon={FilterX}
+            title="No tasks match these filters"
+            description="Try a different priority or assignee, or clear the filters."
+            action={
+              <Button variant="outline" onClick={clearFilters}>
+                Clear filters
+              </Button>
+            }
+          />
+        ) : (
+          <EmptyState
+            icon={ListTodo}
+            title="No tasks yet"
+            description="Create the first task to start filling the board."
+            action={
+              <Button onClick={() => setCreateDialogOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                New Task
+              </Button>
+            }
           />
         ))}
-      </div>
+
+      {/* 3-column Kanban layout: responsive (stack on mobile) */}
+      {tasks && tasks.length > 0 && (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          {COLUMNS.map((col) => (
+            <KanbanColumn
+              key={col.status}
+              title={col.title}
+              status={col.status}
+              tasks={getTasksByStatus(col.status)}
+              projectId={projectId}
+              members={members}
+            />
+          ))}
+        </div>
+      )}
 
       {/* Create Task Dialog */}
       <CreateTaskDialog
