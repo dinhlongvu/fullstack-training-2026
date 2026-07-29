@@ -3,15 +3,10 @@
 // Renders task info (status/priority badges, assignee, dates) + CommentList below.
 
 import { useState } from "react";
-import { useParams, Navigate, useNavigate } from "react-router-dom";
+import { useParams, Navigate, Link } from "react-router-dom";
 import { ArrowLeft, Calendar, User, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/Card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import {
   useTaskQuery,
   useTaskCommentsQuery,
@@ -37,7 +32,6 @@ function formatDate(dateString: string): string {
 
 export function TaskDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
 
   // Parse URL param to number — no hardcoded IDs
   const taskId = Number(id);
@@ -84,14 +78,14 @@ export function TaskDetailPage() {
   if (!task) {
     return (
       <div className="space-y-4">
-        <button
-          type="button"
-          onClick={() => navigate("/projects")}
+        {/* No task loaded here, so there is no projectId to go back to */}
+        <Link
+          to="/projects"
           className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="mr-1 h-4 w-4" />
-          Back to project
-        </button>
+          Back to projects
+        </Link>
         <ErrorState
           message="Couldn't load this task. It may have been deleted, or you may not have access."
           retry={() => void refetchTask()}
@@ -103,16 +97,14 @@ export function TaskDetailPage() {
 
   return (
     <div className="space-y-6">
-      {/* Back link — go to the projects list, a safe in-app fallback that
-          works even when the task was opened via a direct URL (no app history) */}
-      <button
-        type="button"
-        onClick={() => navigate("/projects")}
+      {/* Back link — go to the parent project's board, not the projects list */}
+      <Link
+        to={`/projects/${task.projectId}`}
         className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="mr-1 h-4 w-4" />
         Back to project
-      </button>
+      </Link>
 
       {/* Task info section */}
       <div className="space-y-3">
