@@ -153,7 +153,7 @@
 | **Test Data** | `{ "title": "Valid Title", "description": "", "priority": "Critical" }` |
 | **Test Steps** | 1. Send POST request with `priority` set to an invalid enum value `"Critical"` <br> 2. Check response status code |
 | **Expected Result** | 1. Status 400 Bad Request <br> 2. Response contains validation error: `"Priority must be Low, Medium, or High."` <br> 3. Task is NOT created |
-| **Actual Result** | 1. Status 400 Bad Request contains body: `{ "errors": ["Priority must be Low, Medium, or High."]}` <br> 2. Task is NOT created |
+| **Actual Result** | 1. Status 400 Bad Request contains body: `{ "error": "Priority must be 'Low', 'Medium', or 'High'." }` <br> 2. Task is NOT created |
 | **Status** | ✅ Passed |
 | **Bug link** | — |
 

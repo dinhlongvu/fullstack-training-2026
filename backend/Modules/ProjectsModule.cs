@@ -3,16 +3,11 @@
 // Keeps HTTP concerns thin — delegates ALL business logic to MediatR.
 
 using Backend.Commands.Projects;
-using Backend.Domain;
 using Backend.DTOs;
 using Backend.Queries.Projects;
 using Backend.Services.Auth;
 using Carter;
 using MediatR;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.Routing;
 
 namespace Backend.Modules;
 
@@ -57,7 +52,7 @@ public class ProjectsModule : ICarterModule
         .WithSummary("Create a new project")
         .WithDescription("Create a new project owned by the current user.")
         .Produces<ProjectDto>(StatusCodes.Status201Created) // 201 Created if successful
-        .ProducesValidationProblem() // Auto-returns 400 if FluentValidation fails
+        .Produces<ValidationErrorResponse>(StatusCodes.Status400BadRequest) // Auto-returns 400 if FluentValidation fails
         .Produces(StatusCodes.Status401Unauthorized); // 401 Unauthorized if token invalid
 
         // ======== 3. GET /api/projects/{id} ========
@@ -107,7 +102,7 @@ public class ProjectsModule : ICarterModule
         .WithSummary("Update project details")
         .WithDescription("Updates the name and description of a project. Can only be performed by the project creator.")
         .Produces<ProjectDto>(StatusCodes.Status200OK)
-        .ProducesValidationProblem()
+        .Produces<ValidationErrorResponse>(StatusCodes.Status400BadRequest)
         .Produces(StatusCodes.Status404NotFound)
         .Produces(StatusCodes.Status401Unauthorized);
 
@@ -162,6 +157,7 @@ public class ProjectsModule : ICarterModule
         .WithSummary("Add user to project")
         .WithDescription("Add user to project. Owner-only. Validates user exists, validates user not already a member.")
         .Produces<ProjectMemberDto>(StatusCodes.Status201Created)
+        .Produces<ValidationErrorResponse>(StatusCodes.Status400BadRequest)
         .Produces(StatusCodes.Status404NotFound)
         .Produces(StatusCodes.Status409Conflict)
         .Produces(StatusCodes.Status401Unauthorized);

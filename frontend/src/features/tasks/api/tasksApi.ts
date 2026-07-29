@@ -71,7 +71,7 @@ export function createTask(projectId: number, request: CreateTaskRequest) {
 export interface UpdateTaskRequest {
   title?: string;
   description?: string;
-  priority?: TaskPriority; // IMPORTANT: PUT expects the STRING "Low"/"Medium"/"High" and REJECTS numbers (unlike POST)
+  priority?: TaskPriority; // IMPORTANT: Endpoint expects the STRING "Low"/"Medium"/"High" and rejects numbers.
   dueDate?: string | null;
   assigneeId?: number | null;
   clearAssignee?: boolean;
@@ -83,8 +83,7 @@ export interface UpdateTaskRequest {
 export function updateTask(taskId: number, request: UpdateTaskRequest) {
   return apiClient<Task>(`/api/tasks/${taskId}`, {
     method: "PUT",
-    // Send priority as-is (string). Do NOT use PRIORITY_TO_NUMBER here —
-    // the PUT endpoint parses a string and 400s on numeric input.
+    // Both POST and PUT endpoints parse the string and return 400 on numeric input.
     body: JSON.stringify(request),
   });
 }

@@ -37,12 +37,12 @@ public record CreateTaskRequest
     /// <example>Create the login UI and integrate with the authentication API.</example>
     public string Description { get; init; } = string.Empty;
 
-    /// <summary>Task priority. Accepted values: Low, Medium, High.</summary>
+    /// <summary>Task priority. Accepted values: Low, Medium, High. Defaults to Medium when the field is omitted.</summary>
     /// <example>Medium</example>
     public string? Priority { get; init; }
 
     /// <summary>Optional due date for the task.</summary>
-    /// <example>2026-07-31T17:00:00Z</example>
+    /// <example>2030-12-31T17:00:00Z</example>
     public DateTime? DueDate { get; init; }
 
     /// <summary>Optional ID of a project member to assign this task to.</summary>

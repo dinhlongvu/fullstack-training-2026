@@ -117,7 +117,11 @@ builder.Services.AddSwaggerGen(options =>
     // Read the Comments XML file to display description and example on Swagger UI
     var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-    options.IncludeXmlComments(xmlPath);
+    if (File.Exists(xmlPath))
+    {
+        options.IncludeXmlComments(xmlPath);
+    }
+
 
     // Configure Token input interface (Bearer) for Swagger UI
     options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme

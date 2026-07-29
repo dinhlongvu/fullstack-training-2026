@@ -10,8 +10,6 @@ using Backend.Queries.Tasks;
 using Backend.Services.Auth;
 using Carter;
 using MediatR;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 // Alias to avoid collision with System.Threading.Tasks.Task
@@ -49,9 +47,7 @@ public class TasksModule : ICarterModule
                     return Results.BadRequest(new { error = "Priority must be a single value" });
 
                 // Block garbage or numeric values
-                if (int.TryParse(priority, out _)
-                    || !Enum.TryParse<Priority>(priority, ignoreCase: true, out var p)
-                    || !Enum.IsDefined(p))
+                if (!TryParsePriority(priority, out var p))
                 {
                     return Results.BadRequest(new { error = "Priority must be 'Low', 'Medium', or 'High'." });
                 }
@@ -72,6 +68,7 @@ public class TasksModule : ICarterModule
         .WithSummary("Get tasks in a project")
         .WithDescription("Returns a list of tasks for a project. Supports filtering by status, priority, and assigneeId. Must be project owner or member.")
         .Produces<List<TaskDto>>(StatusCodes.Status200OK)
+        .Produces(StatusCodes.Status400BadRequest)
         .Produces(StatusCodes.Status404NotFound)
         .Produces(StatusCodes.Status401Unauthorized);
 
@@ -87,8 +84,7 @@ public class TasksModule : ICarterModule
             Priority parsedPriority = Priority.Medium;
             if (!string.IsNullOrWhiteSpace(req.Priority))
             {
-                if (int.TryParse(req.Priority, out _)
-                    || !Enum.TryParse<Priority>(req.Priority, ignoreCase: true, out var p))
+                if (!TryParsePriority(req.Priority, out var p))
                 {
                     return Results.BadRequest(new { error = "Priority must be 'Low', 'Medium', or 'High'." });
                 }
@@ -120,8 +116,7 @@ public class TasksModule : ICarterModule
         .WithSummary("Create a new task")
         .WithDescription("Creates a new task in the specified project. Requires project member access.")
         .Produces<TaskDto>(StatusCodes.Status201Created)
-        .ProducesValidationProblem()
-        .Produces(StatusCodes.Status400BadRequest)
+        .Produces<ValidationErrorResponse>(StatusCodes.Status400BadRequest)
         .Produces(StatusCodes.Status404NotFound)
         .Produces(StatusCodes.Status401Unauthorized);
 
@@ -171,9 +166,7 @@ public class TasksModule : ICarterModule
             if (req.Priority is not null)
             {
                 // Block numeric input with int.TryParse
-                if (int.TryParse(req.Priority, out _)
-                    || !Enum.TryParse<Priority>(req.Priority, ignoreCase: true, out var p)
-                    || !Enum.IsDefined(p))
+                if (!TryParsePriority(req.Priority, out var p))
                 {
                     return Results.BadRequest(new { error = "Priority must be 'Low', 'Medium', or 'High'." });
                 }
@@ -349,7 +342,7 @@ public class TasksModule : ICarterModule
         .WithSummary("Add a comment to a task")
         .WithDescription("Creates a new comment. Validates content length and ensures project member authorization.")
         .Produces<CommentDto>(StatusCodes.Status201Created)
-        .ProducesValidationProblem()
+        .Produces<ValidationErrorResponse>(StatusCodes.Status400BadRequest)
         .Produces(StatusCodes.Status404NotFound)
         .Produces(StatusCodes.Status401Unauthorized);
 
@@ -377,5 +370,12 @@ public class TasksModule : ICarterModule
         .Produces(StatusCodes.Status204NoContent)
         .Produces(StatusCodes.Status404NotFound)
         .Produces(StatusCodes.Status401Unauthorized);
+    }
+    private static bool TryParsePriority(string? input, out Priority priority)
+    {
+        priority = default;
+        return !int.TryParse(input, out _)
+            && Enum.TryParse<Priority>(input, ignoreCase: true, out priority)
+            && Enum.IsDefined(priority);
     }
 }

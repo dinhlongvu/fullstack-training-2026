@@ -2640,7 +2640,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n  \"title\": \"Fix login bug\",\r\n  \"description\": \"Session token expires too early\",\r\n  \"priority\": 2,\r\n  \"dueDate\": \"2026-12-31T23:59:59Z\",\r\n  \"assigneeId\": null\r\n}",
+              "raw": "{\r\n  \"title\": \"Fix login bug\",\r\n  \"description\": \"Session token expires too early\",\r\n  \"priority\": \"High\",\r\n  \"dueDate\": \"2026-12-31T23:59:59Z\",\r\n  \"assigneeId\": null\r\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -3251,7 +3251,7 @@
                   "        raw: JSON.stringify({\r",
                   "            title: \"Task for Priority Filter\",\r",
                   "            description: \"Created by pre-request script\",\r",
-                  "            priority: 2,\r",
+                  "            priority: \"High\",\r",
                   "            dueDate: \"2026-12-31T23:59:59Z\"\r",
                   "        })\r",
                   "    }\r",
@@ -3360,7 +3360,7 @@
                   "        raw: JSON.stringify({\r",
                   "            title: \"Task for Assignee Filter\",\r",
                   "            description: \"Created by pre-request script\",\r",
-                  "            priority: 1,\r",
+                  "            priority: \"Medium\",\r",
                   "            dueDate: \"2026-12-31T23:59:59Z\",\r",
                   "            assigneeId: userId\r",
                   "        })\r",

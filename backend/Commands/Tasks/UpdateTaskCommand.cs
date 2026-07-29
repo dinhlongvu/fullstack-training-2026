@@ -44,7 +44,7 @@ public record UpdateTaskRequest
     public string? Priority { get; init; }
 
     /// <summary>The new due date (ISO 8601 date).</summary>
-    /// <example>2026-08-15T17:00:00Z</example>
+    /// <example>2030-12-31T17:00:00Z</example>
     public DateTime? DueDate { get; init; }
 
     /// <summary>The new assignee's user ID.</summary>
