@@ -45,13 +45,14 @@ export function TaskDetailPage() {
   // Two independent queries, two cache keys (as required by the issue)
   const {
     data: task,
-    isLoading: isTaskLoading,
+    isPending: isTaskPending,
     refetch: refetchTask,
     isFetching: isTaskFetching,
   } = useTaskQuery(taskId);
+
   const {
     data: comments,
-    isLoading: isCommentsLoading,
+    isPending: isCommentsPending,
     error: commentsError,
     refetch: refetchComments,
     isFetching: isCommentsFetching,
@@ -72,8 +73,10 @@ export function TaskDetailPage() {
     return <Navigate to="/projects" replace />;
   }
 
-  // Loading state — task detail
-  if (isTaskLoading) {
+  // Loading state — task detail. isPending, not isLoading: a query paused
+  // while offline keeps isLoading false, so the flow would fall through to the
+  // "not found" branch below and blame a deleted task instead of the network.
+  if (isTaskPending) {
     return <TaskDetailSkeleton />;
   }
 
@@ -165,7 +168,7 @@ export function TaskDetailPage() {
         <CardContent>
           <CommentList
             comments={comments}
-            isLoading={isCommentsLoading}
+            isPending={isCommentsPending}
             error={commentsError}
             onRetry={() => void refetchComments()}
             isRetrying={isCommentsFetching}

@@ -11,7 +11,7 @@ import { type Comment } from "../api/tasksApi";
 
 interface CommentListProps {
   comments: Comment[] | undefined;
-  isLoading: boolean;
+  isPending: boolean;
   error: Error | null;
   // Owned by the page, which holds the query.
   onRetry?: () => void;
@@ -38,13 +38,13 @@ function normalizeNewlines(text: string): string {
 
 export function CommentList({
   comments,
-  isLoading,
+  isPending,
   error,
   onRetry,
   isRetrying,
 }: CommentListProps) {
   // Loading state
-  if (isLoading) {
+  if (isPending) {
     return <CommentListSkeleton />;
   }
 

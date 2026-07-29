@@ -38,7 +38,7 @@ export function ProjectDetailPage() {
   // Fetch project detail via React Query
   const {
     data: project,
-    isLoading,
+    isPending,
     refetch,
     isFetching,
   } = useProjectDetailQuery(projectId);
@@ -57,8 +57,10 @@ export function ProjectDetailPage() {
     return <Navigate to="/projects" replace />;
   }
 
-  // Loading state
-  if (isLoading) {
+  // Loading state — isPending, not isLoading: a query paused while offline
+  // keeps isLoading false, so the flow would fall through to the "not found"
+  // branch below and blame a deleted project instead of the network.
+  if (isPending) {
     return <ProjectDetailSkeleton />;
   }
 
