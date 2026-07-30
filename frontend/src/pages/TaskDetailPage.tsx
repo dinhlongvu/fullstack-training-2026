@@ -55,10 +55,17 @@ export function TaskDetailPage() {
   // Edit dialog state + members needed for the assignee dropdown
   const [editOpen, setEditOpen] = useState(false);
   const currentUser = useAuthStore((s) => s.currentUser);
-  const { data: project } = useProjectDetailQuery(task?.projectId ?? 0);
+  const {
+    data: project,
+    isPending: isProjectPending,
+    error: projectError,
+  } = useProjectDetailQuery(task?.projectId ?? 0);
   const members = project?.members ?? [];
   const canEdit =
     currentUser !== null && members.some((m) => m.userId === currentUser.id);
+
+  // A slow or failed project fetch means membership is UNKNOWN, not denied.
+  const isMembershipUnknown = isProjectPending || projectError !== null;
 
   // Invalid id in the URL (/tasks/abc, /tasks/0). Both task queries are
   // `enabled: taskId > 0`, so a non-positive id would leave the page with no
@@ -115,11 +122,12 @@ export function TaskDetailPage() {
 
         <div className="flex items-start justify-between gap-2">
           <h2 className="text-2xl font-bold">{task.title}</h2>
-          {canEdit && (
+          {(canEdit || isMembershipUnknown) && (
             <Button
               variant="outline"
               size="sm"
               className="shrink-0"
+              disabled={isMembershipUnknown}
               onClick={() => setEditOpen(true)}
             >
               <Pencil className="mr-2 h-4 w-4" />
@@ -154,7 +162,7 @@ export function TaskDetailPage() {
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">
-            Comments ({task.commentCount})
+            Comments ({comments?.length ?? task.commentCount})
           </CardTitle>
         </CardHeader>
         <CardContent>
