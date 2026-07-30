@@ -3,6 +3,7 @@
 // Queries only READ data — no side effects, no SaveChanges.
 
 using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using Backend.Domain;
 using Backend.DTOs;
 using Backend.Infrastructure.Data;
@@ -54,8 +55,6 @@ public class GetTasksHandler : IRequestHandler<GetTasksQuery, GetTasksResult>
         // Apply optional filters using IQueryable
         var query = _db.Tasks
             .AsNoTracking()
-            .Include(t => t.Assignee)   // needed for AssigneeName mapping
-            .Include(t => t.Comments)   // needed for CommentCount mapping
             .Where(t => t.ProjectId == req.ProjectId);
 
         if (req.Status.HasValue)
@@ -67,12 +66,12 @@ public class GetTasksHandler : IRequestHandler<GetTasksQuery, GetTasksResult>
         if (req.AssigneeId.HasValue)
             query = query.Where(t => t.AssigneeId == req.AssigneeId.Value);
 
-        // Load entities to memory, then map in-memory
-        var tasks = await query
+        // Project directly to DTO to allow EF Core to optimize the SQL query
+        var taskDtos = await query
             .OrderByDescending(t => t.CreatedAt)
+            .ProjectTo<TaskDto>(_mapper.ConfigurationProvider)
             .ToListAsync(ct);
 
-        var taskDtos = _mapper.Map<List<TaskDto>>(tasks);
         return new GetTasksResult(true, true, taskDtos);
     }
 }
