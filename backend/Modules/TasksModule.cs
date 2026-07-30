@@ -82,7 +82,7 @@ public class TasksModule : ICarterModule
             var currentUserId = context.User.GetUserId();
 
             Priority parsedPriority = Priority.Medium;
-            if (!string.IsNullOrWhiteSpace(req.Priority))
+            if (req.Priority != null)
             {
                 if (!TryParsePriority(req.Priority, out var p))
                 {
@@ -374,6 +374,11 @@ public class TasksModule : ICarterModule
     private static bool TryParsePriority(string? input, out Priority priority)
     {
         priority = default;
+
+        // Block empty strings and multi-value lists ("Low,High"):
+        if (string.IsNullOrWhiteSpace(input) || input.Contains(','))
+            return false;
+
         return !int.TryParse(input, out _)
             && Enum.TryParse<Priority>(input, ignoreCase: true, out priority)
             && Enum.IsDefined(priority);
