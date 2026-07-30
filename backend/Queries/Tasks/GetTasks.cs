@@ -41,16 +41,21 @@ public class GetTasksHandler : IRequestHandler<GetTasksQuery, GetTasksResult>
 
     public async Task<GetTasksResult> Handle(GetTasksQuery req, CancellationToken ct)
     {
-        var project = await _db.Projects
-            .Include(p => p.Members)
-            .FirstOrDefaultAsync(p => p.Id == req.ProjectId, ct);
+        var projectAuth = await _db.Projects
+            .AsNoTracking()
+            .Where(p => p.Id == req.ProjectId)
+            .Select(p => new
+            {
+                IsOwnerOrMember = p.CreatedById == req.CurrentUserId ||
+                                p.Members.Any(m => m.UserId == req.CurrentUserId)
+            })
+            .FirstOrDefaultAsync(ct);
 
-        if (project == null) return new GetTasksResult(false, false, null);
+        if (projectAuth == null)
+            return new GetTasksResult(false, false, null);
 
-        bool isOwner = project.CreatedById == req.CurrentUserId;
-        bool isMember = project.Members.Any(m => m.UserId == req.CurrentUserId);
-
-        if (!isOwner && !isMember) return new GetTasksResult(true, false, null);
+        if (!projectAuth.IsOwnerOrMember)
+            return new GetTasksResult(true, false, null);
 
         // Apply optional filters using IQueryable
         var query = _db.Tasks
