@@ -41,7 +41,7 @@ export function ErrorState({
             disabled={isRetrying}
           >
             <RefreshCw
-              className={cn("h-4 w-4", isRetrying && "animate-spin")}
+              className={cn("mr-2 h-4 w-4", isRetrying && "animate-spin")}
               aria-hidden="true"
             />
             {isRetrying ? "Retrying..." : "Try again"}

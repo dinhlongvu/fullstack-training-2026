@@ -79,6 +79,9 @@ export function TaskDetailPage() {
       ? stateSearch
       : "";
 
+  // Mirrors CommentList's error branch: failed with nothing cached to show.
+  const commentsFailed = commentsError !== null && !comments;
+
   // Invalid id in the URL (/tasks/abc, /tasks/0). Both task queries are
   // `enabled: taskId > 0`, so a non-positive id would leave the page with no
   // data, no error and a retry button that cannot do anything.
@@ -194,9 +197,13 @@ export function TaskDetailPage() {
             onRetry={() => void refetchComments()}
             isRetrying={isCommentsFetching}
           />
-          <div className="mt-6 border-t pt-6">
-            <CommentForm taskId={taskId} />
-          </div>
+          {/* No form when the thread failed to load — a posted comment would
+              disappear into a list that cannot render it. */}
+          {!commentsFailed && (
+            <div className="mt-6 border-t pt-6">
+              <CommentForm taskId={taskId} />
+            </div>
+          )}
         </CardContent>
       </Card>
 
