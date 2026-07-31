@@ -148,6 +148,9 @@ public class CreateTaskHandler : IRequestHandler<CreateTaskCommand, TaskDto>
 | `404 Not Found` | Resource does not exist |
 | `500 Internal Server Error` | Unexpected error (caught by ExceptionHandlingMiddleware) |
 
+> Status 400 → body is always `{ "errors": [...], "traceId": "..." }`.
+> All other error status (401 / 404 / 409 / 500) → body is always `{ "error": "...", "traceId": "..." }`.
+
 ### Validation
 
 - One `AbstractValidator<T>` per command/query

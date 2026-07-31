@@ -12,6 +12,6 @@ public record ValidationErrorResponse
     public IEnumerable<string> Errors { get; init; } = Array.Empty<string>();
 
     /// <summary>Correlation id, useful when reporting an issue.</summary>
-    /// <example>00-1a2b3c4d5e6f-0011223344556677-00</example>
+    /// <example>00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01</example>
     public string TraceId { get; init; } = string.Empty;
 }

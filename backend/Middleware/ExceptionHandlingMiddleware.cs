@@ -35,7 +35,7 @@ public class ExceptionHandlingMiddleware
             // Getting 404 error from ASP.NET Core when calling Endpoint/URL does not exist (Route not found)
             if (context.Response.StatusCode == StatusCodes.Status404NotFound && !context.Response.HasStarted)
             {
-                var traceId = Activity.Current?.Id ?? context.TraceIdentifier;
+                var traceId = context.GetTraceId();
                 context.Response.ContentType = "application/json";
                 var response = new
                 {
@@ -77,7 +77,7 @@ public class ExceptionHandlingMiddleware
         context.Response.StatusCode = (int)statusCode;
 
         // Get traceId from the system
-        var traceId = Activity.Current?.Id ?? context.TraceIdentifier;
+        var traceId = context.GetTraceId();
 
         // 2. Format Body returns (Validation returns array 'errors', otherwise returns 'error')
         object response = exception switch

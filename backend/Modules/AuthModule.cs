@@ -30,7 +30,7 @@ public class AuthModule : ICarterModule
         .WithSummary("Register a new user account")
         .WithDescription("Creates a new user account and returns the created user details.")
         .Produces<UserDto>(StatusCodes.Status201Created)
-        .Produces(StatusCodes.Status400BadRequest)
+        .Produces<ValidationErrorResponse>(StatusCodes.Status400BadRequest)
         .Produces(StatusCodes.Status409Conflict);
 
         // POST /api/auth/login
@@ -45,7 +45,7 @@ public class AuthModule : ICarterModule
         .WithSummary("User login")
         .WithDescription("Authenticates a user and returns a JWT Bearer token along with user info.")
         .Produces<LoginResponseDto>(StatusCodes.Status200OK)
-        .Produces(StatusCodes.Status400BadRequest)
+        .Produces<ValidationErrorResponse>(StatusCodes.Status400BadRequest)
         .Produces(StatusCodes.Status401Unauthorized);
 
         // GET /api/auth/me

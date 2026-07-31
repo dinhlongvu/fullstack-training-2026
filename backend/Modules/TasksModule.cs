@@ -6,6 +6,7 @@
 using Backend.Commands.Tasks;
 using Backend.Domain;
 using Backend.DTOs;
+using Backend.Middleware;
 using Backend.Queries.Tasks;
 using Backend.Services.Auth;
 using Carter;
@@ -46,7 +47,7 @@ public class TasksModule : ICarterModule
                     return Results.BadRequest(new ValidationErrorResponse
                     {
                         Errors = new[] { "Status must be 'Todo', 'InProgress', or 'Done'." },
-                        TraceId = context.TraceIdentifier
+                        TraceId = context.GetTraceId()
                     });
                 }
                 parsedStatus = s;
@@ -55,23 +56,13 @@ public class TasksModule : ICarterModule
             Priority? parsedPriority = null;
             if (!string.IsNullOrWhiteSpace(priority))
             {
-                // Block transmission of multiple values ​​(contains commas)
-                if (priority.Contains(','))
-                {
-                    return Results.BadRequest(new ValidationErrorResponse
-                    {
-                        Errors = new[] { "Priority must be a single value" },
-                        TraceId = context.TraceIdentifier
-                    });
-                }
-
                 // Block garbage or numeric values
                 if (!TryParsePriority(priority, out var p))
                 {
                     return Results.BadRequest(new ValidationErrorResponse
                     {
                         Errors = new[] { "Priority must be 'Low', 'Medium', or 'High'." },
-                        TraceId = context.TraceIdentifier
+                        TraceId = context.GetTraceId()
                     });
                 }
                 parsedPriority = p;
@@ -89,9 +80,9 @@ public class TasksModule : ICarterModule
         })
         .WithName("GetProjectTasks")
         .WithSummary("Get tasks in a project")
-        .WithDescription("Returns a list of tasks for a project. Supports filtering by status, priority, and assigneeId. Must be project owner or member.")
+        .WithDescription("Get the list of project tasks. Optional filter: status (Todo | InProgress | Done), priority (Low | Medium | High), assigneeId.")
         .Produces<List<TaskDto>>(StatusCodes.Status200OK)
-        .Produces(StatusCodes.Status400BadRequest)
+        .Produces<ValidationErrorResponse>(StatusCodes.Status400BadRequest)
         .Produces(StatusCodes.Status404NotFound)
         .Produces(StatusCodes.Status401Unauthorized);
 
@@ -112,7 +103,7 @@ public class TasksModule : ICarterModule
                     return Results.BadRequest(new ValidationErrorResponse
                     {
                         Errors = new[] { "Priority must be 'Low', 'Medium', or 'High'." },
-                        TraceId = context.TraceIdentifier
+                        TraceId = context.GetTraceId()
                     });
                 }
                 parsedPriority = p;
@@ -134,7 +125,11 @@ public class TasksModule : ICarterModule
                 return Results.NotFound(new { error = "Project not found" });
 
             if (!result.IsAssigneeValid)
-                return Results.BadRequest(new { error = "Assignee must be a project member" });
+                return Results.BadRequest(new ValidationErrorResponse
+                {
+                    Errors = new[] { "Assignee must be a project member" },
+                    TraceId = context.GetTraceId()
+                });
 
             // Points the new task to GET Task Detail endpoint
             return Results.Created($"/api/tasks/{result.Data?.Id}", result.Data);
@@ -198,7 +193,7 @@ public class TasksModule : ICarterModule
                     return Results.BadRequest(new ValidationErrorResponse
                     {
                         Errors = new[] { "Priority must be 'Low', 'Medium', or 'High'." },
-                        TraceId = context.TraceIdentifier
+                        TraceId = context.GetTraceId()
                     });
                 }
                 parsedPriority = p;
@@ -222,7 +217,11 @@ public class TasksModule : ICarterModule
                 return Results.NotFound(new { error = "Task not found" });
 
             if (!result.IsAssigneeValid)
-                return Results.BadRequest(new { error = "Assignee must be a project member" });
+                return Results.BadRequest(new ValidationErrorResponse
+                {
+                    Errors = new[] { "Assignee must be a project member" },
+                    TraceId = context.GetTraceId()
+                });
 
             return Results.Ok(result.Data);
         })
@@ -230,7 +229,7 @@ public class TasksModule : ICarterModule
         .WithSummary("Update a task")
         .WithDescription("Updates task fields (title, description, priority, dueDate, assigneeId). Status is managed via PATCH /status. Requires project member access.")
         .Produces<TaskDto>(StatusCodes.Status200OK)
-        .Produces(StatusCodes.Status400BadRequest)
+        .Produces<ValidationErrorResponse>(StatusCodes.Status400BadRequest)
         .Produces(StatusCodes.Status404NotFound)
         .Produces(StatusCodes.Status401Unauthorized);
 
@@ -249,7 +248,7 @@ public class TasksModule : ICarterModule
                 return Results.BadRequest(new ValidationErrorResponse
                 {
                     Errors = new[] { "Status is required." },
-                    TraceId = context.TraceIdentifier
+                    TraceId = context.GetTraceId()
                 });
             }
 
@@ -258,7 +257,7 @@ public class TasksModule : ICarterModule
                 return Results.BadRequest(new ValidationErrorResponse
                 {
                     Errors = new[] { "Status must be 'Todo', 'InProgress', or 'Done'." },
-                    TraceId = context.TraceIdentifier
+                    TraceId = context.GetTraceId()
                 });
             }
 
@@ -275,7 +274,7 @@ public class TasksModule : ICarterModule
         .WithSummary("Move task to a new status")
         .WithDescription("Updates the status of a task (Todo/InProgress/Done). Requires project member access.")
         .Produces<TaskDto>(StatusCodes.Status200OK)
-        .Produces(StatusCodes.Status400BadRequest)
+        .Produces<ValidationErrorResponse>(StatusCodes.Status400BadRequest)
         .Produces(StatusCodes.Status404NotFound)
         .Produces(StatusCodes.Status401Unauthorized);
 
@@ -302,7 +301,11 @@ public class TasksModule : ICarterModule
                 return Results.NotFound(new { error = "Task not found" });
 
             if (!result.IsAssigneeValid)
-                return Results.BadRequest(new { error = "Assignee must be a project member or project owner" });
+                return Results.BadRequest(new ValidationErrorResponse
+                {
+                    Errors = new[] { "Assignee must be a project member or project owner" },
+                    TraceId = context.GetTraceId()
+                });
 
             return Results.Ok(result.Data);
         })
@@ -310,7 +313,7 @@ public class TasksModule : ICarterModule
         .WithSummary("Assign or unassign a task")
         .WithDescription("Assigns a task to a project member. Pass null to unassign. Requires project member access.")
         .Produces<TaskDto>(StatusCodes.Status200OK)
-        .Produces(StatusCodes.Status400BadRequest)
+        .Produces<ValidationErrorResponse>(StatusCodes.Status400BadRequest)
         .Produces(StatusCodes.Status404NotFound)
         .Produces(StatusCodes.Status401Unauthorized);
 
