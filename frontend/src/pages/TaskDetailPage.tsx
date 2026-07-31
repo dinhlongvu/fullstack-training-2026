@@ -64,16 +64,14 @@ export function TaskDetailPage() {
   const canEdit =
     currentUser !== null && members.some((m) => m.userId === currentUser.id);
 
-  // A slow or failed project fetch means membership is UNKNOWN, not denied.
-  const isMembershipUnknown = isProjectPending || projectError !== null;
+  // A running project query means membership is genuinely UNKNOWN.
+  const isMembershipUnknown = isProjectPending && projectError === null;
 
   const location = useLocation();
   const stateSearch = (location.state as { boardSearch?: unknown } | null)
     ?.boardSearch;
 
-  // Filters of the board this task was opened from, so the back link returns to
-  // that exact view. Absent when the task was reached from anywhere else — the
-  // Dashboard, a direct URL — which correctly means "no filters to restore".
+  // Filters of the board this task was opened from, so the back link returns to that exact view.
   const boardSearch =
     typeof stateSearch === "string" && stateSearch.startsWith("?")
       ? stateSearch
@@ -140,6 +138,11 @@ export function TaskDetailPage() {
               size="sm"
               className="shrink-0"
               disabled={isMembershipUnknown}
+              title={
+                isMembershipUnknown
+                  ? "Checking your access to this project..."
+                  : undefined
+              }
               onClick={() => setEditOpen(true)}
             >
               <Pencil className="mr-2 h-4 w-4" />
