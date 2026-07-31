@@ -30,17 +30,6 @@ function formatDate(dateString: string): string {
   });
 }
 
-// Board filters remembered when this task was opened from the board. Only used
-// after a reload, which drops router state.
-function readBoardSearch(taskId: number): string {
-  try {
-    const stored = sessionStorage.getItem(`board-search:${taskId}`);
-    return stored?.startsWith("?") ? stored : "";
-  } catch {
-    return "";
-  }
-}
-
 export function TaskDetailPage() {
   const { id } = useParams<{ id: string }>();
 
@@ -82,15 +71,13 @@ export function TaskDetailPage() {
   const stateSearch = (location.state as { boardSearch?: unknown } | null)
     ?.boardSearch;
 
-  // Router state describes THIS navigation, so it wins whenever present —
-  // including an explicit empty string, which is how the Dashboard says "no
-  // board filters" and stops an older stored entry from being applied.
+  // Filters of the board this task was opened from, so the back link returns to
+  // that exact view. Absent when the task was reached from anywhere else — the
+  // Dashboard, a direct URL — which correctly means "no filters to restore".
   const boardSearch =
-    typeof stateSearch === "string"
-      ? stateSearch.startsWith("?")
-        ? stateSearch
-        : ""
-      : readBoardSearch(taskId);
+    typeof stateSearch === "string" && stateSearch.startsWith("?")
+      ? stateSearch
+      : "";
 
   // Invalid id in the URL (/tasks/abc, /tasks/0). Both task queries are
   // `enabled: taskId > 0`, so a non-positive id would leave the page with no

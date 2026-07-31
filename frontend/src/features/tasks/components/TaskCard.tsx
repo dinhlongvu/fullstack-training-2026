@@ -49,23 +49,6 @@ function isOverdue(dateString: string): boolean {
   return daysUntil(dateString) < 0;
 }
 
-// Remember the board's filters so Task Detail can send the user back to this
-// exact view. Storage can throw and must never stop the navigation that follows.
-function rememberBoardSearch(taskId: number, search: string): void {
-  try {
-    const key = `board-search:${taskId}`;
-    if (search.startsWith("?")) {
-      sessionStorage.setItem(key, search);
-    } else {
-      // Board is unfiltered now — drop any earlier entry instead of leaving a
-      // stale filter behind.
-      sessionStorage.removeItem(key);
-    }
-  } catch {
-    // Router state still covers the normal click flow.
-  }
-}
-
 export function TaskCard({ task, projectId, members }: TaskCardProps) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -73,9 +56,8 @@ export function TaskCard({ task, projectId, members }: TaskCardProps) {
   const assignTask = useAssignTaskMutation(projectId);
 
   // Carry the board's active filters so "Back to project" returns to this exact
-  // view. sessionStorage backs it up because a reload drops router state.
+  // view. Router state rides in the history entry, so it survives a reload too.
   function openTask() {
-    rememberBoardSearch(task.id, location.search);
     navigate(`/tasks/${task.id}`, { state: { boardSearch: location.search } });
   }
 
@@ -225,10 +207,11 @@ export function TaskCard({ task, projectId, members }: TaskCardProps) {
             {/* Due date */}
             {task.dueDate && (
               <div
-                className={`flex shrink-0 items-center gap-1 ${isOverdue(task.dueDate) && task.status !== "Done"
+                className={`flex shrink-0 items-center gap-1 ${
+                  isOverdue(task.dueDate) && task.status !== "Done"
                     ? "text-red-500"
                     : ""
-                  }`}
+                }`}
               >
                 <Calendar className="h-3 w-3" />
                 <span>{formatDueDate(task.dueDate)}</span>

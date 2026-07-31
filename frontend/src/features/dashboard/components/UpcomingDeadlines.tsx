@@ -91,11 +91,8 @@ export function UpcomingDeadlines({
                   <span className="text-xs font-medium text-muted-foreground">
                     {formatDueLabel(deadline.dueDate)}
                   </span>
-                  {/* No board filters here — say so explicitly so Task Detail
-                      does not fall back to a stored filter from an earlier visit. */}
                   <Link
                     to={`/tasks/${deadline.taskId}`}
-                    state={{ boardSearch: "" }}
                     className="text-sm font-medium text-primary hover:underline"
                   >
                     View
