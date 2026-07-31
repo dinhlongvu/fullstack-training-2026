@@ -4,7 +4,7 @@
 // Click navigates to /tasks/:id. Move Left/Right buttons change status (column).
 
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Calendar, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/Button";
@@ -49,10 +49,35 @@ function isOverdue(dateString: string): boolean {
   return daysUntil(dateString) < 0;
 }
 
+// Remember the board's filters so Task Detail can send the user back to this
+// exact view. Storage can throw and must never stop the navigation that follows.
+function rememberBoardSearch(taskId: number, search: string): void {
+  try {
+    const key = `board-search:${taskId}`;
+    if (search.startsWith("?")) {
+      sessionStorage.setItem(key, search);
+    } else {
+      // Board is unfiltered now — drop any earlier entry instead of leaving a
+      // stale filter behind.
+      sessionStorage.removeItem(key);
+    }
+  } catch {
+    // Router state still covers the normal click flow.
+  }
+}
+
 export function TaskCard({ task, projectId, members }: TaskCardProps) {
   const navigate = useNavigate();
+  const location = useLocation();
   const updateStatus = useUpdateTaskStatusMutation(projectId);
   const assignTask = useAssignTaskMutation(projectId);
+
+  // Carry the board's active filters so "Back to project" returns to this exact
+  // view. sessionStorage backs it up because a reload drops router state.
+  function openTask() {
+    rememberBoardSearch(task.id, location.search);
+    navigate(`/tasks/${task.id}`, { state: { boardSearch: location.search } });
+  }
 
   // Local UI state for the edit + delete dialogs
   const [editOpen, setEditOpen] = useState(false);
@@ -125,12 +150,12 @@ export function TaskCard({ task, projectId, members }: TaskCardProps) {
         role="button"
         tabIndex={0}
         aria-label={`View details for ${task.title}`}
-        onClick={() => navigate(`/tasks/${task.id}`)}
+        onClick={openTask}
         onKeyDown={(e) => {
           if (e.target !== e.currentTarget) return;
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
-            navigate(`/tasks/${task.id}`);
+            openTask();
           }
         }}
       >
@@ -200,11 +225,10 @@ export function TaskCard({ task, projectId, members }: TaskCardProps) {
             {/* Due date */}
             {task.dueDate && (
               <div
-                className={`flex shrink-0 items-center gap-1 ${
-                  isOverdue(task.dueDate) && task.status !== "Done"
+                className={`flex shrink-0 items-center gap-1 ${isOverdue(task.dueDate) && task.status !== "Done"
                     ? "text-red-500"
                     : ""
-                }`}
+                  }`}
               >
                 <Calendar className="h-3 w-3" />
                 <span>{formatDueDate(task.dueDate)}</span>

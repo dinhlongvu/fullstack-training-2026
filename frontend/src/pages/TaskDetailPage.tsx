@@ -3,7 +3,7 @@
 // Renders task info (status/priority badges, assignee, dates) + CommentList below.
 
 import { useState } from "react";
-import { useParams, Navigate, Link } from "react-router-dom";
+import { useParams, Navigate, Link, useLocation } from "react-router-dom";
 import { ArrowLeft, Calendar, User, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
@@ -28,6 +28,17 @@ function formatDate(dateString: string): string {
     month: "short",
     day: "numeric",
   });
+}
+
+// Board filters remembered when this task was opened from the board. Only used
+// after a reload, which drops router state.
+function readBoardSearch(taskId: number): string {
+  try {
+    const stored = sessionStorage.getItem(`board-search:${taskId}`);
+    return stored?.startsWith("?") ? stored : "";
+  } catch {
+    return "";
+  }
 }
 
 export function TaskDetailPage() {
@@ -66,6 +77,20 @@ export function TaskDetailPage() {
 
   // A slow or failed project fetch means membership is UNKNOWN, not denied.
   const isMembershipUnknown = isProjectPending || projectError !== null;
+
+  const location = useLocation();
+  const stateSearch = (location.state as { boardSearch?: unknown } | null)
+    ?.boardSearch;
+
+  // Router state describes THIS navigation, so it wins whenever present —
+  // including an explicit empty string, which is how the Dashboard says "no
+  // board filters" and stops an older stored entry from being applied.
+  const boardSearch =
+    typeof stateSearch === "string"
+      ? stateSearch.startsWith("?")
+        ? stateSearch
+        : ""
+      : readBoardSearch(taskId);
 
   // Invalid id in the URL (/tasks/abc, /tasks/0). Both task queries are
   // `enabled: taskId > 0`, so a non-positive id would leave the page with no
@@ -106,7 +131,7 @@ export function TaskDetailPage() {
     <div className="space-y-6">
       {/* Back link — go to the parent project's board, not the projects list */}
       <Link
-        to={`/projects/${task.projectId}`}
+        to={`/projects/${task.projectId}${boardSearch}`}
         className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="mr-1 h-4 w-4" />
