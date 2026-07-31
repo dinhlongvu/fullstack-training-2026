@@ -1,7 +1,14 @@
-// Guards the router-state contract between TaskCard and TaskDetailPage:
-// TaskCard sends the board's query string as `state.boardSearch`, this page
-// appends it to the back link. Nothing in the type system ties the two files
-// together, so a change on either side would otherwise fail silently.
+// Two things are guarded here.
+//
+// 1. The router-state contract between TaskCard and TaskDetailPage: TaskCard
+//    sends the board's query string as `state.boardSearch`, this page appends
+//    it to the back link. Nothing in the type system ties the two files
+//    together, so a change on either side would otherwise fail silently.
+//
+// 2. The three comment-section branches. Offline is the interesting one: the
+//    query pauses instead of erroring, so `error` stays null while `isPending`
+//    stays true — the exact combination that made #213 look fixed when it was
+//    only half fixed.
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { screen } from "@testing-library/react";
@@ -35,6 +42,24 @@ const task: Task = {
   commentCount: 0,
 };
 
+// Defaults to a loaded, empty thread; each test overrides only what it needs.
+function mockCommentsQuery(overrides: {
+  data?: unknown[];
+  isPending?: boolean;
+  isPaused?: boolean;
+  error?: Error | null;
+}) {
+  vi.mocked(useTaskCommentsQuery).mockReturnValue({
+    data: undefined,
+    isPending: false,
+    isPaused: false,
+    error: null,
+    refetch: vi.fn(),
+    isFetching: false,
+    ...overrides,
+  } as unknown as ReturnType<typeof useTaskCommentsQuery>);
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
 
@@ -46,13 +71,7 @@ beforeEach(() => {
     isFetching: false,
   } as unknown as ReturnType<typeof useTaskQuery>);
 
-  vi.mocked(useTaskCommentsQuery).mockReturnValue({
-    data: [],
-    isPending: false,
-    error: null,
-    refetch: vi.fn(),
-    isFetching: false,
-  } as unknown as ReturnType<typeof useTaskCommentsQuery>);
+  mockCommentsQuery({ data: [] });
 
   vi.mocked(useProjectDetailQuery).mockReturnValue({
     data: undefined,
@@ -113,5 +132,46 @@ describe("TaskDetailPage back link", () => {
     renderWithState({ boardSearch: "javascript:alert(1)" });
 
     expect(backLink()).toHaveAttribute("href", "/projects/5");
+  });
+});
+
+function postButton() {
+  return screen.getByRole("button", { name: /post comment|posting/i });
+}
+
+const OFFLINE_TEXT = /you seem to be offline/i;
+const FORM_DISABLED_TEXT = /posting is unavailable right now/i;
+
+describe("TaskDetailPage comments section", () => {
+  it("keeps the form usable once the thread has loaded", () => {
+    mockCommentsQuery({ data: [] });
+    renderWithState();
+
+    expect(postButton()).toBeEnabled();
+    expect(screen.getByRole("textbox")).toBeEnabled();
+    expect(screen.queryByText(OFFLINE_TEXT)).not.toBeInTheDocument();
+    expect(screen.queryByText(FORM_DISABLED_TEXT)).not.toBeInTheDocument();
+  });
+
+  it("disables the form but keeps it mounted when the thread fails to load", () => {
+    mockCommentsQuery({ error: new Error("boom") });
+    renderWithState();
+
+    expect(screen.getByText("Failed to load comments.")).toBeInTheDocument();
+    // Still rendered — unmounting would discard whatever the user had typed.
+    expect(screen.getByRole("textbox")).toBeDisabled();
+    expect(postButton()).toBeDisabled();
+    expect(screen.getByText(FORM_DISABLED_TEXT)).toBeInTheDocument();
+  });
+
+  it("explains an offline pause instead of spinning the skeleton forever", () => {
+    // Offline with an empty cache: paused, so `error` is null and `isPending`
+    // is true. Reading isPending alone would render a skeleton that never ends.
+    mockCommentsQuery({ isPending: true, isPaused: true });
+    renderWithState();
+
+    expect(screen.getByText(OFFLINE_TEXT)).toBeInTheDocument();
+    expect(screen.queryByText("Loading comments...")).not.toBeInTheDocument();
+    expect(postButton()).toBeDisabled();
   });
 });

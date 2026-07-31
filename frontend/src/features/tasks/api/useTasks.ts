@@ -182,6 +182,9 @@ export function useTaskCommentsQuery(taskId: number) {
 export function useCreateCommentMutation(taskId: number) {
   const queryClient = useQueryClient();
   return useMutation({
+    // Fail fast instead of pausing offline: a paused mutation keeps isPending
+    // true and can be queued twice, posting the same comment on reconnect.
+    networkMode: "always",
     mutationFn: (request: CreateCommentRequest) =>
       createComment(taskId, request),
     onSuccess: () => {

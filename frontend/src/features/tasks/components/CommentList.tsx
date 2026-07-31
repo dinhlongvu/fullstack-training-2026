@@ -12,10 +12,24 @@ import { type Comment } from "../api/tasksApi";
 interface CommentListProps {
   comments: Comment[] | undefined;
   isPending: boolean;
+  // Offline queries pause instead of erroring, so this is not covered by `error`.
+  isPaused: boolean;
   error: Error | null;
   // Owned by the page, which holds the query.
   onRetry?: () => void;
   isRetrying?: boolean;
+}
+
+// The thread cannot be rendered at all: it either failed or is offline-paused,
+// with nothing cached to fall back on. A failed background refetch still sets
+// `error`, but the already-loaded thread is fine to keep — hence `!comments`.
+// Shared with TaskDetailPage, which gates the comment form on the same rule.
+export function isThreadUnavailable(
+  error: Error | null,
+  isPaused: boolean,
+  comments: Comment[] | undefined,
+): boolean {
+  return (error !== null || isPaused) && !comments;
 }
 
 // Format a timestamp for display (e.g., "Jul 9, 2026, 2:30 PM")
@@ -39,26 +53,30 @@ function normalizeNewlines(text: string): string {
 export function CommentList({
   comments,
   isPending,
+  isPaused,
   error,
   onRetry,
   isRetrying,
 }: CommentListProps) {
-  // Loading state
-  if (isPending) {
-    return <CommentListSkeleton />;
-  }
-
-  // Error state — only when there is nothing cached left to show. A failed
-  // background refetch (e.g. after posting a comment invalidates the query)
-  // still sets `error`, but the already-loaded thread is fine to keep.
-  if (error && !comments) {
+  // Checked before isPending: a paused query keeps isPending true, so reading
+  // it first would render a skeleton that never resolves.
+  if (isThreadUnavailable(error, isPaused, comments)) {
     return (
       <ErrorState
-        message="Failed to load comments."
+        message={
+          isPaused
+            ? "You seem to be offline. Comments will load once the connection is back."
+            : "Failed to load comments."
+        }
         retry={onRetry}
         isRetrying={isRetrying}
       />
     );
+  }
+
+  // Loading state
+  if (isPending) {
+    return <CommentListSkeleton />;
   }
 
   // Empty state

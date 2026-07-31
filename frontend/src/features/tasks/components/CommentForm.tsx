@@ -33,9 +33,12 @@ type CommentFormValues = z.infer<typeof commentSchema>;
 
 interface CommentFormProps {
   taskId: number;
+  // Set when the thread cannot be shown. The form stays mounted so the user
+  // keeps what they typed; this explains why it is inert.
+  disabledReason?: string;
 }
 
-export function CommentForm({ taskId }: CommentFormProps) {
+export function CommentForm({ taskId, disabledReason }: CommentFormProps) {
   // 3. Initialize React Hook Form with Zod resolver
   const form = useForm<CommentFormValues>({
     resolver: zodResolver(commentSchema),
@@ -46,6 +49,8 @@ export function CommentForm({ taskId }: CommentFormProps) {
 
   // 4. Setup mutation
   const createMutation = useCreateCommentMutation(taskId);
+
+  const isDisabled = disabledReason !== undefined || createMutation.isPending;
 
   // 5. Submit handler
   const onSubmit = (values: CommentFormValues) => {
@@ -76,7 +81,7 @@ export function CommentForm({ taskId }: CommentFormProps) {
                 <Textarea
                   placeholder="Write a comment..."
                   rows={3}
-                  disabled={createMutation.isPending}
+                  disabled={isDisabled}
                   {...field}
                 />
               </FormControl>
@@ -84,8 +89,11 @@ export function CommentForm({ taskId }: CommentFormProps) {
             </FormItem>
           )}
         />
+        {disabledReason && (
+          <p className="text-sm text-muted-foreground">{disabledReason}</p>
+        )}
         <div className="flex justify-end">
-          <Button type="submit" disabled={createMutation.isPending}>
+          <Button type="submit" disabled={isDisabled}>
             {createMutation.isPending ? "Posting..." : "Post Comment"}
           </Button>
         </div>

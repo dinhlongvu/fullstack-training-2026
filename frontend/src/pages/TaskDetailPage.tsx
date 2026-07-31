@@ -19,7 +19,10 @@ import { EditTaskDialog } from "@/features/tasks/components/EditTaskDialog";
 import { TaskDetailSkeleton } from "@/features/tasks/components/TaskDetailSkeleton";
 import { ErrorState } from "@/components/ErrorState";
 import { isNetworkError } from "@/lib/api";
-import { CommentList } from "@/features/tasks/components/CommentList";
+import {
+  CommentList,
+  isThreadUnavailable,
+} from "@/features/tasks/components/CommentList";
 import { CommentForm } from "@/features/tasks/components/CommentForm";
 
 // Format a date for display (e.g., "Jul 9, 2026")
@@ -49,6 +52,7 @@ export function TaskDetailPage() {
   const {
     data: comments,
     isPending: isCommentsPending,
+    isPaused: isCommentsPaused,
     error: commentsError,
     refetch: refetchComments,
     isFetching: isCommentsFetching,
@@ -79,8 +83,13 @@ export function TaskDetailPage() {
       ? stateSearch
       : "";
 
-  // Mirrors CommentList's error branch: failed with nothing cached to show.
-  const commentsFailed = commentsError !== null && !comments;
+  // Same rule CommentList renders on, so the form and the thread never
+  // disagree about whether comments are usable.
+  const commentsUnavailable = isThreadUnavailable(
+    commentsError,
+    isCommentsPaused,
+    comments,
+  );
 
   // Invalid id in the URL (/tasks/abc, /tasks/0). Both task queries are
   // `enabled: taskId > 0`, so a non-positive id would leave the page with no
@@ -193,17 +202,24 @@ export function TaskDetailPage() {
           <CommentList
             comments={comments}
             isPending={isCommentsPending}
+            isPaused={isCommentsPaused}
             error={commentsError}
             onRetry={() => void refetchComments()}
             isRetrying={isCommentsFetching}
           />
-          {/* No form when the thread failed to load — a posted comment would
-              disappear into a list that cannot render it. */}
-          {!commentsFailed && (
-            <div className="mt-6 border-t pt-6">
-              <CommentForm taskId={taskId} />
-            </div>
-          )}
+
+          {/* Kept mounted while the thread is unavailable — unmounting would
+              throw away whatever the user had typed. */}
+          <div className="mt-6 border-t pt-6">
+            <CommentForm
+              taskId={taskId}
+              disabledReason={
+                commentsUnavailable
+                  ? "Comments couldn't be loaded, so posting is unavailable right now."
+                  : undefined
+              }
+            />
+          </div>
         </CardContent>
       </Card>
 
