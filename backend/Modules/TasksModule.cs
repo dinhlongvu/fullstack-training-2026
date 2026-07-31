@@ -29,7 +29,7 @@ public class TasksModule : ICarterModule
         // Returns all tasks in a project, with optional filters
         group.MapGet("/", async (
             int projectId,
-            [FromQuery] DomainTaskStatus? status,   // ?status=Todo|InProgress|Done
+            [FromQuery] string? status,   // ?status=Todo|InProgress|Done
             [FromQuery] string? priority,         // ?priority=Low|Medium|High
             [FromQuery] int? assigneeId,            // ?assigneeId=id
             HttpContext context,
@@ -38,24 +38,47 @@ public class TasksModule : ICarterModule
         {
             var currentUserId = context.User.GetUserId();
 
-            Priority? parsedPriority = null;
+            DomainTaskStatus? parsedStatus = null;
+            if (!string.IsNullOrWhiteSpace(status))
+            {
+                if (!TryParseStatus(status, out var s))
+                {
+                    return Results.BadRequest(new ValidationErrorResponse
+                    {
+                        Errors = new[] { "Status must be 'Todo', 'InProgress', or 'Done'." },
+                        TraceId = context.TraceIdentifier
+                    });
+                }
+                parsedStatus = s;
+            }
 
+            Priority? parsedPriority = null;
             if (!string.IsNullOrWhiteSpace(priority))
             {
                 // Block transmission of multiple values ​​(contains commas)
                 if (priority.Contains(','))
-                    return Results.BadRequest(new { error = "Priority must be a single value" });
+                {
+                    return Results.BadRequest(new ValidationErrorResponse
+                    {
+                        Errors = new[] { "Priority must be a single value" },
+                        TraceId = context.TraceIdentifier
+                    });
+                }
 
                 // Block garbage or numeric values
                 if (!TryParsePriority(priority, out var p))
                 {
-                    return Results.BadRequest(new { error = "Priority must be 'Low', 'Medium', or 'High'." });
+                    return Results.BadRequest(new ValidationErrorResponse
+                    {
+                        Errors = new[] { "Priority must be 'Low', 'Medium', or 'High'." },
+                        TraceId = context.TraceIdentifier
+                    });
                 }
                 parsedPriority = p;
             }
 
             var result = await mediator.Send(
-                new GetTasksQuery(projectId, currentUserId, status, parsedPriority, assigneeId), ct);
+                new GetTasksQuery(projectId, currentUserId, parsedStatus, parsedPriority, assigneeId), ct);
 
             if (!result.IsProjectFound || !result.IsAuthorized)
             {
@@ -86,7 +109,11 @@ public class TasksModule : ICarterModule
             {
                 if (!TryParsePriority(req.Priority, out var p))
                 {
-                    return Results.BadRequest(new { error = "Priority must be 'Low', 'Medium', or 'High'." });
+                    return Results.BadRequest(new ValidationErrorResponse
+                    {
+                        Errors = new[] { "Priority must be 'Low', 'Medium', or 'High'." },
+                        TraceId = context.TraceIdentifier
+                    });
                 }
                 parsedPriority = p;
             }
@@ -168,7 +195,11 @@ public class TasksModule : ICarterModule
                 // Block numeric input with int.TryParse
                 if (!TryParsePriority(req.Priority, out var p))
                 {
-                    return Results.BadRequest(new { error = "Priority must be 'Low', 'Medium', or 'High'." });
+                    return Results.BadRequest(new ValidationErrorResponse
+                    {
+                        Errors = new[] { "Priority must be 'Low', 'Medium', or 'High'." },
+                        TraceId = context.TraceIdentifier
+                    });
                 }
                 parsedPriority = p;
             }
@@ -213,14 +244,22 @@ public class TasksModule : ICarterModule
         {
             var currentUserId = context.User.GetUserId();
 
-            if (req.Status == null)
-                return Results.BadRequest(new { error = "Status is required." });
-
-            if (int.TryParse(req.Status, out _)
-                || !Enum.TryParse<DomainTaskStatus>(req.Status, ignoreCase: true, out var parsedStatus)
-                || !Enum.IsDefined(parsedStatus))
+            if (string.IsNullOrWhiteSpace(req.Status))
             {
-                return Results.BadRequest(new { error = "Status must be 'Todo', 'InProgress', or 'Done'." });
+                return Results.BadRequest(new ValidationErrorResponse
+                {
+                    Errors = new[] { "Status is required." },
+                    TraceId = context.TraceIdentifier
+                });
+            }
+
+            if (!TryParseStatus(req.Status, out var parsedStatus))
+            {
+                return Results.BadRequest(new ValidationErrorResponse
+                {
+                    Errors = new[] { "Status must be 'Todo', 'InProgress', or 'Done'." },
+                    TraceId = context.TraceIdentifier
+                });
             }
 
             var command = new UpdateTaskStatusCommand(taskId, currentUserId, parsedStatus);
@@ -375,12 +414,25 @@ public class TasksModule : ICarterModule
     {
         priority = default;
 
-        // Block empty strings and multi-value lists ("Low,High"):
+        // Block empty strings and multi-value lists ("Low,High")
         if (string.IsNullOrWhiteSpace(input) || input.Contains(','))
             return false;
 
         return !int.TryParse(input, out _)
             && Enum.TryParse<Priority>(input, ignoreCase: true, out priority)
             && Enum.IsDefined(priority);
+    }
+
+    private static bool TryParseStatus(string? input, out DomainTaskStatus status)
+    {
+        status = default;
+
+        // Block empty strings and multi-value lists ("Todo,Done")
+        if (string.IsNullOrWhiteSpace(input) || input.Contains(','))
+            return false;
+
+        return !int.TryParse(input, out _)
+            && Enum.TryParse<DomainTaskStatus>(input, ignoreCase: true, out status)
+            && Enum.IsDefined(status);
     }
 }

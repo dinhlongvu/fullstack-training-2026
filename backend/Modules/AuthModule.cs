@@ -73,7 +73,7 @@ public class AuthModule : ICarterModule
         .WithSummary("Refresh access token")
         .WithDescription("Exchanges a valid, non-expired refresh token for a new set of JWT access and refresh tokens.")
         .Produces<RefreshTokenResponseDto>(StatusCodes.Status200OK)
-        .ProducesProblem(StatusCodes.Status401Unauthorized)
+        .Produces(StatusCodes.Status401Unauthorized)
         .Produces<ValidationErrorResponse>(StatusCodes.Status400BadRequest)
         .AllowAnonymous(); // refresh must be reachable without an access token
     }
