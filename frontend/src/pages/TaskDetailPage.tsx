@@ -3,15 +3,10 @@
 // Renders task info (status/priority badges, assignee, dates) + CommentList below.
 
 import { useState } from "react";
-import { useParams, Navigate, useNavigate } from "react-router-dom";
+import { useParams, Navigate, Link, useLocation } from "react-router-dom";
 import { ArrowLeft, Calendar, User, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/Card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import {
   useTaskQuery,
   useTaskCommentsQuery,
@@ -37,7 +32,6 @@ function formatDate(dateString: string): string {
 
 export function TaskDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
 
   // Parse URL param to number — no hardcoded IDs
   const taskId = Number(id);
@@ -61,10 +55,27 @@ export function TaskDetailPage() {
   // Edit dialog state + members needed for the assignee dropdown
   const [editOpen, setEditOpen] = useState(false);
   const currentUser = useAuthStore((s) => s.currentUser);
-  const { data: project } = useProjectDetailQuery(task?.projectId ?? 0);
+  const {
+    data: project,
+    isPending: isProjectPending,
+    error: projectError,
+  } = useProjectDetailQuery(task?.projectId ?? 0);
   const members = project?.members ?? [];
   const canEdit =
     currentUser !== null && members.some((m) => m.userId === currentUser.id);
+
+  // A running project query means membership is genuinely UNKNOWN.
+  const isMembershipUnknown = isProjectPending && projectError === null;
+
+  const location = useLocation();
+  const stateSearch = (location.state as { boardSearch?: unknown } | null)
+    ?.boardSearch;
+
+  // Filters of the board this task was opened from, so the back link returns to that exact view.
+  const boardSearch =
+    typeof stateSearch === "string" && stateSearch.startsWith("?")
+      ? stateSearch
+      : "";
 
   // Invalid id in the URL (/tasks/abc, /tasks/0). Both task queries are
   // `enabled: taskId > 0`, so a non-positive id would leave the page with no
@@ -84,14 +95,14 @@ export function TaskDetailPage() {
   if (!task) {
     return (
       <div className="space-y-4">
-        <button
-          type="button"
-          onClick={() => navigate("/projects")}
+        {/* No task loaded here, so there is no projectId to go back to */}
+        <Link
+          to="/projects"
           className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="mr-1 h-4 w-4" />
-          Back to project
-        </button>
+          Back to projects
+        </Link>
         <ErrorState
           message="Couldn't load this task. It may have been deleted, or you may not have access."
           retry={() => void refetchTask()}
@@ -103,16 +114,14 @@ export function TaskDetailPage() {
 
   return (
     <div className="space-y-6">
-      {/* Back link — go to the projects list, a safe in-app fallback that
-          works even when the task was opened via a direct URL (no app history) */}
-      <button
-        type="button"
-        onClick={() => navigate("/projects")}
+      {/* Back link — go to the parent project's board, not the projects list */}
+      <Link
+        to={`/projects/${task.projectId}${boardSearch}`}
         className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="mr-1 h-4 w-4" />
         Back to project
-      </button>
+      </Link>
 
       {/* Task info section */}
       <div className="space-y-3">
@@ -123,11 +132,17 @@ export function TaskDetailPage() {
 
         <div className="flex items-start justify-between gap-2">
           <h2 className="text-2xl font-bold">{task.title}</h2>
-          {canEdit && (
+          {(canEdit || isMembershipUnknown) && (
             <Button
               variant="outline"
               size="sm"
               className="shrink-0"
+              disabled={isMembershipUnknown}
+              title={
+                isMembershipUnknown
+                  ? "Checking your access to this project..."
+                  : undefined
+              }
               onClick={() => setEditOpen(true)}
             >
               <Pencil className="mr-2 h-4 w-4" />
@@ -162,7 +177,7 @@ export function TaskDetailPage() {
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">
-            Comments ({task.commentCount})
+            Comments ({comments?.length ?? task.commentCount})
           </CardTitle>
         </CardHeader>
         <CardContent>

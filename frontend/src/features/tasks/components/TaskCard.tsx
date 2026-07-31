@@ -4,7 +4,7 @@
 // Click navigates to /tasks/:id. Move Left/Right buttons change status (column).
 
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Calendar, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/Button";
@@ -51,8 +51,15 @@ function isOverdue(dateString: string): boolean {
 
 export function TaskCard({ task, projectId, members }: TaskCardProps) {
   const navigate = useNavigate();
+  const location = useLocation();
   const updateStatus = useUpdateTaskStatusMutation(projectId);
   const assignTask = useAssignTaskMutation(projectId);
+
+  // Carry the board's active filters so "Back to project" returns to this exact
+  // view. Router state rides in the history entry, so it survives a reload too.
+  function openTask() {
+    navigate(`/tasks/${task.id}`, { state: { boardSearch: location.search } });
+  }
 
   // Local UI state for the edit + delete dialogs
   const [editOpen, setEditOpen] = useState(false);
@@ -125,12 +132,12 @@ export function TaskCard({ task, projectId, members }: TaskCardProps) {
         role="button"
         tabIndex={0}
         aria-label={`View details for ${task.title}`}
-        onClick={() => navigate(`/tasks/${task.id}`)}
+        onClick={openTask}
         onKeyDown={(e) => {
           if (e.target !== e.currentTarget) return;
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
-            navigate(`/tasks/${task.id}`);
+            openTask();
           }
         }}
       >
