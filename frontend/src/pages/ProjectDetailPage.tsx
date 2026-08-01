@@ -7,6 +7,7 @@ import { useParams, Navigate, Link } from "react-router-dom";
 import { ArrowLeft, UserPlus, Pencil, Trash2, Users, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { ErrorState } from "@/components/ErrorState";
+import { isNetworkError } from "@/lib/api";
 import { ProjectDetailSkeleton } from "@/features/projects/components/ProjectDetailSkeleton";
 import {
   Card,
@@ -39,6 +40,7 @@ export function ProjectDetailPage() {
   const {
     data: project,
     isPending,
+    error,
     refetch,
     isFetching,
   } = useProjectDetailQuery(projectId);
@@ -57,9 +59,7 @@ export function ProjectDetailPage() {
     return <Navigate to="/projects" replace />;
   }
 
-  // Loading state — isPending, not isLoading: a query paused while offline
-  // keeps isLoading false, so the flow would fall through to the "not found"
-  // branch below and blame a deleted project instead of the network.
+  // Loading state.
   if (isPending) {
     return <ProjectDetailSkeleton />;
   }
@@ -76,7 +76,13 @@ export function ProjectDetailPage() {
           Back to projects
         </Link>
         <ErrorState
-          message="Couldn't load this project. It may have been deleted, or you may not have access."
+          message={
+            // A dropped connection is not a missing project. Naming the wrong
+            // cause sends the user looking for the wrong problem.
+            isNetworkError(error)
+              ? "Couldn't load this project. Check your connection and try again."
+              : "Couldn't load this project. It may have been deleted, or you may not have access."
+          }
           retry={() => void refetch()}
           isRetrying={isFetching}
         />
