@@ -18,6 +18,7 @@ import { StatusBadge } from "@/features/tasks/components/StatusBadge";
 import { EditTaskDialog } from "@/features/tasks/components/EditTaskDialog";
 import { TaskDetailSkeleton } from "@/features/tasks/components/TaskDetailSkeleton";
 import { ErrorState } from "@/components/ErrorState";
+import { isNetworkError } from "@/lib/api";
 import { CommentList } from "@/features/tasks/components/CommentList";
 import { CommentForm } from "@/features/tasks/components/CommentForm";
 
@@ -40,6 +41,7 @@ export function TaskDetailPage() {
   const {
     data: task,
     isPending: isTaskPending,
+    error: taskError,
     refetch: refetchTask,
     isFetching: isTaskFetching,
   } = useTaskQuery(taskId);
@@ -84,9 +86,7 @@ export function TaskDetailPage() {
     return <Navigate to="/projects" replace />;
   }
 
-  // Loading state — task detail. isPending, not isLoading: a query paused
-  // while offline keeps isLoading false, so the flow would fall through to the
-  // "not found" branch below and blame a deleted task instead of the network.
+  // Loading state — task detail.
   if (isTaskPending) {
     return <TaskDetailSkeleton />;
   }
@@ -104,7 +104,13 @@ export function TaskDetailPage() {
           Back to projects
         </Link>
         <ErrorState
-          message="Couldn't load this task. It may have been deleted, or you may not have access."
+          message={
+            // A dropped connection is not a missing task. Naming the wrong
+            // cause sends the user looking for the wrong problem.
+            isNetworkError(taskError)
+              ? "Couldn't load this task. Check your connection and try again."
+              : "Couldn't load this task. It may have been deleted, or you may not have access."
+          }
           retry={() => void refetchTask()}
           isRetrying={isTaskFetching}
         />
