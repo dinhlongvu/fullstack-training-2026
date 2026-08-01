@@ -31,6 +31,18 @@ node --version   # should show v20.x.x
 npm --version    # should show 10.x.x
 ```
 
+Node 20 is required, not just recommended: newer versions break the frontend
+test suite in ways that look like unrelated failures. The version lives in
+`.nvmrc`, and `frontend/npm ci` refuses to run on anything else.
+
+If you already have a different Node installed, use [nvm](https://github.com/nvm-sh/nvm)
+instead of replacing it:
+
+```bash
+nvm install    # reads .nvmrc
+nvm use        # run this from the repo, once per terminal
+```
+
 ### 3. Visual Studio Code
 
 Download from: https://code.visualstudio.com/
@@ -212,6 +224,8 @@ If all checks pass, you're ready for the mini-project!
 |---------|----------|
 | `dotnet: command not found` | Install .NET SDK 8.0 (see Prerequisites) |
 | `npm: command not found` | Install Node.js 20 (see Prerequisites) |
+| `npm error code EBADENGINE` | You are on the wrong Node version. Run `nvm use` from the repo root |
+| `npm test` fails on every file with `Cannot read properties of undefined (reading 'getItem')` | Same cause: Node newer than 20. Run `nvm use`, then `npm ci` again |
 | `dotnet restore` fails | Check internet connection, try `dotnet nuget locals all --clear` |
 | `npm install` fails | Delete `node_modules` and `package-lock.json`, run `npm install` again |
 | `dotnet ef` not found | Install: `dotnet tool install --global dotnet-ef` |
