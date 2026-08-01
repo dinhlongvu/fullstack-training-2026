@@ -71,10 +71,17 @@ export async function apiClient<TResponse>(
     ...options.headers,
   };
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...options,
-    headers,
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, {
+      ...options,
+      headers,
+    });
+  } catch {
+    // fetch only rejects on a network-level failure: offline, DNS, CORS.
+    // Its own message is "Failed to fetch", which ends up in a toast as-is.
+    throw new Error("Can't reach the server. Check your connection and try again.");
+  }
 
   // Handle 401 Unauthorized — attempt token refresh before logging out
   if (response.status === 401) {
