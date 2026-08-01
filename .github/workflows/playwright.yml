@@ -21,7 +21,7 @@ jobs:
     # ── Node.js (for Frontend + Playwright) ─────────────────
     - uses: actions/setup-node@v4
       with:
-        node-version: lts/*
+        node-version-file: .nvmrc
 
     # ── Backend: restore, create config & migrate DB ────────
     - name: Restore backend dependencies
