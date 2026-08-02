@@ -19,11 +19,9 @@ import { EditTaskDialog } from "@/features/tasks/components/EditTaskDialog";
 import { TaskDetailSkeleton } from "@/features/tasks/components/TaskDetailSkeleton";
 import { ErrorState } from "@/components/ErrorState";
 import { isNetworkError } from "@/lib/api";
-import {
-  CommentList,
-  isThreadUnavailable,
-} from "@/features/tasks/components/CommentList";
+import { CommentList } from "@/features/tasks/components/CommentList";
 import { CommentForm } from "@/features/tasks/components/CommentForm";
+import { isThreadUnavailable } from "@/features/tasks/lib/commentThreadState";
 
 // Format a date for display (e.g., "Jul 9, 2026")
 function formatDate(dateString: string): string {
@@ -52,7 +50,6 @@ export function TaskDetailPage() {
   const {
     data: comments,
     isPending: isCommentsPending,
-    isPaused: isCommentsPaused,
     error: commentsError,
     refetch: refetchComments,
     isFetching: isCommentsFetching,
@@ -85,11 +82,7 @@ export function TaskDetailPage() {
 
   // Same rule CommentList renders on, so the form and the thread never
   // disagree about whether comments are usable.
-  const commentsUnavailable = isThreadUnavailable(
-    commentsError,
-    isCommentsPaused,
-    comments,
-  );
+  const commentsUnavailable = isThreadUnavailable(commentsError, comments);
 
   // Invalid id in the URL (/tasks/abc, /tasks/0). Both task queries are
   // `enabled: taskId > 0`, so a non-positive id would leave the page with no
@@ -202,7 +195,6 @@ export function TaskDetailPage() {
           <CommentList
             comments={comments}
             isPending={isCommentsPending}
-            isPaused={isCommentsPaused}
             error={commentsError}
             onRetry={() => void refetchComments()}
             isRetrying={isCommentsFetching}

@@ -6,30 +6,18 @@
 import { MessageSquare } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import { ErrorState } from "@/components/ErrorState";
+import { isNetworkError } from "@/lib/api";
 import { CommentListSkeleton } from "./CommentListSkeleton";
+import { isThreadUnavailable } from "../lib/commentThreadState";
 import { type Comment } from "../api/tasksApi";
 
 interface CommentListProps {
   comments: Comment[] | undefined;
   isPending: boolean;
-  // Offline queries pause instead of erroring, so this is not covered by `error`.
-  isPaused: boolean;
   error: Error | null;
   // Owned by the page, which holds the query.
   onRetry?: () => void;
   isRetrying?: boolean;
-}
-
-// The thread cannot be rendered at all: it either failed or is offline-paused,
-// with nothing cached to fall back on. A failed background refetch still sets
-// `error`, but the already-loaded thread is fine to keep — hence `!comments`.
-// Shared with TaskDetailPage, which gates the comment form on the same rule.
-export function isThreadUnavailable(
-  error: Error | null,
-  isPaused: boolean,
-  comments: Comment[] | undefined,
-): boolean {
-  return (error !== null || isPaused) && !comments;
 }
 
 // Format a timestamp for display (e.g., "Jul 9, 2026, 2:30 PM")
@@ -53,18 +41,17 @@ function normalizeNewlines(text: string): string {
 export function CommentList({
   comments,
   isPending,
-  isPaused,
   error,
   onRetry,
   isRetrying,
 }: CommentListProps) {
-  // Checked before isPending: a paused query keeps isPending true, so reading
-  // it first would render a skeleton that never resolves.
-  if (isThreadUnavailable(error, isPaused, comments)) {
+  // Checked before isPending: a thread that failed with nothing cached still
+  // reads isPending true, so the skeleton would never resolve.
+  if (isThreadUnavailable(error, comments)) {
     return (
       <ErrorState
         message={
-          isPaused
+          isNetworkError(error)
             ? "You seem to be offline. Comments will load once the connection is back."
             : "Failed to load comments."
         }
