@@ -74,6 +74,7 @@ public class GetTasksHandler : IRequestHandler<GetTasksQuery, GetTasksResult>
         // Project directly to DTO to allow EF Core to optimize the SQL query
         var taskDtos = await query
             .OrderByDescending(t => t.CreatedAt)
+            .ThenByDescending(t => t.Id)
             .ProjectTo<TaskDto>(_mapper.ConfigurationProvider)
             .ToListAsync(ct);
 
