@@ -22,7 +22,7 @@ export function ErrorFallback({ error, onReset }: ErrorFallbackProps) {
         <p className="break-words">{error.message || "Unexpected error."}</p>
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" size="sm" onClick={onReset}>
-            <RefreshCw className="h-4 w-4" />
+            <RefreshCw className="mr-2 h-4 w-4" />
             Try again
           </Button>
           <Button variant="link" size="sm" asChild>
