@@ -5,10 +5,9 @@
 //    it to the back link. Nothing in the type system ties the two files
 //    together, so a change on either side would otherwise fail silently.
 //
-// 2. The three comment-section branches. Offline is the interesting one: the
-//    query pauses instead of erroring, so `error` stays null while `isPending`
-//    stays true — the exact combination that made #213 look fixed when it was
-//    only half fixed.
+// 2. The comment-section branches. The form has to stay mounted when the
+//    thread fails, and stay readable rather than disabled — otherwise a
+//    failed fetch throws away whatever the user had typed. That was #213.
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { screen } from "@testing-library/react";
@@ -46,13 +45,11 @@ const task: Task = {
 function mockCommentsQuery(overrides: {
   data?: unknown[];
   isPending?: boolean;
-  isPaused?: boolean;
   error?: Error | null;
 }) {
   vi.mocked(useTaskCommentsQuery).mockReturnValue({
     data: undefined,
     isPending: false,
-    isPaused: false,
     error: null,
     refetch: vi.fn(),
     isFetching: false,
@@ -139,7 +136,6 @@ function postButton() {
   return screen.getByRole("button", { name: /post comment|posting/i });
 }
 
-const OFFLINE_TEXT = /you seem to be offline/i;
 const FORM_DISABLED_TEXT = /posting is unavailable right now/i;
 
 describe("TaskDetailPage comments section", () => {
@@ -148,30 +144,24 @@ describe("TaskDetailPage comments section", () => {
     renderWithState();
 
     expect(postButton()).toBeEnabled();
-    expect(screen.getByRole("textbox")).toBeEnabled();
-    expect(screen.queryByText(OFFLINE_TEXT)).not.toBeInTheDocument();
+    expect(screen.getByRole("textbox")).not.toHaveAttribute("readonly");
     expect(screen.queryByText(FORM_DISABLED_TEXT)).not.toBeInTheDocument();
   });
 
-  it("disables the form but keeps it mounted when the thread fails to load", () => {
+  it("makes the form inert but keeps the draft readable when the thread fails", () => {
     mockCommentsQuery({ error: new Error("boom") });
     renderWithState();
 
     expect(screen.getByText("Failed to load comments.")).toBeInTheDocument();
-    // Still rendered — unmounting would discard whatever the user had typed.
-    expect(screen.getByRole("textbox")).toBeDisabled();
-    expect(postButton()).toBeDisabled();
-    expect(screen.getByText(FORM_DISABLED_TEXT)).toBeInTheDocument();
-  });
 
-  it("explains an offline pause instead of spinning the skeleton forever", () => {
-    // Offline with an empty cache: paused, so `error` is null and `isPending`
-    // is true. Reading isPending alone would render a skeleton that never ends.
-    mockCommentsQuery({ isPending: true, isPaused: true });
-    renderWithState();
+    // Still mounted — unmounting would discard whatever the user had typed.
+    // readOnly rather than disabled, so that draft stays selectable and
+    // copyable, and the reason is announced with the field.
+    const textbox = screen.getByRole("textbox");
+    expect(textbox).toHaveAttribute("readonly");
+    expect(textbox).toHaveAttribute("aria-disabled", "true");
+    expect(textbox).toHaveAccessibleDescription(FORM_DISABLED_TEXT);
 
-    expect(screen.getByText(OFFLINE_TEXT)).toBeInTheDocument();
-    expect(screen.queryByText("Loading comments...")).not.toBeInTheDocument();
     expect(postButton()).toBeDisabled();
   });
 });
