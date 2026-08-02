@@ -9,6 +9,25 @@ import { refreshTokenRequest } from "@/features/auth/api/authApi";
 // Backend API base URL loaded from environment variables
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
+/**
+ * The request never reached the server: offline, DNS, CORS.
+ *
+ * Distinct from an error the server sent back, because the two need different
+ * messages. Telling someone a task "may have been deleted" when their wifi
+ * dropped sends them looking for the wrong problem.
+ */
+export class NetworkError extends Error {
+  constructor() {
+    super("Can't reach the server. Check your connection and try again.");
+    this.name = "NetworkError";
+  }
+}
+
+/** True when the request never reached the server. */
+export function isNetworkError(error: unknown): boolean {
+  return error instanceof NetworkError;
+}
+
 // Expected structure of API error responses
 interface ApiErrorResponse {
   error?: string;
@@ -71,10 +90,17 @@ export async function apiClient<TResponse>(
     ...options.headers,
   };
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...options,
-    headers,
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, {
+      ...options,
+      headers,
+    });
+  } catch {
+    // fetch only rejects on a network-level failure: offline, DNS, CORS.
+    // Its own message is "Failed to fetch", which ends up in a toast as-is.
+    throw new NetworkError();
+  }
 
   // Handle 401 Unauthorized — attempt token refresh before logging out
   if (response.status === 401) {
