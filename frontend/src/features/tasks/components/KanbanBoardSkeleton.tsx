@@ -19,7 +19,10 @@ function SkeletonCard() {
 
 function SkeletonColumn() {
   return (
-    <div className="flex flex-col rounded-lg bg-muted/30 p-3">
+    <div
+      aria-hidden="true"
+      className="flex flex-col rounded-lg bg-muted/30 p-3"
+    >
       <div className="mb-3 flex items-center gap-2">
         <Skeleton className="h-2.5 w-2.5 rounded-full" />
         <Skeleton className="h-4 w-24" />
@@ -35,7 +38,13 @@ function SkeletonColumn() {
 
 export function KanbanBoardSkeleton() {
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+    <div
+      role="status"
+      aria-busy="true"
+      aria-live="polite"
+      className="grid grid-cols-1 gap-4 md:grid-cols-3"
+    >
+      <span className="sr-only">Loading tasks...</span>
       <SkeletonColumn />
       <SkeletonColumn />
       <SkeletonColumn />

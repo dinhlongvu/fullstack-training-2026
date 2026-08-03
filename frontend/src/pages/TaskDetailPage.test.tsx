@@ -1,7 +1,13 @@
-// Guards the router-state contract between TaskCard and TaskDetailPage:
-// TaskCard sends the board's query string as `state.boardSearch`, this page
-// appends it to the back link. Nothing in the type system ties the two files
-// together, so a change on either side would otherwise fail silently.
+// Two things are guarded here.
+//
+// 1. The router-state contract between TaskCard and TaskDetailPage: TaskCard
+//    sends the board's query string as `state.boardSearch`, this page appends
+//    it to the back link. Nothing in the type system ties the two files
+//    together, so a change on either side would otherwise fail silently.
+//
+// 2. The comment-section branches. The form has to stay mounted when the
+//    thread fails, and stay readable rather than disabled — otherwise a
+//    failed fetch throws away whatever the user had typed. That was #213.
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { screen } from "@testing-library/react";
@@ -14,6 +20,7 @@ import {
 } from "@/features/tasks/api/useTasks";
 import { useProjectDetailQuery } from "@/features/projects/api/useProjects";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { NetworkError } from "@/lib/api";
 import { renderWithProviders } from "@/test/test-utils";
 import { type Task } from "@/features/tasks/api/tasksApi";
 
@@ -35,6 +42,22 @@ const task: Task = {
   commentCount: 0,
 };
 
+// Defaults to a loaded, empty thread; each test overrides only what it needs.
+function mockCommentsQuery(overrides: {
+  data?: unknown[];
+  isPending?: boolean;
+  error?: Error | null;
+}) {
+  vi.mocked(useTaskCommentsQuery).mockReturnValue({
+    data: undefined,
+    isPending: false,
+    error: null,
+    refetch: vi.fn(),
+    isFetching: false,
+    ...overrides,
+  } as unknown as ReturnType<typeof useTaskCommentsQuery>);
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
 
@@ -46,13 +69,7 @@ beforeEach(() => {
     isFetching: false,
   } as unknown as ReturnType<typeof useTaskQuery>);
 
-  vi.mocked(useTaskCommentsQuery).mockReturnValue({
-    data: [],
-    isPending: false,
-    error: null,
-    refetch: vi.fn(),
-    isFetching: false,
-  } as unknown as ReturnType<typeof useTaskCommentsQuery>);
+  mockCommentsQuery({ data: [] });
 
   vi.mocked(useProjectDetailQuery).mockReturnValue({
     data: undefined,
@@ -113,5 +130,68 @@ describe("TaskDetailPage back link", () => {
     renderWithState({ boardSearch: "javascript:alert(1)" });
 
     expect(backLink()).toHaveAttribute("href", "/projects/5");
+  });
+});
+
+function postButton() {
+  return screen.getByRole("button", { name: /post comment|posting/i });
+}
+
+const FORM_DISABLED_TEXT = /posting is unavailable right now/i;
+
+describe("TaskDetailPage comments section", () => {
+  it("keeps the form usable once the thread has loaded", () => {
+    mockCommentsQuery({ data: [] });
+    renderWithState();
+
+    expect(postButton()).toBeEnabled();
+    expect(screen.getByRole("textbox")).not.toHaveAttribute("readonly");
+    expect(screen.queryByText(FORM_DISABLED_TEXT)).not.toBeInTheDocument();
+  });
+
+  it("makes the form inert but keeps the draft readable when the thread fails", () => {
+    mockCommentsQuery({ error: new Error("boom") });
+    renderWithState();
+
+    expect(screen.getByText("Failed to load comments.")).toBeInTheDocument();
+
+    // Still mounted — unmounting would discard whatever the user had typed.
+    // readOnly rather than disabled, so that draft stays selectable and
+    // copyable, and the reason reads as the field's description.
+    const textbox = screen.getByRole("textbox");
+    expect(textbox).toHaveAttribute("readonly");
+    expect(textbox).toHaveAccessibleDescription(FORM_DISABLED_TEXT);
+
+    expect(postButton()).toBeDisabled();
+  });
+
+  // A failed refetch keeps the cached thread, so the form must stay usable.
+  it("keeps the form usable while a cached thread is still on screen", () => {
+    mockCommentsQuery({
+      data: [
+        {
+          id: 1,
+          content: "still here",
+          authorId: 1,
+          authorName: "Hoc",
+          createdAt: "2026-07-02T00:00:00Z",
+          updatedAt: "2026-07-02T00:00:00Z",
+        },
+      ],
+      error: new NetworkError(),
+    });
+    renderWithState();
+
+    expect(screen.getByText("still here")).toBeInTheDocument();
+    expect(postButton()).toBeEnabled();
+    expect(screen.getByRole("textbox")).not.toHaveAttribute("readonly");
+    expect(screen.queryByText(FORM_DISABLED_TEXT)).not.toBeInTheDocument();
+  });
+
+  it("names the connection when the thread never reached the server", () => {
+    mockCommentsQuery({ error: new NetworkError() });
+    renderWithState();
+
+    expect(screen.getByText(/you seem to be offline/i)).toBeInTheDocument();
   });
 });

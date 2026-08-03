@@ -21,6 +21,7 @@ import { ErrorState } from "@/components/ErrorState";
 import { isNetworkError } from "@/lib/api";
 import { CommentList } from "@/features/tasks/components/CommentList";
 import { CommentForm } from "@/features/tasks/components/CommentForm";
+import { isThreadUnavailable } from "@/features/tasks/lib/commentThreadState";
 
 // Format a date for display (e.g., "Jul 9, 2026")
 function formatDate(dateString: string): string {
@@ -78,6 +79,10 @@ export function TaskDetailPage() {
     typeof stateSearch === "string" && stateSearch.startsWith("?")
       ? stateSearch
       : "";
+
+  // Same rule CommentList renders on, so the form and the thread never
+  // disagree about whether comments are usable.
+  const commentsUnavailable = isThreadUnavailable(commentsError, comments);
 
   // Invalid id in the URL (/tasks/abc, /tasks/0). Both task queries are
   // `enabled: taskId > 0`, so a non-positive id would leave the page with no
@@ -194,8 +199,19 @@ export function TaskDetailPage() {
             onRetry={() => void refetchComments()}
             isRetrying={isCommentsFetching}
           />
+
+          {/* Kept mounted rather than conditionally rendered: the only way
+              here is a thread that never loaded, and unmounting would throw
+              away whatever the user had typed. */}
           <div className="mt-6 border-t pt-6">
-            <CommentForm taskId={taskId} />
+            <CommentForm
+              taskId={taskId}
+              disabledReason={
+                commentsUnavailable
+                  ? "Comments couldn't be loaded, so posting is unavailable right now."
+                  : undefined
+              }
+            />
           </div>
         </CardContent>
       </Card>
