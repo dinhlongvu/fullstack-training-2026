@@ -15,6 +15,7 @@ using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -37,6 +38,13 @@ builder.Services.AddDbContext<AppDbContext>((sp, options) =>
 
 // ─── Carter (Minimal API) ───────────────────────────────
 builder.Services.AddCarter();
+// Force the framework to throw an exception on bad HTTP requests (malformed JSON body,
+// wrong data type, missing required body) instead of silently returning an empty 400 response.
+// This ensures ALL errors go through ExceptionHandlingMiddleware and return a consistent JSON envelope.
+builder.Services.Configure<RouteHandlerOptions>(options =>
+{
+    options.ThrowOnBadRequest = true;
+});
 
 // ─── MediatR + CQRS ─────────────────────────────────────
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
@@ -88,22 +96,36 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             NameClaimType = JwtRegisteredClaimNames.Sub
         };
 
-        // Intercept authentication failures to return structural JSON payloads for 401 Unauthorized responses
+        // Intercept JWT authentication and authorization failures to return
+        // a structured JSON body instead of ASP.NET's default empty response.
         options.Events = new JwtBearerEvents
         {
+            // Fires when the request has no token or an invalid/expired token (HTTP 401).
             OnChallenge = async context =>
             {
-                // Suppress the default empty inbound HTTP 401 challenge response behavior
+                // Suppress ASP.NET's default empty 401 response.
                 context.HandleResponse();
 
-                // Explicitly set the standardized content type boundary and HTTP status code
                 context.Response.StatusCode = StatusCodes.Status401Unauthorized;
                 context.Response.ContentType = "application/json";
 
-                // Emit a unified error payload for consistent client-side interceptor parsing
                 await context.Response.WriteAsJsonAsync(new
                 {
-                    error = "Unauthorized. Please provide a valid Bearer token."
+                    error = "Unauthorized. Please provide a valid Bearer token.",
+                    traceId = context.HttpContext.GetTraceId()
+                });
+            },
+
+            // Fires when the token is valid but the user lacks permission (HTTP 403).
+            OnForbidden = async context =>
+            {
+                context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                context.Response.ContentType = "application/json";
+
+                await context.Response.WriteAsJsonAsync(new
+                {
+                    error = "Forbidden.",
+                    traceId = context.HttpContext.GetTraceId()
                 });
             }
         };

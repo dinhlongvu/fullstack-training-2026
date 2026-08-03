@@ -87,7 +87,7 @@
 | **Test Data** | `{ "title": "", "description": "Some desc", "priority": "Low" }` |
 | **Test Steps** | 1. Send PUT request with empty `title` <br> 2. Check response status code and body |
 | **Expected Result** | 1. Status 400 Bad Request <br> 2. Response contains validation error: `"Title is required."` <br> 3. Task is NOT updated |
-| **Actual Result** | 1. Response returned status 400 Bad Request with `{"errors":{"title":["Title is required"]}}`. |
+| **Actual Result** | 1. Response returned status 400 Bad Request with `{"errors":["Title cannot be empty if provided."],"traceId":"..."}`. |
 | **Status** | ✅ Pass |
 | **Bug link** | — |
 
@@ -104,7 +104,7 @@
 | **Test Data** | `{ "title": "<201-character-string>", "description": "", "priority": "Low" }` |
 | **Test Steps** | 1. Send PUT request with `title` of 201 characters <br> 2. Check response status code |
 | **Expected Result** | 1. Status 400 Bad Request <br> 2. Response contains validation error: `"Title must be 200 characters or less."` |
-| **Actual Result** | 1. Response returned status 400 Bad Request with `{"errors":{"title":["Title must be 200 characters or less."]}}`.   |
+| **Actual Result** | 1. Response returned status 400 Bad Request with `{"errors":["Title must be 200 characters or less."],"traceId":"..."}`. |
 | **Status** | ✅ Pass |
 | **Bug link** | — |
 
@@ -121,7 +121,7 @@
 | **Test Data** | `{ "title": "Old Due", "description": "", "priority": "Low", "dueDate": "2019-06-15T00:00:00Z" }` |
 | **Test Steps** | 1. Send PUT request with `dueDate` set to a date in the past <br> 2. Check response status code |
 | **Expected Result** | 1. Status 400 Bad Request <br> 2. Response contains validation error: `"Due date must be in the future."` <br> 3. Task's due date is NOT updated |
-| **Actual Result** | 1. Response returned status 400 Bad Request with `{"errors":{"dueDate":["Due date must be in the future."]}}` | 
+| **Actual Result** | 1. Response returned status 400 Bad Request with `{"errors":["Due date must be in the future."],"traceId":"..."}` |
 | **Status** | ✅ Pass |
 | **Bug link** | — |
 
@@ -171,8 +171,8 @@
 | **Precondition** | User is project member; target assignee is NOT in the project |
 | **Test Data** | `{ "title": "Invalid Assign", "description": "", "priority": "Low", "assigneeId": <non-member-id> }` |
 | **Test Steps** | 1. Send PUT request with `assigneeId` set to a user not in the project <br> 2. Check response status code |
-| **Expected Result** | 1. Status 400 Bad Request <br> 2. Response body: `{ "error": "Assignee must be a project member" }` <br> 3. Task is NOT updated |
-| **Actual Result** | 1. Status 400 Bad Request <br> 2. Response body: `{ "error": "Assignee must be a project member" }` <br> 3. Task is NOT updated |
+| **Expected Result** | 1. Status 400 Bad Request <br> 2. Response body: `{"errors":["Assignee must be a project member"],"traceId":"..."}` <br> 3. Task is NOT updated |
+| **Actual Result** | 1. Status 400 Bad Request <br> 2. Response body: `{"errors":["Assignee must be a project member"],"traceId":"..."}` <br> 3. Task is NOT updated |
 | **Status** | ✅ Pass |
 | **Bug link** | — |
 
@@ -205,8 +205,8 @@
 | **Precondition** | User is project member; task exists |
 | **Test Data** | `{ "title": "Priority Test", "description": "", "priority": "Critical" }` |
 | **Test Steps** | 1. Send PUT request with invalid `priority` value `"Critical"` <br> 2. Check response status code |
-| **Expected Result** | 1. Status 400 Bad Request <br> 2. Response contains validation error: `"Priority must be Low, Medium, or High."` |
-| **Actual Result** | 1. Response returned status 400 Bad Request with `{"errors":{"priority":["Priority must be Low, Medium, or High."]}}`. |
+| **Expected Result** | 1. Status 400 Bad Request <br> 2. Response contains validation error: `"Priority must be 'Low', 'Medium', or 'High'."` |
+| **Actual Result** | 1. Response returned status 400 Bad Request with `{"errors":["Priority must be 'Low', 'Medium', or 'High'."],"traceId":"..."}`. |
 | **Status** | ✅ Pass |
 | **Bug link** | — |
 

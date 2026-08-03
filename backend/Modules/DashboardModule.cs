@@ -5,9 +5,6 @@ using Backend.Queries.Dashboard;
 using Backend.Services.Auth;
 using Carter;
 using MediatR;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Routing;
 
 namespace Backend.Modules;
 
@@ -56,6 +53,7 @@ public class DashboardModule : ICarterModule
         .WithSummary("Get a paginated list of tasks assigned to the current user")
         .WithDescription("Returns all tasks assigned to the authenticated user, across all projects. Supports filtering by urgency.")
         .Produces<PaginatedList<MyTaskDto>>(StatusCodes.Status200OK)
+        .Produces<ValidationErrorResponse>(StatusCodes.Status400BadRequest)
         .Produces(StatusCodes.Status401Unauthorized);
     }
 }

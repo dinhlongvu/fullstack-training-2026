@@ -40,7 +40,7 @@ public class TasksModule : ICarterModule
             var currentUserId = context.User.GetUserId();
 
             DomainTaskStatus? parsedStatus = null;
-            if (!string.IsNullOrWhiteSpace(status))
+            if (status != null)
             {
                 if (!TryParseStatus(status, out var s))
                 {
@@ -54,7 +54,7 @@ public class TasksModule : ICarterModule
             }
 
             Priority? parsedPriority = null;
-            if (!string.IsNullOrWhiteSpace(priority))
+            if (priority != null)
             {
                 // Block garbage or numeric values
                 if (!TryParsePriority(priority, out var p))
@@ -67,6 +67,7 @@ public class TasksModule : ICarterModule
                 }
                 parsedPriority = p;
             }
+
 
             var result = await mediator.Send(
                 new GetTasksQuery(projectId, currentUserId, parsedStatus, parsedPriority, assigneeId), ct);

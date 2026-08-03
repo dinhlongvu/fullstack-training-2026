@@ -150,6 +150,9 @@ public class CreateTaskHandler : IRequestHandler<CreateTaskCommand, TaskDto>
 
 > Status 400 → body is always `{ "errors": [...], "traceId": "..." }`.
 > All other error status (401 / 404 / 409 / 500) → body is always `{ "error": "...", "traceId": "..." }`.
+> Query parameters: if a parameter is present in the URL (even as an empty string),
+> its value must be valid; the server returns 400 instead of silently ignoring it.
+> To skip filtering, omit the parameter entirely.
 
 ### Validation
 

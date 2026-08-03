@@ -24,12 +24,6 @@ public class UpdateTaskCommandValidator : AbstractValidator<UpdateTaskCommand>
                 .MaximumLength(2000).WithMessage("Description must be 2000 characters or less.");
         });
 
-        When(x => x.Priority.HasValue, () =>
-        {
-            RuleFor(x => x.Priority!.Value)
-                .IsInEnum().WithMessage("Priority must be Low, Medium, or High.");
-        });
-
         When(x => x.DueDate.HasValue, () =>
         {
             // Use Must() with a lambda so DateTime.UtcNow is evaluated at request time,

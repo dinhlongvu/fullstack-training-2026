@@ -8,7 +8,7 @@ namespace Backend.DTOs;
 public record ValidationErrorResponse
 {
     /// <summary>One message per failed validation rule.</summary>
-    /// <example>["Priority must be Low, Medium, or High."]</example>
+    /// <example>["Priority must be 'Low', 'Medium', or 'High'."]</example>    
     public IEnumerable<string> Errors { get; init; } = Array.Empty<string>();
 
     /// <summary>Correlation id, useful when reporting an issue.</summary>

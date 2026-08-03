@@ -144,7 +144,7 @@
 | **Test Data** | body: `{}` (empty JSON object, no `status` field) |
 | **Test Steps** | 1. Send PATCH request with an empty body <br> 2. Check response status code |
 | **Expected Result** | 1. Status 400 Bad Request <br> 2. Response indicates `status` is required <br> 3. Task is NOT modified |
-| **Actual Result** | 1. Response returned status 400 Bad Request with `{"error": "Status field is required."}`. |
+| **Actual Result** | 1. Response returned status 400 Bad Request with `{"errors":["Status is required."],"traceId":"..."}`. |
 | **Status** | ✅ Pass |
 | **Bug link** | — |
 
