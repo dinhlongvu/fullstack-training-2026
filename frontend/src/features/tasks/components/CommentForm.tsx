@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/Button";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -32,13 +33,11 @@ const commentSchema = z.object({
 // 2. Infer form type from schema (single source of truth)
 type CommentFormValues = z.infer<typeof commentSchema>;
 
-// Ties `disabledReason` to the textarea via aria-describedby.
-const REASON_ID = "comment-disabled-reason";
-
 interface CommentFormProps {
   taskId: number;
-  // Set when the thread cannot be shown. The form stays mounted so the user
-  // keeps what they typed; this explains why it is inert.
+  // Set when the thread could not be loaded at all — a first load failing, or
+  // the cache expiring after gcTime. A failed refetch keeps its data, so it
+  // does not land here. Rare, but the draft still has to survive it.
   disabledReason?: string;
 }
 
@@ -93,25 +92,21 @@ export function CommentForm({ taskId, disabledReason }: CommentFormProps) {
                   // selected, so the draft we kept could not be copied out.
                   // It also drops out of the tab order without saying why.
                   readOnly={isInert}
-                  aria-disabled={isInert}
-                  aria-describedby={disabledReason ? REASON_ID : undefined}
                   className={cn(isInert && "cursor-not-allowed bg-muted")}
                   {...field}
                 />
               </FormControl>
+              {/* FormControl already wires aria-describedby to this and to
+                  FormMessage. Setting it by hand here dropped the link to the
+                  validation message, because a child prop wins even when its
+                  value is undefined. */}
+              {disabledReason && (
+                <FormDescription>{disabledReason}</FormDescription>
+              )}
               <FormMessage />
             </FormItem>
           )}
         />
-        {disabledReason && (
-          <p
-            id={REASON_ID}
-            role="status"
-            className="text-sm text-muted-foreground"
-          >
-            {disabledReason}
-          </p>
-        )}
         <div className="flex justify-end">
           <Button type="submit" disabled={isInert}>
             {createMutation.isPending ? "Posting..." : "Post Comment"}
