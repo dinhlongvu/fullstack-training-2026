@@ -37,9 +37,7 @@ export function ProjectsPage() {
         </Button>
       </div>
 
-      {/* Loading state — isPending, not isLoading: an offline query is paused
-          with isFetching=false, so isLoading stays false and the page would
-          otherwise render blank (no skeleton, no error, no data). */}
+      {/* Loading state */}
       {isPending && <ProjectListSkeleton />}
 
       {/* Error state — only when there is nothing to show. A background
