@@ -45,8 +45,9 @@ export function CommentList({
   onRetry,
   isRetrying,
 }: CommentListProps) {
-  // Checked before isPending: a thread that failed with nothing cached still
-  // reads isPending true, so the skeleton would never resolve.
+  // Error before loading: they are mutually exclusive under
+  // networkMode: 'always' (a failed query reports status "error", never
+  // "pending"), so the order only fixes the reading order of the branches.
   if (isThreadUnavailable(error, comments)) {
     return (
       <ErrorState

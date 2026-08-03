@@ -200,8 +200,9 @@ export function TaskDetailPage() {
             isRetrying={isCommentsFetching}
           />
 
-          {/* Kept mounted while the thread is unavailable — unmounting would
-              throw away whatever the user had typed. */}
+          {/* Kept mounted rather than conditionally rendered: the only way
+              here is a thread that never loaded, and unmounting would throw
+              away whatever the user had typed. */}
           <div className="mt-6 border-t pt-6">
             <CommentForm
               taskId={taskId}
