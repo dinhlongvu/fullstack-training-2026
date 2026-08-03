@@ -5,6 +5,7 @@
 import { CheckCircle2, Circle, ListTodo, Timer } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import { ErrorState } from "@/components/ErrorState";
+import { isNetworkError } from "@/lib/api";
 import { useMyStatsQuery } from "@/features/dashboard/api/useDashboard";
 import { StatsCard } from "@/features/dashboard/components/StatsCard";
 import { DashboardSkeleton } from "@/features/dashboard/components/DashboardSkeleton";
@@ -35,7 +36,13 @@ export function DashboardPage() {
       {/* Error state — only when there are no cached stats to show */}
       {error && !stats && (
         <ErrorState
-          message="Failed to load your dashboard. Check your connection and try again."
+          message={
+            // A dropped connection is not a server fault. Naming the wrong
+            // cause sends the user looking for the wrong problem.
+            isNetworkError(error)
+              ? "Couldn't load your dashboard. Check your connection and try again."
+              : "Couldn't load your dashboard. Try again in a moment."
+          }
           retry={() => void refetch()}
           isRetrying={isFetching}
         />

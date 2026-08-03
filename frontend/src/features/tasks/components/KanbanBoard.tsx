@@ -8,6 +8,7 @@ import { Plus, ListTodo, FilterX } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/EmptyState";
 import { ErrorState } from "@/components/ErrorState";
+import { isNetworkError } from "@/lib/api";
 import { KanbanColumn } from "./KanbanColumn";
 import { KanbanBoardSkeleton } from "./KanbanBoardSkeleton";
 import { CreateTaskDialog } from "./CreateTaskDialog";
@@ -202,7 +203,13 @@ export function KanbanBoard({ projectId, members }: KanbanBoardProps) {
       {/* Error — only when there is no cached board to fall back to */}
       {error && !tasks && (
         <ErrorState
-          message="Failed to load tasks for this project."
+          message={
+            // A dropped connection is not a server fault. Naming the wrong
+            // cause sends the user looking for the wrong problem.
+            isNetworkError(error)
+              ? "Couldn't load tasks for this project. Check your connection and try again."
+              : "Couldn't load tasks for this project. Try again in a moment."
+          }
           retry={() => void refetch()}
           isRetrying={isFetching}
         />
