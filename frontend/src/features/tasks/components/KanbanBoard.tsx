@@ -17,6 +17,8 @@ import { type Task, type TaskPriority } from "../api/tasksApi";
 import { type ProjectMember } from "@/features/projects/api/projectsApi";
 
 interface KanbanBoardProps {
+  // Always a persisted project id: ProjectDetailPage redirects on a
+  // non-positive URL param and waits for the project before mounting this.
   projectId: number;
   members: ProjectMember[];
 }
@@ -196,9 +198,10 @@ export function KanbanBoard({ projectId, members }: KanbanBoardProps) {
       </div>
 
       {/* Loading — skeleton columns, toolbar above stays usable.
-          isPending, not isLoading: useProjectTasksQuery is
-          `enabled: projectId > 0`, and a disabled query reports isLoading
-          false with no data, which would leave this area blank. */}
+          isPending, not isLoading: the two only diverge while a query is
+          pending but idle, which cannot happen here. `networkMode: 'always'`
+          rules out pausing, and this board only mounts with a loaded
+          project's id, so the query is never disabled. */}
       {isPending && <KanbanBoardSkeleton />}
 
       {/* Error — only when there is no cached board to fall back to */}
