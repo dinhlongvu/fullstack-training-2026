@@ -153,7 +153,7 @@ builder.Services.AddSwaggerGen(options =>
         Scheme = "Bearer",
         BearerFormat = "JWT",
         In = Microsoft.OpenApi.Models.ParameterLocation.Header,
-        Description = "JWT Authorization header using the Bearer scheme. \r\n\r\n Get token from /api/auth/login"
+        Description = "JWT Authorization header using the Bearer scheme.\n\nGet token from /api/auth/login"
     });
 
     // Apply security requirement globally to enforce JWT input requirements on Swagger UI

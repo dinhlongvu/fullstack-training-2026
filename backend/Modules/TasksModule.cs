@@ -74,7 +74,7 @@ public class TasksModule : ICarterModule
 
             if (!result.IsProjectFound || !result.IsAuthorized)
             {
-                return Results.NotFound(new { error = "Project not found" });
+                return Results.NotFound(new { error = "Project not found", traceId = context.GetTraceId() });
             }
 
             return Results.Ok(result.Data);
@@ -123,7 +123,7 @@ public class TasksModule : ICarterModule
             var result = await mediator.Send(command);
 
             if (!result.IsProjectFound || !result.IsAuthorized)
-                return Results.NotFound(new { error = "Project not found" });
+                return Results.NotFound(new { error = "Project not found", traceId = context.GetTraceId() });
 
             if (!result.IsAssigneeValid)
                 return Results.BadRequest(new ValidationErrorResponse
@@ -162,7 +162,7 @@ public class TasksModule : ICarterModule
 
             if (!result.IsFound || !result.IsAuthorized)
             {
-                return Results.NotFound(new { error = "Task not found" });
+                return Results.NotFound(new { error = "Task not found", traceId = context.GetTraceId() });
             }
 
             return Results.Ok(result.Data);
@@ -215,7 +215,7 @@ public class TasksModule : ICarterModule
             var result = await mediator.Send(command, ct);
 
             if (!result.IsFound || !result.IsAuthorized)
-                return Results.NotFound(new { error = "Task not found" });
+                return Results.NotFound(new { error = "Task not found", traceId = context.GetTraceId() });
 
             if (!result.IsAssigneeValid)
                 return Results.BadRequest(new ValidationErrorResponse
@@ -267,7 +267,7 @@ public class TasksModule : ICarterModule
             var result = await mediator.Send(command, ct);
 
             if (!result.IsFound || !result.IsAuthorized)
-                return Results.NotFound(new { error = "Task not found" });
+                return Results.NotFound(new { error = "Task not found", traceId = context.GetTraceId() });
 
             return Results.Ok(result.Data);
         })
@@ -299,7 +299,7 @@ public class TasksModule : ICarterModule
             var result = await mediator.Send(command, ct);
 
             if (!result.IsFound || !result.IsAuthorized)
-                return Results.NotFound(new { error = "Task not found" });
+                return Results.NotFound(new { error = "Task not found", traceId = context.GetTraceId() });
 
             if (!result.IsAssigneeValid)
                 return Results.BadRequest(new ValidationErrorResponse
