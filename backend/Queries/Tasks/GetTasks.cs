@@ -3,6 +3,7 @@
 // Queries only READ data — no side effects, no SaveChanges.
 
 using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using Backend.Domain;
 using Backend.DTOs;
 using Backend.Infrastructure.Data;
@@ -40,22 +41,25 @@ public class GetTasksHandler : IRequestHandler<GetTasksQuery, GetTasksResult>
 
     public async Task<GetTasksResult> Handle(GetTasksQuery req, CancellationToken ct)
     {
-        var project = await _db.Projects
-            .Include(p => p.Members)
-            .FirstOrDefaultAsync(p => p.Id == req.ProjectId, ct);
+        var projectAuth = await _db.Projects
+            .AsNoTracking()
+            .Where(p => p.Id == req.ProjectId)
+            .Select(p => new
+            {
+                IsOwnerOrMember = p.CreatedById == req.CurrentUserId ||
+                                p.Members.Any(m => m.UserId == req.CurrentUserId)
+            })
+            .FirstOrDefaultAsync(ct);
 
-        if (project == null) return new GetTasksResult(false, false, null);
+        if (projectAuth == null)
+            return new GetTasksResult(false, false, null);
 
-        bool isOwner = project.CreatedById == req.CurrentUserId;
-        bool isMember = project.Members.Any(m => m.UserId == req.CurrentUserId);
-
-        if (!isOwner && !isMember) return new GetTasksResult(true, false, null);
+        if (!projectAuth.IsOwnerOrMember)
+            return new GetTasksResult(true, false, null);
 
         // Apply optional filters using IQueryable
         var query = _db.Tasks
             .AsNoTracking()
-            .Include(t => t.Assignee)   // needed for AssigneeName mapping
-            .Include(t => t.Comments)   // needed for CommentCount mapping
             .Where(t => t.ProjectId == req.ProjectId);
 
         if (req.Status.HasValue)
@@ -67,12 +71,13 @@ public class GetTasksHandler : IRequestHandler<GetTasksQuery, GetTasksResult>
         if (req.AssigneeId.HasValue)
             query = query.Where(t => t.AssigneeId == req.AssigneeId.Value);
 
-        // Load entities to memory, then map in-memory
-        var tasks = await query
+        // Project directly to DTO to allow EF Core to optimize the SQL query
+        var taskDtos = await query
             .OrderByDescending(t => t.CreatedAt)
+            .ThenByDescending(t => t.Id)
+            .ProjectTo<TaskDto>(_mapper.ConfigurationProvider)
             .ToListAsync(ct);
 
-        var taskDtos = _mapper.Map<List<TaskDto>>(tasks);
         return new GetTasksResult(true, true, taskDtos);
     }
 }
