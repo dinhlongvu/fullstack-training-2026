@@ -20,6 +20,7 @@ import {
 } from "@/features/tasks/api/useTasks";
 import { useProjectDetailQuery } from "@/features/projects/api/useProjects";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { NetworkError } from "@/lib/api";
 import { renderWithProviders } from "@/test/test-utils";
 import { type Task } from "@/features/tasks/api/tasksApi";
 
@@ -156,12 +157,41 @@ describe("TaskDetailPage comments section", () => {
 
     // Still mounted — unmounting would discard whatever the user had typed.
     // readOnly rather than disabled, so that draft stays selectable and
-    // copyable, and the reason is announced with the field.
+    // copyable, and the reason reads as the field's description.
     const textbox = screen.getByRole("textbox");
     expect(textbox).toHaveAttribute("readonly");
-    expect(textbox).toHaveAttribute("aria-disabled", "true");
     expect(textbox).toHaveAccessibleDescription(FORM_DISABLED_TEXT);
 
     expect(postButton()).toBeDisabled();
+  });
+
+  // A failed refetch keeps the cached thread, so the form must stay usable.
+  it("keeps the form usable while a cached thread is still on screen", () => {
+    mockCommentsQuery({
+      data: [
+        {
+          id: 1,
+          content: "still here",
+          authorId: 1,
+          authorName: "Hoc",
+          createdAt: "2026-07-02T00:00:00Z",
+          updatedAt: "2026-07-02T00:00:00Z",
+        },
+      ],
+      error: new NetworkError(),
+    });
+    renderWithState();
+
+    expect(screen.getByText("still here")).toBeInTheDocument();
+    expect(postButton()).toBeEnabled();
+    expect(screen.getByRole("textbox")).not.toHaveAttribute("readonly");
+    expect(screen.queryByText(FORM_DISABLED_TEXT)).not.toBeInTheDocument();
+  });
+
+  it("names the connection when the thread never reached the server", () => {
+    mockCommentsQuery({ error: new NetworkError() });
+    renderWithState();
+
+    expect(screen.getByText(/you seem to be offline/i)).toBeInTheDocument();
   });
 });
