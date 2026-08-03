@@ -6,7 +6,9 @@
 import { MessageSquare } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import { ErrorState } from "@/components/ErrorState";
+import { isNetworkError } from "@/lib/api";
 import { CommentListSkeleton } from "./CommentListSkeleton";
+import { isThreadUnavailable } from "../lib/commentThreadState";
 import { type Comment } from "../api/tasksApi";
 
 interface CommentListProps {
@@ -43,22 +45,26 @@ export function CommentList({
   onRetry,
   isRetrying,
 }: CommentListProps) {
-  // Loading state
-  if (isPending) {
-    return <CommentListSkeleton />;
-  }
-
-  // Error state — only when there is nothing cached left to show. A failed
-  // background refetch (e.g. after posting a comment invalidates the query)
-  // still sets `error`, but the already-loaded thread is fine to keep.
-  if (error && !comments) {
+  // Error before loading: they are mutually exclusive under
+  // networkMode: 'always' (a failed query reports status "error", never
+  // "pending"), so the order only fixes the reading order of the branches.
+  if (isThreadUnavailable(error, comments)) {
     return (
       <ErrorState
-        message="Failed to load comments."
+        message={
+          isNetworkError(error)
+            ? "You seem to be offline. Comments will load once the connection is back."
+            : "Failed to load comments."
+        }
         retry={onRetry}
         isRetrying={isRetrying}
       />
     );
+  }
+
+  // Loading state
+  if (isPending) {
+    return <CommentListSkeleton />;
   }
 
   // Empty state

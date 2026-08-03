@@ -11,12 +11,14 @@ import { Button } from "@/components/ui/Button";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/Form";
 import { Textarea } from "@/components/ui/Textarea";
+import { cn } from "@/lib/utils";
 import { useCreateCommentMutation } from "../api/useTasks";
 
 // 1. Zod schema — content required, max 1000 characters
@@ -33,9 +35,13 @@ type CommentFormValues = z.infer<typeof commentSchema>;
 
 interface CommentFormProps {
   taskId: number;
+  // Set when the thread could not be loaded at all — a first load failing, or
+  // the cache expiring after gcTime. A failed refetch keeps its data, so it
+  // does not land here. Rare, but the draft still has to survive it.
+  disabledReason?: string;
 }
 
-export function CommentForm({ taskId }: CommentFormProps) {
+export function CommentForm({ taskId, disabledReason }: CommentFormProps) {
   // 3. Initialize React Hook Form with Zod resolver
   const form = useForm<CommentFormValues>({
     resolver: zodResolver(commentSchema),
@@ -47,8 +53,14 @@ export function CommentForm({ taskId }: CommentFormProps) {
   // 4. Setup mutation
   const createMutation = useCreateCommentMutation(taskId);
 
+  const isInert = disabledReason !== undefined || createMutation.isPending;
+
   // 5. Submit handler
   const onSubmit = (values: CommentFormValues) => {
+    // Neither readOnly nor the disabled button stops a submit event that
+    // reaches the form directly, so the last word has to be here.
+    if (isInert) return;
+
     createMutation.mutate(
       { content: values.content },
       {
@@ -76,16 +88,27 @@ export function CommentForm({ taskId }: CommentFormProps) {
                 <Textarea
                   placeholder="Write a comment..."
                   rows={3}
-                  disabled={createMutation.isPending}
+                  // readOnly, not disabled: a disabled textarea cannot be
+                  // selected, so the draft we kept could not be copied out.
+                  // It also drops out of the tab order without saying why.
+                  readOnly={isInert}
+                  className={cn(isInert && "cursor-not-allowed bg-muted")}
                   {...field}
                 />
               </FormControl>
+              {/* FormControl already wires aria-describedby to this and to
+                  FormMessage. Setting it by hand here dropped the link to the
+                  validation message, because a child prop wins even when its
+                  value is undefined. */}
+              {disabledReason && (
+                <FormDescription>{disabledReason}</FormDescription>
+              )}
               <FormMessage />
             </FormItem>
           )}
         />
         <div className="flex justify-end">
-          <Button type="submit" disabled={createMutation.isPending}>
+          <Button type="submit" disabled={isInert}>
             {createMutation.isPending ? "Posting..." : "Post Comment"}
           </Button>
         </div>
