@@ -195,7 +195,10 @@ export function KanbanBoard({ projectId, members }: KanbanBoardProps) {
         </Button>
       </div>
 
-      {/* Loading — skeleton columns, toolbar above stays usable */}
+      {/* Loading — skeleton columns, toolbar above stays usable.
+          isPending, not isLoading: useProjectTasksQuery is
+          `enabled: projectId > 0`, and a disabled query reports isLoading
+          false with no data, which would leave this area blank. */}
       {isPending && <KanbanBoardSkeleton />}
 
       {/* Error — only when there is no cached board to fall back to */}
