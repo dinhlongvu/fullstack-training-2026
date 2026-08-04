@@ -20,7 +20,7 @@ public record UpdateTaskCommand(
 ) : IRequest<UpdateTaskResult>;
 
 public record UpdateTaskResult(
-    bool IsFound,
+    bool IsTaskFound,
     bool IsAuthorized,
     bool IsAssigneeValid,
     TaskDto? Data

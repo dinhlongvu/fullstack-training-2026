@@ -22,7 +22,7 @@ public record AssignTaskCommand(
 ) : IRequest<AssignTaskResult>;
 
 public record AssignTaskResult(
-    bool IsFound,
+    bool IsTaskFound,
     bool IsAuthorized,
     bool IsAssigneeValid,
     TaskDto? Data

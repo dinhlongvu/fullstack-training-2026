@@ -4,6 +4,7 @@
 
 using Backend.Commands.Projects;
 using Backend.DTOs;
+using Backend.Middleware;
 using Backend.Queries.Projects;
 using Backend.Services.Auth;
 using Carter;
@@ -62,10 +63,10 @@ public class ProjectsModule : ICarterModule
             var userId = context.User.GetUserId();
             var result = await mediator.Send(new GetProjectDetailQuery(id, userId), ct);
 
-            // Handle 404 not found project
+            // Handle 404 — project does not exist or caller is not a member / owner
             if (!result.IsFound || !result.IsAuthorized)
             {
-                return Results.NotFound(new { error = "Project not found" });
+                return Results.NotFound(new { error = "Project not found", traceId = context.GetTraceId() });
             }
 
             // Handle 200 OK
@@ -89,10 +90,10 @@ public class ProjectsModule : ICarterModule
 
             var result = await mediator.Send(command, ct);
 
-            // Handle 404 Not Found
+            // Handle 404 — project does not exist or caller is not a member / owner
             if (!result.IsFound || !result.IsAuthorized)
             {
-                return Results.NotFound(new { error = "Project not found" });
+                return Results.NotFound(new { error = "Project not found", traceId = context.GetTraceId() });
             }
 
             // Handle 200 OK
@@ -116,7 +117,7 @@ public class ProjectsModule : ICarterModule
 
             if (!result.IsFound || !result.IsAuthorized)
             {
-                return Results.NotFound(new { error = "Project not found" });
+                return Results.NotFound(new { error = "Project not found", traceId = context.GetTraceId() });
             }
 
             return Results.NoContent();
@@ -138,16 +139,20 @@ public class ProjectsModule : ICarterModule
             var command = new AddProjectMemberCommand(id, req.Email, currentUserId);
             var result = await mediator.Send(command, ct);
 
-            // Handle 404 Not Found (Project or User)
+            // Handle 404 — project or target user does not exist, or caller is not the owner.
             if (!result.IsProjectFound || !result.IsUserFound || !result.IsAuthorized)
             {
-                return Results.NotFound(new { error = "Project or User not found" });
+                return Results.NotFound(new { error = "Project or User not found", traceId = context.GetTraceId() });
             }
 
-            // Handle 409 Conflict (User is already a member)
+            // Handle 409 — the target user is already a member of this project.
             if (result.IsAlreadyMember)
             {
-                return Results.Conflict(new { error = "User is already a member of this project" });
+                return Results.Conflict(new
+                {
+                    error = "User is already a member of this project",
+                    traceId = context.GetTraceId()
+                });
             }
 
             // Handle 201 Created

@@ -24,7 +24,7 @@ public record UpdateTaskStatusCommand(
 ) : IRequest<UpdateTaskStatusResult>;
 
 public record UpdateTaskStatusResult(
-    bool IsFound,
+    bool IsTaskFound,
     bool IsAuthorized,
     TaskDto? Data
 );

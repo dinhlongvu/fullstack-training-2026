@@ -160,7 +160,7 @@ public class TasksModule : ICarterModule
             var result = await mediator.Send(
                 new GetTaskDetailQuery(taskId, currentUserId), ct);
 
-            if (!result.IsFound || !result.IsAuthorized)
+            if (!result.IsTaskFound || !result.IsAuthorized)
             {
                 return Results.NotFound(new { error = "Task not found", traceId = context.GetTraceId() });
             }
@@ -214,7 +214,7 @@ public class TasksModule : ICarterModule
 
             var result = await mediator.Send(command, ct);
 
-            if (!result.IsFound || !result.IsAuthorized)
+            if (!result.IsTaskFound || !result.IsAuthorized)
                 return Results.NotFound(new { error = "Task not found", traceId = context.GetTraceId() });
 
             if (!result.IsAssigneeValid)
@@ -266,7 +266,7 @@ public class TasksModule : ICarterModule
 
             var result = await mediator.Send(command, ct);
 
-            if (!result.IsFound || !result.IsAuthorized)
+            if (!result.IsTaskFound || !result.IsAuthorized)
                 return Results.NotFound(new { error = "Task not found", traceId = context.GetTraceId() });
 
             return Results.Ok(result.Data);
@@ -298,7 +298,7 @@ public class TasksModule : ICarterModule
 
             var result = await mediator.Send(command, ct);
 
-            if (!result.IsFound || !result.IsAuthorized)
+            if (!result.IsTaskFound || !result.IsAuthorized)
                 return Results.NotFound(new { error = "Task not found", traceId = context.GetTraceId() });
 
             if (!result.IsAssigneeValid)
@@ -329,8 +329,8 @@ public class TasksModule : ICarterModule
 
             var result = await mediator.Send(new DeleteTaskCommand(taskId, currentUserId), ct);
 
-            if (!result.IsFound || !result.IsAuthorized)
-                return Results.NotFound(new { error = "Task not found" });
+            if (!result.IsTaskFound || !result.IsAuthorized)
+                return Results.NotFound(new { error = "Task not found", traceId = context.GetTraceId() });
 
             return Results.NoContent();
         })
@@ -352,7 +352,7 @@ public class TasksModule : ICarterModule
             var result = await mediator.Send(new GetTaskCommentsQuery(taskId, currentUserId), ct);
 
             if (!result.IsTaskFound || !result.IsAuthorized)
-                return Results.NotFound(new { error = "Task not found" });
+                return Results.NotFound(new { error = "Task not found", traceId = context.GetTraceId() });
 
             return Results.Ok(result.Data);
         })
@@ -377,7 +377,7 @@ public class TasksModule : ICarterModule
             var result = await mediator.Send(command, ct);
 
             if (!result.IsTaskFound || !result.IsAuthorized)
-                return Results.NotFound(new { error = "Task not found" });
+                return Results.NotFound(new { error = "Task not found", traceId = context.GetTraceId() });
 
             return Results.Json(result.Data, statusCode: StatusCodes.Status201Created);
         })
@@ -402,8 +402,8 @@ public class TasksModule : ICarterModule
 
             var result = await mediator.Send(command, ct);
 
-            if (!result.IsFound || !result.IsAuthorized)
-                return Results.NotFound(new { error = "Comment not found" });
+            if (!result.IsCommentFound || !result.IsAuthorized)
+                return Results.NotFound(new { error = "Comment not found", traceId = context.GetTraceId() });
 
             return Results.NoContent();
         })

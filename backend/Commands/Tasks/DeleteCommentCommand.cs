@@ -11,6 +11,6 @@ public record DeleteCommentCommand(
 ) : IRequest<DeleteCommentResult>;
 
 public record DeleteCommentResult(
-    bool IsFound,
+    bool IsCommentFound,
     bool IsAuthorized
 );
