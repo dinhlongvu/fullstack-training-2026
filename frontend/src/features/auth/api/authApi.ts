@@ -1,4 +1,4 @@
-import { apiClient } from "@/lib/api";
+import { apiClient, NetworkError } from "@/lib/api";
 import { type AuthUser } from "@/stores/useAuthStore";
 
 // Data Transfer Objects (DTOs) defining the shape of outgoing request bodies.
@@ -58,16 +58,29 @@ const API_BASE_URL = import.meta.env.VITE_API_URL;
 export async function refreshTokenRequest(
   refreshToken: string,
 ): Promise<RefreshResponse> {
-  const response = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ refreshToken }),
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refreshToken }),
+    });
+  } catch {
+    // Never reached the server, so this says nothing about the token.
+    throw new NetworkError();
+  }
 
   if (!response.ok) {
     throw new Error("Refresh failed");
   }
-  return response.json()
+
+  const body = (await response.json()) as Partial<RefreshResponse>;
+
+  // A 200 with the wrong shape is not a usable session. Without this check the
+  // string "undefined" ends up in localStorage and in the Authorization header.
+  if (typeof body.token !== "string" || typeof body.refreshToken !== "string") {
+    throw new Error("Refresh failed");
+  }
+
+  return { token: body.token, refreshToken: body.refreshToken };
 }
-
-
