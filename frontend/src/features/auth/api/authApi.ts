@@ -73,5 +73,14 @@ export async function refreshTokenRequest(
   if (!response.ok) {
     throw new Error("Refresh failed");
   }
-  return response.json();
+
+  const body = (await response.json()) as Partial<RefreshResponse>;
+
+  // A 200 with the wrong shape is not a usable session. Without this check the
+  // string "undefined" ends up in localStorage and in the Authorization header.
+  if (typeof body.token !== "string" || typeof body.refreshToken !== "string") {
+    throw new Error("Refresh failed");
+  }
+
+  return { token: body.token, refreshToken: body.refreshToken };
 }

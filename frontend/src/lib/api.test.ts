@@ -72,6 +72,15 @@ describe("401 refresh path", () => {
     expect(useAuthStore.getState().currentUser).toBeNull();
   });
 
+  it("logs out when the refresh returns 200 with the wrong shape", async () => {
+    mockFetch(unauthorized, ok({ unexpected: true }));
+
+    const error = await apiClient("/api/projects").catch((e: unknown) => e);
+
+    expect(isNetworkError(error)).toBe(false);
+    expect(useAuthStore.getState().token).toBeNull();
+  });
+
   it("reports a NetworkError when the retry after a good refresh drops", async () => {
     mockFetch(unauthorized, ok(NEW_TOKENS), offline);
 
