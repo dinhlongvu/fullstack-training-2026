@@ -126,8 +126,11 @@ export async function apiClient<TResponse>(
         refreshPromise = refreshTokenRequest(refreshToken);
       }
       newTokens = await refreshPromise;
-    } catch {
-      // Refresh failed — token is invalid/expired/revoked
+    } catch (error) {
+      // A refresh that never reached the server says nothing about the token.
+      // Keep the session; only a rejection from the server means it is dead.
+      if (isNetworkError(error)) throw error;
+
       forceLogout();
       throw new Error("Unauthorized");
     } finally {
@@ -145,10 +148,16 @@ export async function apiClient<TResponse>(
       ...options.headers,
     };
 
-    const retryResponse = await fetch(`${API_BASE_URL}${path}`, {
-      ...options,
-      headers: retryHeaders,
-    });
+    let retryResponse: Response;
+    try {
+      retryResponse = await fetch(`${API_BASE_URL}${path}`, {
+        ...options,
+        headers: retryHeaders,
+      });
+    } catch {
+      // Same as the first attempt: the screens branch on isNetworkError.
+      throw new NetworkError();
+    }
 
     // Retry still unauthorized — give up
     if (retryResponse.status === 401) {
