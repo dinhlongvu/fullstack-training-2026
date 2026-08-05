@@ -103,6 +103,9 @@ export function TaskCard({ task, projectId, members }: TaskCardProps) {
   const assigneeValue =
     task.assigneeId === null ? UNASSIGNED_VALUE : String(task.assigneeId);
 
+  const assigneeLabelId = `assignee-label-${task.id}`;
+  const assigneeTriggerId = `assignee-trigger-${task.id}`;
+
   // Assign/unassign the task when a picker option is chosen.
   // The sentinel maps back to `null` for the API.
   function handleAssigneeChange(value: string) {
@@ -179,14 +182,20 @@ export function TaskCard({ task, projectId, members }: TaskCardProps) {
               className="min-w-[110px] flex-1"
               onClick={(e) => e.stopPropagation()}
             >
+              <span id={assigneeLabelId} className="sr-only">
+                {`Assignee for ${task.title}`}
+              </span>
               <Select
                 value={assigneeValue}
                 onValueChange={handleAssigneeChange}
                 disabled={assignTask.isPending}
               >
                 <SelectTrigger
+                  id={assigneeTriggerId}
+                  // The trigger's own id comes last, so the accessible name is
+                  // "<label> <selected value>" and the assignee is still read.
+                  aria-labelledby={`${assigneeLabelId} ${assigneeTriggerId}`}
                   className="h-7 w-full text-xs"
-                  aria-label={`Assignee for ${task.title}`}
                 >
                   <SelectValue placeholder="Unassigned" />
                 </SelectTrigger>
