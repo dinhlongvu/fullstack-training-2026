@@ -79,8 +79,17 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   // Still fetching user data -> Show spinner
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      <div
+        role="status"
+        aria-busy="true"
+        aria-live="polite"
+        className="flex min-h-screen items-center justify-center bg-background"
+      >
+        <Loader2
+          className="h-6 w-6 animate-spin text-muted-foreground"
+          aria-hidden="true"
+        />
+        <span className="sr-only">Checking your session...</span>
       </div>
     );
   }

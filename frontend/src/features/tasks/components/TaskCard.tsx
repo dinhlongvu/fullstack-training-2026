@@ -4,7 +4,7 @@
 // Click navigates to /tasks/:id. Move Left/Right buttons change status (column).
 
 import { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Calendar, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/Button";
@@ -103,6 +103,9 @@ export function TaskCard({ task, projectId, members }: TaskCardProps) {
   const assigneeValue =
     task.assigneeId === null ? UNASSIGNED_VALUE : String(task.assigneeId);
 
+  const assigneeLabelId = `assignee-label-${task.id}`;
+  const assigneeTriggerId = `assignee-trigger-${task.id}`;
+
   // Assign/unassign the task when a picker option is chosen.
   // The sentinel maps back to `null` for the API.
   function handleAssigneeChange(value: string) {
@@ -122,24 +125,11 @@ export function TaskCard({ task, projectId, members }: TaskCardProps) {
 
   return (
     <>
-      {/* The card is a non-native clickable, so expose it to keyboard/AT users:
-          role + tabIndex make it focusable and announced as a button, and
-          onKeyDown activates it with Enter/Space (WCAG 2.1.1). The
-          target === currentTarget guard ensures Enter/Space fired on an inner
-          control (move/delete/assignee) doesn't ALSO navigate to the detail. */}
+      {/* The card stays a mouse shortcut; the title link is the keyboard and
+          screen-reader path in, so the card is not a button wrapping buttons. */}
       <Card
-        className="cursor-pointer transition-shadow hover:shadow-md animate-in fade-in-0 zoom-in-95 duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-        role="button"
-        tabIndex={0}
-        aria-label={`View details for ${task.title}`}
+        className="cursor-pointer transition-shadow hover:shadow-md animate-in fade-in-0 zoom-in-95 duration-200"
         onClick={openTask}
-        onKeyDown={(e) => {
-          if (e.target !== e.currentTarget) return;
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            openTask();
-          }
-        }}
       >
         <CardContent className="p-4">
           {/* Header: priority badge + edit/delete actions */}
@@ -152,26 +142,36 @@ export function TaskCard({ task, projectId, members }: TaskCardProps) {
               >
                 <button
                   type="button"
-                  aria-label="Edit task"
+                  aria-label={`Edit task: ${task.title}`}
                   onClick={() => setEditOpen(true)}
-                  className="text-muted-foreground transition-colors hover:text-foreground"
+                  className="rounded-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 >
-                  <Pencil className="h-4 w-4" />
+                  <Pencil className="h-4 w-4" aria-hidden="true" />
                 </button>
                 <button
                   type="button"
-                  aria-label="Delete task"
+                  aria-label={`Delete task: ${task.title}`}
                   onClick={handleDeleteClick}
-                  className="text-muted-foreground transition-colors hover:text-destructive"
+                  className="rounded-sm text-muted-foreground transition-colors hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <Trash2 className="h-4 w-4" aria-hidden="true" />
                 </button>
               </div>
             )}
           </div>
 
-          {/* Task title */}
-          <h4 className="text-sm font-medium leading-tight">{task.title}</h4>
+          {/* Task title — carries the same router state as the card's own
+              click, so "Back to project" returns to the filtered board. */}
+          <h4 className="text-sm font-medium leading-tight">
+            <Link
+              to={`/tasks/${task.id}`}
+              state={{ boardSearch: location.search }}
+              onClick={(e) => e.stopPropagation()}
+              className="rounded-sm hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+              {task.title}
+            </Link>
+          </h4>
 
           {/* Footer: assignee picker + due date */}
           {/* flex-wrap keeps the due date from being pushed out of the card;
@@ -182,12 +182,21 @@ export function TaskCard({ task, projectId, members }: TaskCardProps) {
               className="min-w-[110px] flex-1"
               onClick={(e) => e.stopPropagation()}
             >
+              <span id={assigneeLabelId} className="sr-only">
+                {`Assignee for ${task.title}`}
+              </span>
               <Select
                 value={assigneeValue}
                 onValueChange={handleAssigneeChange}
                 disabled={assignTask.isPending}
               >
-                <SelectTrigger className="h-7 w-full text-xs">
+                <SelectTrigger
+                  id={assigneeTriggerId}
+                  // The trigger's own id comes last, so the accessible name is
+                  // "<label> <selected value>" and the assignee is still read.
+                  aria-labelledby={`${assigneeLabelId} ${assigneeTriggerId}`}
+                  className="h-7 w-full text-xs"
+                >
                   <SelectValue placeholder="Unassigned" />
                 </SelectTrigger>
                 <SelectContent>
@@ -209,11 +218,11 @@ export function TaskCard({ task, projectId, members }: TaskCardProps) {
               <div
                 className={`flex shrink-0 items-center gap-1 ${
                   isOverdue(task.dueDate) && task.status !== "Done"
-                    ? "text-red-500"
+                    ? "text-destructive"
                     : ""
                 }`}
               >
-                <Calendar className="h-3 w-3" />
+                <Calendar className="h-3 w-3" aria-hidden="true" />
                 <span>{formatDueDate(task.dueDate)}</span>
               </div>
             )}
@@ -232,6 +241,7 @@ export function TaskCard({ task, projectId, members }: TaskCardProps) {
                   variant="outline"
                   size="sm"
                   className="min-w-[7rem] flex-1"
+                  aria-label={`Move Left: ${task.title}`}
                   disabled={updateStatus.isPending}
                   onClick={(e) => handleMove(e, "left")}
                 >
@@ -243,6 +253,7 @@ export function TaskCard({ task, projectId, members }: TaskCardProps) {
                   variant="outline"
                   size="sm"
                   className="min-w-[7rem] flex-1"
+                  aria-label={`Move Right: ${task.title}`}
                   disabled={updateStatus.isPending}
                   onClick={(e) => handleMove(e, "right")}
                 >

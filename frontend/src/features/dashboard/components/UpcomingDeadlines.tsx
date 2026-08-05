@@ -47,13 +47,16 @@ export function UpcomingDeadlines({
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-base">Upcoming Deadlines</CardTitle>
-        <CalendarClock className="h-4 w-4 text-muted-foreground" />
+        <CalendarClock
+          className="h-4 w-4 text-muted-foreground"
+          aria-hidden="true"
+        />
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Overdue summary — count only, so a large backlog can't crowd out the list. */}
         {overdueCount > 0 && (
           <div className="flex items-center gap-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">
-            <AlertTriangle className="h-4 w-4 shrink-0" />
+            <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
             <span>
               {overdueCount} overdue {overdueCount === 1 ? "task" : "tasks"}
             </span>
