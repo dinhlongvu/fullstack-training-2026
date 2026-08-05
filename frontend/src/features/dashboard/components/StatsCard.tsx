@@ -20,7 +20,7 @@ export function StatsCard({ label, value, icon: Icon }: StatsCardProps) {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardDescription>{label}</CardDescription>
-        <Icon className="h-4 w-4 text-muted-foreground" />
+        <Icon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
       </CardHeader>
       <CardContent>
         <p className="text-3xl font-bold">{value}</p>

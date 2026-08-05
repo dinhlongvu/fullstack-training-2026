@@ -231,7 +231,10 @@ export function CreateTaskDialog({
                           {field.value
                             ? format(field.value, "PPP")
                             : "Pick a date (optional)"}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          <CalendarIcon
+                            className="ml-auto h-4 w-4 opacity-50"
+                            aria-hidden="true"
+                          />
                         </Button>
                       </FormControl>
                     </PopoverTrigger>

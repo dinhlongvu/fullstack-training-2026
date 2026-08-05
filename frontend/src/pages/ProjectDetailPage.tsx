@@ -72,7 +72,7 @@ export function ProjectDetailPage() {
           to="/projects"
           className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
         >
-          <ArrowLeft className="mr-1 h-4 w-4" />
+          <ArrowLeft className="mr-1 h-4 w-4" aria-hidden="true" />
           Back to projects
         </Link>
         <ErrorState
@@ -97,7 +97,7 @@ export function ProjectDetailPage() {
         to="/projects"
         className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
       >
-        <ArrowLeft className="mr-1 h-4 w-4" />
+        <ArrowLeft className="mr-1 h-4 w-4" aria-hidden="true" />
         Back to projects
       </Link>
 
@@ -110,7 +110,7 @@ export function ProjectDetailPage() {
           </p>
           <div className="mt-3 flex items-center gap-4 text-sm text-muted-foreground">
             <span className="flex items-center gap-1">
-              <Calendar className="h-4 w-4" />
+              <Calendar className="h-4 w-4" aria-hidden="true" />
               Created {new Date(project.createdAt).toLocaleDateString()}
               {project.updatedAt !== project.createdAt && (
                 <span className="ml-1 italic">
@@ -119,7 +119,7 @@ export function ProjectDetailPage() {
               )}
             </span>
             <span className="flex items-center gap-1">
-              <Users className="h-4 w-4" />
+              <Users className="h-4 w-4" aria-hidden="true" />
               {project.members.length}{" "}
               {project.members.length === 1 ? "member" : "members"}
             </span>
@@ -134,7 +134,7 @@ export function ProjectDetailPage() {
               size="sm"
               onClick={() => setAddMemberOpen(true)}
             >
-              <UserPlus className="mr-2 h-4 w-4" />
+              <UserPlus className="mr-2 h-4 w-4" aria-hidden="true" />
               Add Member
             </Button>
             <Button
@@ -142,7 +142,7 @@ export function ProjectDetailPage() {
               size="sm"
               onClick={() => setEditOpen(true)}
             >
-              <Pencil className="mr-2 h-4 w-4" />
+              <Pencil className="mr-2 h-4 w-4" aria-hidden="true" />
               Edit
             </Button>
             <Button
@@ -150,7 +150,7 @@ export function ProjectDetailPage() {
               size="sm"
               onClick={() => setDeleteOpen(true)}
             >
-              <Trash2 className="mr-2 h-4 w-4" />
+              <Trash2 className="mr-2 h-4 w-4" aria-hidden="true" />
               Delete
             </Button>
           </div>
