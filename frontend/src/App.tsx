@@ -13,8 +13,11 @@ import { TaskDetailPage } from "@/pages/TaskDetailPage";
 import { DashboardPage } from "@/pages/DashboardPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 import { Toaster } from "@/components/ui/Sonner";
+import { useAxeReporter } from "@/lib/useAxeReporter";
 
 export default function App() {
+  useAxeReporter();
+
   return (
     <RootErrorBoundary>
       <Routes>
