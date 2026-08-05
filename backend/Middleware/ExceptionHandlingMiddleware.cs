@@ -4,6 +4,7 @@
 
 using System.Net;
 using System.Text.Json;
+using Backend.DTOs;
 using Backend.Exceptions;
 using FluentValidation;
 
@@ -31,14 +32,24 @@ public class ExceptionHandlingMiddleware
         {
             await _next(context);
 
-            // Handle 404 from ASP.NET Core routing (route not found, not a business-logic 404).
-            // Business-logic 404s are thrown as KeyNotFoundException and caught below.
-            if (context.Response.StatusCode == StatusCodes.Status404NotFound && !context.Response.HasStarted)
+            // Framework can emit 404 (no route match), 405 (wrong method), or 415 (wrong Content-Type)
+            // without throwing an exception, so these statuses bypass the catch blocks below.
+            // Backfill the error envelope for any error response that has not yet written a body.
+            if (context.Response.StatusCode >= 400 && !context.Response.HasStarted)
             {
                 var traceId = context.GetTraceId();
                 context.Response.ContentType = "application/json";
-                var notFoundResponse = new { error = "Resource not found", traceId };
-                await context.Response.WriteAsync(JsonSerializer.Serialize(notFoundResponse, _jsonOptions));
+
+                var message = context.Response.StatusCode switch
+                {
+                    StatusCodes.Status404NotFound => "Resource not found.",
+                    StatusCodes.Status405MethodNotAllowed => "HTTP method not allowed for this route.",
+                    StatusCodes.Status415UnsupportedMediaType => "Content-Type must be application/json.",
+                    _ => "The request could not be processed."
+                };
+
+                var fallbackResponse = new ErrorResponse { Error = message, TraceId = traceId };
+                await context.Response.WriteAsync(JsonSerializer.Serialize(fallbackResponse, _jsonOptions));
             }
         }
         catch (BadHttpRequestException ex)
@@ -98,26 +109,28 @@ public class ExceptionHandlingMiddleware
         //             all other errors → { "error": "...", "traceId": "..." }
         object response = exception switch
         {
-            ValidationException ve => new
+            // 400 - validation failures return an array of message
+            ValidationException ve => new ValidationErrorResponse
             {
-                errors = ve.Errors.Select(e => e.ErrorMessage),
-                traceId
+                Errors = ve.Errors.Select(e => e.ErrorMessage),
+                TraceId = traceId
             },
 
-            // Do NOT echo bad.Message — it can leak internal .NET type names and JSON paths.
-            // Return a safe, generic message instead.
-            BadHttpRequestException bad when bad.StatusCode == StatusCodes.Status400BadRequest => new
+            // 400 - malformed body: return a safe generic message, never echo internal .NER paths
+            BadHttpRequestException bad when bad.StatusCode == StatusCodes.Status400BadRequest => new ValidationErrorResponse()
             {
-                errors = new[] { "The request body or a query parameter is malformed or has an invalid value." },
-                traceId
+                Errors = new[] { "The request body or a query parameter is malformed or has an invalid value." },
+                TraceId = traceId
             },
-            BadHttpRequestException => new { error = "The request could not be processed.", traceId },
 
-            ConflictException ce => new { error = ce.Message, traceId },
-            UnauthorizedException ue => new { error = ue.Message, traceId },
-            UnauthorizedAccessException => new { error = "Unauthorized.", traceId },
-            KeyNotFoundException ke => new { error = ke.Message, traceId },
-            _ => new { error = "Internal server error", traceId }
+            // Other BadHttpRequestException status codes (e.g 411, 413)
+            BadHttpRequestException => new ErrorResponse { Error = "The request could not be processed.", TraceId = traceId },
+
+            ConflictException ce => new ErrorResponse { Error = ce.Message, TraceId = traceId },
+            UnauthorizedException ue => new ErrorResponse { Error = ue.Message, TraceId = traceId },
+            UnauthorizedAccessException => new ErrorResponse { Error = "Unauthorized.", TraceId = traceId },
+            KeyNotFoundException ke => new ErrorResponse { Error = ke.Message, TraceId = traceId },
+            _ => new ErrorResponse { Error = "Internal server error.", TraceId = traceId }
         };
 
         await context.Response.WriteAsync(JsonSerializer.Serialize(response, _jsonOptions));

@@ -74,7 +74,7 @@ public class TasksModule : ICarterModule
 
             if (!result.IsProjectFound || !result.IsAuthorized)
             {
-                return Results.NotFound(new { error = "Project not found", traceId = context.GetTraceId() });
+                return ErrorResults.NotFound(context, "Project not found");
             }
 
             return Results.Ok(result.Data);
@@ -84,8 +84,8 @@ public class TasksModule : ICarterModule
         .WithDescription("Get the list of project tasks. Optional filter: status (Todo | InProgress | Done), priority (Low | Medium | High), assigneeId.")
         .Produces<List<TaskDto>>(StatusCodes.Status200OK)
         .Produces<ValidationErrorResponse>(StatusCodes.Status400BadRequest)
-        .Produces(StatusCodes.Status404NotFound)
-        .Produces(StatusCodes.Status401Unauthorized);
+        .Produces<ErrorResponse>(StatusCodes.Status404NotFound)
+        .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized);
 
         // ======== 2. POST /api/projects/{projectId}/tasks ========
         group.MapPost("/", async (
@@ -123,12 +123,12 @@ public class TasksModule : ICarterModule
             var result = await mediator.Send(command);
 
             if (!result.IsProjectFound || !result.IsAuthorized)
-                return Results.NotFound(new { error = "Project not found", traceId = context.GetTraceId() });
+                return ErrorResults.NotFound(context, "Project not found");
 
             if (!result.IsAssigneeValid)
                 return Results.BadRequest(new ValidationErrorResponse
                 {
-                    Errors = new[] { "Assignee must be a project member" },
+                    Errors = new[] { "Assignee must be a project member." },
                     TraceId = context.GetTraceId()
                 });
 
@@ -140,8 +140,8 @@ public class TasksModule : ICarterModule
         .WithDescription("Creates a new task in the specified project. Requires project member access.")
         .Produces<TaskDto>(StatusCodes.Status201Created)
         .Produces<ValidationErrorResponse>(StatusCodes.Status400BadRequest)
-        .Produces(StatusCodes.Status404NotFound)
-        .Produces(StatusCodes.Status401Unauthorized);
+        .Produces<ErrorResponse>(StatusCodes.Status404NotFound)
+        .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized);
 
         // ======== 3. GET /api/tasks/{taskId} ========
         // Define a separate group for tasks to avoid the project/{projectId} prefix
@@ -162,7 +162,7 @@ public class TasksModule : ICarterModule
 
             if (!result.IsTaskFound || !result.IsAuthorized)
             {
-                return Results.NotFound(new { error = "Task not found", traceId = context.GetTraceId() });
+                return ErrorResults.NotFound(context, "Task not found");
             }
 
             return Results.Ok(result.Data);
@@ -171,8 +171,8 @@ public class TasksModule : ICarterModule
         .WithSummary("Get task detail")
         .WithDescription("Returns detailed information about a specific task. Requires project member access.")
         .Produces<TaskDto>(StatusCodes.Status200OK)
-        .Produces(StatusCodes.Status404NotFound)
-        .Produces(StatusCodes.Status401Unauthorized);
+        .Produces<ErrorResponse>(StatusCodes.Status404NotFound)
+        .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized);
 
         // ======== 4. PUT /api/tasks/{taskId} ========
         // Updates task fields only. Status excluded — use PATCH /status.
@@ -215,12 +215,12 @@ public class TasksModule : ICarterModule
             var result = await mediator.Send(command, ct);
 
             if (!result.IsTaskFound || !result.IsAuthorized)
-                return Results.NotFound(new { error = "Task not found", traceId = context.GetTraceId() });
+                return ErrorResults.NotFound(context, "Task not found");
 
             if (!result.IsAssigneeValid)
                 return Results.BadRequest(new ValidationErrorResponse
                 {
-                    Errors = new[] { "Assignee must be a project member" },
+                    Errors = new[] { "Assignee must be a project member." },
                     TraceId = context.GetTraceId()
                 });
 
@@ -231,8 +231,8 @@ public class TasksModule : ICarterModule
         .WithDescription("Updates task fields (title, description, priority, dueDate, assigneeId). Status is managed via PATCH /status. Requires project member access.")
         .Produces<TaskDto>(StatusCodes.Status200OK)
         .Produces<ValidationErrorResponse>(StatusCodes.Status400BadRequest)
-        .Produces(StatusCodes.Status404NotFound)
-        .Produces(StatusCodes.Status401Unauthorized);
+        .Produces<ErrorResponse>(StatusCodes.Status404NotFound)
+        .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized);
 
         // ======== 5. PATCH /api/tasks/{taskId}/status ========
         taskRootGroup.MapPatch("/{taskId:int}/status", async (
@@ -267,7 +267,7 @@ public class TasksModule : ICarterModule
             var result = await mediator.Send(command, ct);
 
             if (!result.IsTaskFound || !result.IsAuthorized)
-                return Results.NotFound(new { error = "Task not found", traceId = context.GetTraceId() });
+                return ErrorResults.NotFound(context, "Task not found");
 
             return Results.Ok(result.Data);
         })
@@ -276,8 +276,8 @@ public class TasksModule : ICarterModule
         .WithDescription("Updates the status of a task (Todo/InProgress/Done). Requires project member access.")
         .Produces<TaskDto>(StatusCodes.Status200OK)
         .Produces<ValidationErrorResponse>(StatusCodes.Status400BadRequest)
-        .Produces(StatusCodes.Status404NotFound)
-        .Produces(StatusCodes.Status401Unauthorized);
+        .Produces<ErrorResponse>(StatusCodes.Status404NotFound)
+        .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized);
 
         // ======== 6. PATCH /api/tasks/{taskId}/assign ========
         // Assign OR unassign task to a project member
@@ -299,12 +299,12 @@ public class TasksModule : ICarterModule
             var result = await mediator.Send(command, ct);
 
             if (!result.IsTaskFound || !result.IsAuthorized)
-                return Results.NotFound(new { error = "Task not found", traceId = context.GetTraceId() });
+                return ErrorResults.NotFound(context, "Task not found");
 
             if (!result.IsAssigneeValid)
                 return Results.BadRequest(new ValidationErrorResponse
                 {
-                    Errors = new[] { "Assignee must be a project member or project owner" },
+                    Errors = new[] { "Assignee must be a project member or project owner." },
                     TraceId = context.GetTraceId()
                 });
 
@@ -315,8 +315,8 @@ public class TasksModule : ICarterModule
         .WithDescription("Assigns a task to a project member. Pass null to unassign. Requires project member access.")
         .Produces<TaskDto>(StatusCodes.Status200OK)
         .Produces<ValidationErrorResponse>(StatusCodes.Status400BadRequest)
-        .Produces(StatusCodes.Status404NotFound)
-        .Produces(StatusCodes.Status401Unauthorized);
+        .Produces<ErrorResponse>(StatusCodes.Status404NotFound)
+        .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized);
 
         // ======== 7. DELETE /api/tasks/{taskId} ========
         taskRootGroup.MapDelete("/{taskId:int}", async (
@@ -330,7 +330,7 @@ public class TasksModule : ICarterModule
             var result = await mediator.Send(new DeleteTaskCommand(taskId, currentUserId), ct);
 
             if (!result.IsTaskFound || !result.IsAuthorized)
-                return Results.NotFound(new { error = "Task not found", traceId = context.GetTraceId() });
+                return ErrorResults.NotFound(context, "Task not found");
 
             return Results.NoContent();
         })
@@ -338,8 +338,8 @@ public class TasksModule : ICarterModule
         .WithSummary("Delete a task")
         .WithDescription("Deletes a task and utilizes DB cascade for comments. Requires project member access.")
         .Produces(StatusCodes.Status204NoContent)
-        .Produces(StatusCodes.Status404NotFound)
-        .Produces(StatusCodes.Status401Unauthorized);
+        .Produces<ErrorResponse>(StatusCodes.Status404NotFound)
+        .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized);
 
         // ======== 8. GET /api/tasks/{taskId}/comments ========
         taskRootGroup.MapGet("/{taskId:int}/comments", async (
@@ -352,7 +352,7 @@ public class TasksModule : ICarterModule
             var result = await mediator.Send(new GetTaskCommentsQuery(taskId, currentUserId), ct);
 
             if (!result.IsTaskFound || !result.IsAuthorized)
-                return Results.NotFound(new { error = "Task not found", traceId = context.GetTraceId() });
+                return ErrorResults.NotFound(context, "Task not found");
 
             return Results.Ok(result.Data);
         })
@@ -360,8 +360,8 @@ public class TasksModule : ICarterModule
         .WithSummary("Get all comments for a task")
         .WithDescription("Returns a chronological list of comments for a task, embedded with author names.")
         .Produces<List<CommentDto>>(StatusCodes.Status200OK)
-        .Produces(StatusCodes.Status404NotFound)
-        .Produces(StatusCodes.Status401Unauthorized);
+        .Produces<ErrorResponse>(StatusCodes.Status404NotFound)
+        .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized);
 
         // ======== 9. POST /api/tasks/{taskId}/comments ========
         taskRootGroup.MapPost("/{taskId:int}/comments", async (
@@ -377,17 +377,17 @@ public class TasksModule : ICarterModule
             var result = await mediator.Send(command, ct);
 
             if (!result.IsTaskFound || !result.IsAuthorized)
-                return Results.NotFound(new { error = "Task not found", traceId = context.GetTraceId() });
+                return ErrorResults.NotFound(context, "Task not found");
 
-            return Results.Json(result.Data, statusCode: StatusCodes.Status201Created);
+            return Results.Created($"/api/tasks/{taskId}/comments/{result.Data?.Id}", result.Data);
         })
         .WithName("CreateComment")
         .WithSummary("Add a comment to a task")
         .WithDescription("Creates a new comment. Validates content length and ensures project member authorization.")
         .Produces<CommentDto>(StatusCodes.Status201Created)
         .Produces<ValidationErrorResponse>(StatusCodes.Status400BadRequest)
-        .Produces(StatusCodes.Status404NotFound)
-        .Produces(StatusCodes.Status401Unauthorized);
+        .Produces<ErrorResponse>(StatusCodes.Status404NotFound)
+        .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized);
 
         // ======== 10. DELETE /api/tasks/{taskId}/comments/{commentId} ========
         taskRootGroup.MapDelete("/{taskId:int}/comments/{commentId:int}", async (
@@ -403,7 +403,7 @@ public class TasksModule : ICarterModule
             var result = await mediator.Send(command, ct);
 
             if (!result.IsCommentFound || !result.IsAuthorized)
-                return Results.NotFound(new { error = "Comment not found", traceId = context.GetTraceId() });
+                return ErrorResults.NotFound(context, "Comment not found");
 
             return Results.NoContent();
         })
@@ -411,8 +411,8 @@ public class TasksModule : ICarterModule
         .WithSummary("Delete a comment within a task")
         .WithDescription("Allows users to delete their own comments, and Project Managers to delete any comment within their projects.")
         .Produces(StatusCodes.Status204NoContent)
-        .Produces(StatusCodes.Status404NotFound)
-        .Produces(StatusCodes.Status401Unauthorized);
+        .Produces<ErrorResponse>(StatusCodes.Status404NotFound)
+        .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized);
     }
     private static bool TryParsePriority(string? input, out Priority priority)
     {

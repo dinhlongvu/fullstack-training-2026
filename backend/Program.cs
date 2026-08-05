@@ -5,6 +5,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Reflection;
 using System.Text;
+using Backend.DTOs;
 using Backend.Infrastructure.Data;
 using Backend.Infrastructure.Interceptors;
 using Backend.Middleware;
@@ -109,10 +110,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 context.Response.StatusCode = StatusCodes.Status401Unauthorized;
                 context.Response.ContentType = "application/json";
 
-                await context.Response.WriteAsJsonAsync(new
+                // Return a structured JSON body for unauthenticated requests (missing/invalid/expired token).
+                await context.Response.WriteAsJsonAsync(new ErrorResponse
                 {
-                    error = "Unauthorized. Please provide a valid Bearer token.",
-                    traceId = context.HttpContext.GetTraceId()
+                    Error = "Unauthorized. Please provide a valid Bearer token.",
+                    TraceId = context.HttpContext.GetTraceId()
                 });
             },
 
@@ -122,10 +124,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 context.Response.StatusCode = StatusCodes.Status403Forbidden;
                 context.Response.ContentType = "application/json";
 
-                await context.Response.WriteAsJsonAsync(new
+                // Return a structured JSON body when the token is valid but the user lacks permission.
+                await context.Response.WriteAsJsonAsync(new ErrorResponse
                 {
-                    error = "Forbidden.",
-                    traceId = context.HttpContext.GetTraceId()
+                    Error = "Forbidden.",
+                    TraceId = context.HttpContext.GetTraceId()
                 });
             }
         };

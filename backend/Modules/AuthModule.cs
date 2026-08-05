@@ -31,7 +31,7 @@ public class AuthModule : ICarterModule
         .WithDescription("Creates a new user account and returns the created user details.")
         .Produces<UserDto>(StatusCodes.Status201Created)
         .Produces<ValidationErrorResponse>(StatusCodes.Status400BadRequest)
-        .Produces(StatusCodes.Status409Conflict);
+        .Produces<ErrorResponse>(StatusCodes.Status409Conflict);
 
         // POST /api/auth/login
         group.MapPost("/login", async (
@@ -46,7 +46,7 @@ public class AuthModule : ICarterModule
         .WithDescription("Authenticates a user and returns a JWT Bearer token along with user info.")
         .Produces<LoginResponseDto>(StatusCodes.Status200OK)
         .Produces<ValidationErrorResponse>(StatusCodes.Status400BadRequest)
-        .Produces(StatusCodes.Status401Unauthorized);
+        .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized);
 
         // GET /api/auth/me
         group.MapGet("/me", async (HttpContext context, IMediator mediator, CancellationToken ct) =>
@@ -61,7 +61,7 @@ public class AuthModule : ICarterModule
         .WithSummary("Get current user profile")
         .WithDescription("Retrieves the profile information of the currently authenticated user based on the JWT token.")
         .Produces<UserDto>(StatusCodes.Status200OK)
-        .Produces(StatusCodes.Status401Unauthorized);
+        .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized);
 
         // POST /api/auth/refresh
         group.MapPost("/refresh", async (IMediator mediator, RefreshTokenCommand command) =>
@@ -73,7 +73,7 @@ public class AuthModule : ICarterModule
         .WithSummary("Refresh access token")
         .WithDescription("Exchanges a valid, non-expired refresh token for a new set of JWT access and refresh tokens.")
         .Produces<RefreshTokenResponseDto>(StatusCodes.Status200OK)
-        .Produces(StatusCodes.Status401Unauthorized)
+        .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized)
         .Produces<ValidationErrorResponse>(StatusCodes.Status400BadRequest)
         .AllowAnonymous(); // refresh must be reachable without an access token
     }
