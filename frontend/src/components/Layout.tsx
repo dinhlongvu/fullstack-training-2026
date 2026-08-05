@@ -7,7 +7,6 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import { PageErrorBoundary } from "@/components/ErrorBoundary";
 import { cn } from "@/lib/utils";
 
-// NavLink sets aria-current="page" on the active route by itself.
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   cn(
     "block rounded-md px-3 py-2 hover:bg-accent",
@@ -40,11 +39,13 @@ export function Layout() {
       {/* Sidebar */}
       <aside className="w-64 border-r bg-muted/40 p-4">
         <h1 className="mb-6 text-lg font-bold">TaskBoard</h1>
+        {/* NavLink matches by URL prefix without `end`, so leaving it out
+            marks Projects as the current page while on /projects/5. */}
         <nav className="space-y-1">
-          <NavLink to="/projects" className={navLinkClass}>
+          <NavLink to="/projects" end className={navLinkClass}>
             Projects
           </NavLink>
-          <NavLink to="/dashboard" className={navLinkClass}>
+          <NavLink to="/dashboard" end className={navLinkClass}>
             Dashboard
           </NavLink>
         </nav>
