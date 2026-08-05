@@ -211,12 +211,9 @@ test.describe("API: POST /api/projects/{projectId}/tasks — Create Task", () =>
     expect(res.status()).toBe(401);
   });
 
-  test("TC-TASK-CREATE-004: Non-member cannot create task → 403", async ({
+  test("TC-TASK-CREATE-004: Non-member cannot create task → 404", async ({
     request,
   }) => {
-
-
-
     const project = await createProjectViaApi(request, owner.token, {
       name: "Non-Member Task Create",
     });
@@ -233,7 +230,7 @@ test.describe("API: POST /api/projects/{projectId}/tasks — Create Task", () =>
       },
     );
 
-    expect([403, 404]).toContain(res.status());
+    expect(res.status()).toBe(404);
   });
 
   test("TC-TASK-CREATE-005: Create task with missing title → 400", async ({

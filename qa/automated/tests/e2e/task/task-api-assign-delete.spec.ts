@@ -218,14 +218,14 @@ test.describe("API: Tasks Assign & Delete", () => {
       expect(res.status()).toBe(401);
     });
 
-    test("TC-TASK-ASSIGN-004: Non-member cannot assign task → 403/404", async ({
+    test("TC-TASK-ASSIGN-004: Non-member cannot assign task → 404", async ({
       request,
     }) => {
       const res = await request.patch(`${API_BASE}/api/tasks/${task.id}/assign`, {
         headers: { Authorization: `Bearer ${nonMember.token}` },
         data: { assigneeId: member.id },
       });
-      expect([403, 404]).toContain(res.status());
+      expect(res.status()).toBe(404);
     });
 
     test("TC-TASK-ASSIGN-005: Assign task to non-member user → 400", async ({
@@ -367,13 +367,13 @@ test.describe("API: Tasks Assign & Delete", () => {
       expect(res.status()).toBe(401);
     });
 
-    test("TC-TASK-DELETE-004: Non-member cannot delete task → 403/404", async ({
+    test("TC-TASK-DELETE-004: Non-member cannot delete task → 404", async ({
       request,
     }) => {
       const res = await request.delete(`${API_BASE}/api/tasks/${task.id}`, {
         headers: { Authorization: `Bearer ${nonMember.token}` },
       });
-      expect([403, 404]).toContain(res.status());
+      expect(res.status()).toBe(404);
     });
 
     test("TC-TASK-DELETE-005: Delete non-existent task → 404", async ({

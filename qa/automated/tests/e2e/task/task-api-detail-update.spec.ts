@@ -221,7 +221,7 @@ test.describe("API: GET /api/tasks/{id} — Task Detail", () => {
     expect(res.status()).toBe(401);
   });
 
-  test("TC-TASK-DETAIL-004: Non-member cannot get task detail → 403", async ({
+  test("TC-TASK-DETAIL-004: Non-member cannot get task detail → 404", async ({
     request,
   }) => {
     const project = await createProjectViaApi(request, owner.token, {
@@ -235,7 +235,7 @@ test.describe("API: GET /api/tasks/{id} — Task Detail", () => {
       headers: { Authorization: `Bearer ${nonMember.token}` },
     });
 
-    expect([403, 404]).toContain(res.status());
+    expect(res.status()).toBe(404);
   });
 
   test("TC-TASK-DETAIL-005: Get non-existent task → 404", async ({
@@ -437,7 +437,7 @@ test.describe("API: PUT /api/tasks/{id} — Update Task", () => {
       data: { title: "Unauthorized Update" },
     });
 
-    expect([403, 404]).toContain(res.status());
+    expect(res.status()).toBe(404);
   });
 
   test("TC-TASK-UPDATE-005: Update task with empty title → 400", async ({

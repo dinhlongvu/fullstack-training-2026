@@ -227,12 +227,9 @@ test.describe("API: GET /api/projects/{projectId}/tasks — List Tasks", () => {
     expect(res.status()).toBe(401);
   });
 
-  test("TC-TASK-LIST-004: Non-member cannot list tasks → 403", async ({
+  test("TC-TASK-LIST-004: Non-member cannot list tasks → 404", async ({
     request,
   }) => {
-
-
-
     const project = await createProjectViaApi(request, owner.token, {
       name: "Non-Member Task List",
     });
@@ -242,7 +239,7 @@ test.describe("API: GET /api/projects/{projectId}/tasks — List Tasks", () => {
       { headers: { Authorization: `Bearer ${nonMember.token}` } },
     );
 
-    expect([403, 404]).toContain(res.status());
+    expect(res.status()).toBe(404);
   });
 
   test("TC-TASK-LIST-005: List tasks for non-existent project → 404", async ({
