@@ -150,6 +150,7 @@ export function KanbanBoard({ projectId, members }: KanbanBoardProps) {
       <div className="flex flex-wrap items-center gap-3">
         {/* Priority filter */}
         <select
+          aria-label="Filter tasks by priority"
           value={priorityFilter ?? ""}
           onChange={(e) => setFilter("priority", e.target.value || null)}
           className="rounded-md border bg-background px-3 py-1.5 text-sm"
@@ -164,6 +165,7 @@ export function KanbanBoard({ projectId, members }: KanbanBoardProps) {
 
         {/* Assignee filter */}
         <select
+          aria-label="Filter tasks by assignee"
           value={assigneeFilter ?? ""}
           onChange={(e) => setFilter("assigneeId", e.target.value || null)}
           className="rounded-md border bg-background px-3 py-1.5 text-sm"
@@ -192,7 +194,7 @@ export function KanbanBoard({ projectId, members }: KanbanBoardProps) {
           className="ml-auto"
           onClick={() => setCreateDialogOpen(true)}
         >
-          <Plus className="mr-2 h-4 w-4" />
+          <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
           New Task
         </Button>
       </div>
@@ -242,7 +244,7 @@ export function KanbanBoard({ projectId, members }: KanbanBoardProps) {
             description="Create the first task to start filling the board."
             action={
               <Button onClick={() => setCreateDialogOpen(true)}>
-                <Plus className="mr-2 h-4 w-4" />
+                <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
                 New Task
               </Button>
             }
