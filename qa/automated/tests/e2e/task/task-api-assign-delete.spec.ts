@@ -175,14 +175,14 @@ test.describe("API: Tasks Assign & Delete", () => {
       });
     });
 
-    test.skip("TC-TASK-ASSIGN-001: Owner assigns task to a project member (happy path)", async ({
+    test("TC-TASK-ASSIGN-001: Owner assigns task to a project member (happy path)", async ({
       request,
     }) => {
       const res = await request.patch(`${API_BASE}/api/tasks/${task.id}/assign`, {
         headers: { Authorization: `Bearer ${owner.token}` },
         data: { assigneeId: member.id },
       });
-      expect(res.status()).toBe(204);
+      expect(res.status()).toBe(200);
 
       // Verify
       const detailRes = await request.get(`${API_BASE}/api/tasks/${task.id}`, {
@@ -192,14 +192,14 @@ test.describe("API: Tasks Assign & Delete", () => {
       expect(detail.assigneeName).toBe(member.fullName);
     });
 
-    test.skip("TC-TASK-ASSIGN-002: Member assigns task to another project member", async ({
+    test("TC-TASK-ASSIGN-002: Member assigns task to another project member", async ({
       request,
     }) => {
       const res = await request.patch(`${API_BASE}/api/tasks/${task.id}/assign`, {
         headers: { Authorization: `Bearer ${member.token}` },
         data: { assigneeId: member2.id },
       });
-      expect(res.status()).toBe(204);
+      expect(res.status()).toBe(200);
 
       // Verify
       const detailRes = await request.get(`${API_BASE}/api/tasks/${task.id}`, {
@@ -209,7 +209,7 @@ test.describe("API: Tasks Assign & Delete", () => {
       expect(detail.assigneeName).toBe(member2.fullName);
     });
 
-    test.skip("TC-TASK-ASSIGN-003: Assign task without Bearer token → 401", async ({
+    test("TC-TASK-ASSIGN-003: Assign task without Bearer token → 401", async ({
       request,
     }) => {
       const res = await request.patch(`${API_BASE}/api/tasks/${task.id}/assign`, {
@@ -218,7 +218,7 @@ test.describe("API: Tasks Assign & Delete", () => {
       expect(res.status()).toBe(401);
     });
 
-    test.skip("TC-TASK-ASSIGN-004: Non-member cannot assign task → 403/404", async ({
+    test("TC-TASK-ASSIGN-004: Non-member cannot assign task → 403/404", async ({
       request,
     }) => {
       const res = await request.patch(`${API_BASE}/api/tasks/${task.id}/assign`, {
@@ -228,7 +228,7 @@ test.describe("API: Tasks Assign & Delete", () => {
       expect([403, 404]).toContain(res.status());
     });
 
-    test.skip("TC-TASK-ASSIGN-005: Assign task to non-member user → 400", async ({
+    test("TC-TASK-ASSIGN-005: Assign task to non-member user → 400", async ({
       request,
     }) => {
       const res = await request.patch(`${API_BASE}/api/tasks/${task.id}/assign`, {
@@ -240,7 +240,7 @@ test.describe("API: Tasks Assign & Delete", () => {
       expect(body.error).toBeDefined();
     });
 
-    test.skip("TC-TASK-ASSIGN-006: Assign task to non-existent user → 400/404", async ({
+    test("TC-TASK-ASSIGN-006: Assign task to non-existent user → 400/404", async ({
       request,
     }) => {
       const res = await request.patch(`${API_BASE}/api/tasks/${task.id}/assign`, {
@@ -250,7 +250,7 @@ test.describe("API: Tasks Assign & Delete", () => {
       expect([400, 404]).toContain(res.status());
     });
 
-    test.skip("TC-TASK-ASSIGN-007: Unassign task by setting assigneeId to null", async ({
+    test("TC-TASK-ASSIGN-007: Unassign task by setting assigneeId to null", async ({
       request,
     }) => {
       // Setup: assign to member first
@@ -264,7 +264,7 @@ test.describe("API: Tasks Assign & Delete", () => {
         headers: { Authorization: `Bearer ${owner.token}` },
         data: { assigneeId: null },
       });
-      expect(res.status()).toBe(204);
+      expect(res.status()).toBe(200);
 
       // Verify
       const detailRes = await request.get(`${API_BASE}/api/tasks/${task.id}`, {
@@ -274,14 +274,14 @@ test.describe("API: Tasks Assign & Delete", () => {
       expect(detail.assigneeName).toBeNull();
     });
 
-    test.skip("TC-TASK-ASSIGN-008: Assign task to project owner (owner is valid assignee)", async ({
+    test("TC-TASK-ASSIGN-008: Assign task to project owner (owner is valid assignee)", async ({
       request,
     }) => {
       const res = await request.patch(`${API_BASE}/api/tasks/${task.id}/assign`, {
         headers: { Authorization: `Bearer ${owner.token}` },
         data: { assigneeId: owner.id },
       });
-      expect(res.status()).toBe(204);
+      expect(res.status()).toBe(200);
 
       const detailRes = await request.get(`${API_BASE}/api/tasks/${task.id}`, {
         headers: { Authorization: `Bearer ${owner.token}` },
@@ -290,7 +290,7 @@ test.describe("API: Tasks Assign & Delete", () => {
       expect(detail.assigneeName).toBe(owner.fullName);
     });
 
-    test.skip("TC-TASK-ASSIGN-009: Assign non-existent task → 404", async ({
+    test("TC-TASK-ASSIGN-009: Assign non-existent task → 404", async ({
       request,
     }) => {
       const res = await request.patch(`${API_BASE}/api/tasks/999999/assign`, {
@@ -300,7 +300,7 @@ test.describe("API: Tasks Assign & Delete", () => {
       expect(res.status()).toBe(404);
     });
 
-    test.skip("TC-TASK-ASSIGN-010: SQL injection in assigneeId body field → 400", async ({
+    test("TC-TASK-ASSIGN-010: SQL injection in assigneeId body field → 400", async ({
       request,
     }) => {
       const res = await request.patch(`${API_BASE}/api/tasks/${task.id}/assign`, {
