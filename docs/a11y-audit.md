@@ -5,7 +5,8 @@ Issue: #76 · Branch: `bao/task-f05-accessibility`
 **Scope**: Login, Register, Projects, Project Detail, Task Detail, Dashboard
 (+ the 404 page). Light theme only — the app ships no dark theme.
 **Tooling**: `@axe-core/react` 4.12 (dev console), manual keyboard pass in
-Chrome, spot check with NVDA on Windows.
+Chrome, and accessible names read off the Chrome DevTools Accessibility pane.
+No screen-reader pass was run — see limitation 7.
 
 ---
 
@@ -112,5 +113,11 @@ on the sidebar's `bg-muted/40` (4.58:1); all five status/priority badges
 5. **Filter results are not announced.** Changing a Kanban filter re-renders the
    board silently; there is no live region reporting the new task count.
 6. **No dark theme**, so contrast was only measured against the light palette.
+7. **Nothing here was verified with a real screen reader.** Accessible names were
+   read off the DevTools Accessibility pane, which computes the same name a
+   screen reader announces but says nothing about how the announcement actually
+   sounds in context. The assignee picker on `TaskCard` is why this matters: its
+   name was reasoned about, judged correct, and was not — an `aria-label` there
+   replaced the selected assignee instead of labelling it.
 
 Items 3 and 4 are the natural next accessibility ticket.
