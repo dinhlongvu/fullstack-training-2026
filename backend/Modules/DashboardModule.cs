@@ -53,6 +53,7 @@ public class DashboardModule : ICarterModule
         .WithSummary("Get a paginated list of tasks assigned to the current user")
         .WithDescription("Returns all tasks assigned to the authenticated user, across all projects. Supports filtering by urgency.")
         .Produces<PaginatedList<MyTaskDto>>(StatusCodes.Status200OK)
+        .Produces<ValidationErrorResponse>(StatusCodes.Status400BadRequest)
         .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized);
     }
 }

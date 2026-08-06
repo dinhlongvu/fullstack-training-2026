@@ -141,7 +141,7 @@ public class ProjectsModule : ICarterModule
 
             // Handle 404 — project or target user does not exist, or caller is not the owner.
             if (!result.IsProjectFound || !result.IsUserFound || !result.IsAuthorized)
-                return ErrorResults.NotFound(context, "Project not found");
+                return ErrorResults.NotFound(context, "Project or User not found");
 
             // Handle 409 — the target user is already a member of this project.
             if (result.IsAlreadyMember)
