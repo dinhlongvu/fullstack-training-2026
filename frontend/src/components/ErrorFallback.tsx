@@ -16,13 +16,13 @@ interface ErrorFallbackProps {
 export function ErrorFallback({ error, onReset }: ErrorFallbackProps) {
   return (
     <Alert variant="destructive" className="mx-auto my-8 max-w-xl">
-      <AlertTriangle className="h-4 w-4" />
+      <AlertTriangle className="h-4 w-4" aria-hidden="true" />
       <AlertTitle>Something went wrong</AlertTitle>
       <AlertDescription className="space-y-4">
         <p className="break-words">{error.message || "Unexpected error."}</p>
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" size="sm" onClick={onReset}>
-            <RefreshCw className="mr-2 h-4 w-4" />
+            <RefreshCw className="mr-2 h-4 w-4" aria-hidden="true" />
             Try again
           </Button>
           <Button variant="link" size="sm" asChild>

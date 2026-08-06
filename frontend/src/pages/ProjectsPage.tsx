@@ -32,7 +32,7 @@ export function ProjectsPage() {
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">My Projects</h2>
         <Button onClick={() => setDialogOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
+          <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
           Create Project
         </Button>
       </div>
@@ -66,7 +66,7 @@ export function ProjectsPage() {
           description="Create your first project to get started."
           action={
             <Button onClick={() => setDialogOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
+              <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
               Create Project
             </Button>
           }

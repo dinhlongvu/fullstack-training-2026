@@ -105,7 +105,7 @@ export function TaskDetailPage() {
           to="/projects"
           className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
         >
-          <ArrowLeft className="mr-1 h-4 w-4" />
+          <ArrowLeft className="mr-1 h-4 w-4" aria-hidden="true" />
           Back to projects
         </Link>
         <ErrorState
@@ -130,7 +130,7 @@ export function TaskDetailPage() {
         to={`/projects/${task.projectId}${boardSearch}`}
         className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
       >
-        <ArrowLeft className="mr-1 h-4 w-4" />
+        <ArrowLeft className="mr-1 h-4 w-4" aria-hidden="true" />
         Back to project
       </Link>
 
@@ -156,7 +156,7 @@ export function TaskDetailPage() {
               }
               onClick={() => setEditOpen(true)}
             >
-              <Pencil className="mr-2 h-4 w-4" />
+              <Pencil className="mr-2 h-4 w-4" aria-hidden="true" />
               Edit
             </Button>
           )}
@@ -168,17 +168,17 @@ export function TaskDetailPage() {
 
         <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
           <span className="flex items-center gap-1">
-            <User className="h-4 w-4" />
+            <User className="h-4 w-4" aria-hidden="true" />
             {task.assigneeName ?? "Unassigned"}
           </span>
           {task.dueDate && (
             <span className="flex items-center gap-1">
-              <Calendar className="h-4 w-4" />
+              <Calendar className="h-4 w-4" aria-hidden="true" />
               Due {formatDate(task.dueDate)}
             </span>
           )}
           <span className="flex items-center gap-1">
-            <Calendar className="h-4 w-4" />
+            <Calendar className="h-4 w-4" aria-hidden="true" />
             Created {formatDate(task.createdAt)}
           </span>
         </div>
