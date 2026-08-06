@@ -2,8 +2,8 @@ import { test, expect, type APIRequestContext, request as playwrightRequest } fr
 import { API_BASE, uniqueEmail, registerAndLogin, createProjectViaApi, createTaskViaApi, addMemberViaApi, type RegisteredUser, type TaskDto } from "../utils/api-helpers";
 
 // Priority and Status enum values (local to task tests)
-const PRIORITY = { Low: 0, Medium: 1, High: 2 } as const;
-const TASK_STATUS = { Todo: 0, InProgress: 1, Done: 2 } as const;
+const PRIORITY = { Low: "Low", Medium: "Medium", High: "High" } as const;
+const TASK_STATUS = { Todo: "Todo", InProgress: "InProgress", Done: "Done" } as const;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TEST SUITE: GET /api/projects/{projectId}/tasks — List Tasks
