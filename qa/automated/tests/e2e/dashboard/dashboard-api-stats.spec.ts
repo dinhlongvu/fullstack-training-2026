@@ -188,7 +188,8 @@ test.describe("Dashboard Stats API — TC-DASHBOARD-API", () => {
     // Create 25 tasks sequentially to prevent SQLite connection pool locks
     for (let i = 0; i < 25; i++) {
       const daysOffset = (i % 2) + 1; // 1 or 2 days from now (within 3 day window)
-      const priority = i % 3; // 0=Low, 1=Medium, 2=High
+      const priorities = ["Low", "Medium", "High"];
+      const priority = priorities[i % 3]; // Loop through string priorities
       await createTaskViaApi(request, user.token, project.id, {
         title: `Upcoming-${i.toString().padStart(2, "0")}`,
         dueDate: futureDateISO(daysOffset),
@@ -259,7 +260,7 @@ test.describe("Dashboard Stats API — TC-DASHBOARD-API", () => {
     const res = await request.get(MY_STATS_URL);
 
     // Assert
-    expect(res.status()).toBe();
+    expect(res.status()).toBe(401);
     const body = await res.json();
     expect(body).toHaveProperty('error');
     expect(body).toHaveProperty('traceId');
@@ -473,7 +474,7 @@ test.describe("Dashboard Stats API — TC-DASHBOARD-API", () => {
       headers: { Authorization: "Bearer totally-invalid-jwt-token-12345" },
     });
 
-    expect(res.status()).toBe();
+    expect(res.status()).toBe(401);
     const body = await res.json();
     expect(body).toHaveProperty('error');
     expect(body).toHaveProperty('traceId');

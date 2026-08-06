@@ -142,7 +142,7 @@ export async function createProjectViaDialog(
   name: string,
   description: string = "",
 ) {
-  await page.getByRole("button", { name: /Create Project/i }).click();
+  await page.getByRole("button", { name: /Create Project/i }).first().click();
   await expect(page.getByRole("dialog")).toBeVisible();
   
   await page.getByLabel(/^Name$/i).fill(name);

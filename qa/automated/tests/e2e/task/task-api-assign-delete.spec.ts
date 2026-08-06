@@ -111,7 +111,7 @@ test.describe("API: Tasks Assign & Delete", () => {
       });
       expect(res.status()).toBe(400);
       const body = await res.json();
-      expect(body.error).toBeDefined();
+      expect(body.errors).toBeDefined();
     });
 
     test("TC-TASK-ASSIGN-006: Assign task to non-existent user → 400/404", async ({

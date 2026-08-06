@@ -151,9 +151,9 @@ test.describe("Dashboard UI — TC-DASHBOARD-UI", () => {
     // Act
     await page.goto(DASHBOARD_URL);
 
-    // Assert: empty state message
+    await expect(page.getByText("No tasks yet", { exact: true })).toBeVisible();
     await expect(
-      page.getByText("No tasks yet — create your first project!"),
+      page.getByText("Tasks assigned to you across all projects will show up here."),
     ).toBeVisible();
 
     // Assert: stats cards should NOT be rendered
@@ -180,9 +180,9 @@ test.describe("Dashboard UI — TC-DASHBOARD-UI", () => {
     // Act
     await page.goto(DASHBOARD_URL);
 
-    // Assert: error message is shown with the destructive style
+    // Assert: error state should be visible instead of crashing
     await expect(
-      page.getByText(/Failed to load dashboard/),
+      page.getByText(/Couldn't load your dashboard/i),
     ).toBeVisible();
 
     // Assert: page did NOT crash — heading should still be visible
@@ -362,7 +362,7 @@ test.describe("Dashboard UI — TC-DASHBOARD-UI", () => {
     await page.goto(DASHBOARD_URL);
 
     // The page should show the error state, not crash
-    await expect(page.getByText(/Failed to load dashboard/)).toBeVisible();
+    await expect(page.getByText(/Couldn't load your dashboard/i)).toBeVisible();
     await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
   });
 });
