@@ -208,10 +208,4 @@ export async function assignTaskViaApi(
   try { body = await res.json(); } catch (e) { }
   return { status: res.status(), body };
 }
-export async function registerUser(request: import('@playwright/test').APIRequestContext, email: string, fullName: string, password: string) {
-  const { expect } = require('@playwright/test');
-  const res = await request.post(`${API_BASE}/api/auth/register`, {
-    data: { email, fullName, password },
-  });
-  expect(res.status(), `Register failed for ${email}`).toBe(201);
-}
+

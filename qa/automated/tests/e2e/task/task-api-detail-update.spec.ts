@@ -1,19 +1,11 @@
 import { test, expect, type APIRequestContext, request as playwrightRequest } from "@playwright/test";
+import { API_BASE, registerAndLogin, createProjectViaApi, createTaskViaApi, addMemberViaApi, type RegisteredUser } from "../utils/api-helpers";
 
-// ─── Constants ───────────────────────────────────────────────────────────────
+// Priority and Status enum values (local to task tests)
+const PRIORITY = { Low: 0, Medium: 1, High: 2 } as const;
+const TASK_STATUS = { Todo: 0, InProgress: 1, Done: 2 } as const;
 
-const API_BASE = "http://localhost:5000";
-
-// ─── Types ───────────────────────────────────────────────────────────────────
-
-interface RegisteredUser {
-  id: number;
-  email: string;
-  fullName: string;
-  password: string;
-  token: string;
-}
-
+// ─── Types (local — matches API response shape with string enums) ────────────
 interface TaskDto {
   id: number;
   title: string;
@@ -24,108 +16,6 @@ interface TaskDto {
   assigneeName: string | null;
   commentCount: number;
   createdAt: string;
-}
-
-// ─── Helper Functions ────────────────────────────────────────────────────────
-
-function uniqueEmail(): string {
-  return `taskdetail_${Date.now()}_${Math.floor(Math.random() * 100000)}@example.com`;
-}
-
-async function registerAndLogin(
-  request: APIRequestContext,
-  overrides?: { email?: string; fullName?: string; password?: string },
-): Promise<RegisteredUser> {
-  const email = overrides?.email ?? uniqueEmail();
-  const fullName = overrides?.fullName ?? "Task Detail Test User";
-  const password = overrides?.password ?? "Test@1234";
-
-  const registerRes = await request.post(`${API_BASE}/api/auth/register`, {
-    data: { email, fullName, password },
-  });
-  expect(registerRes.status(), `Register failed for ${email}`).toBe(201);
-  const registerBody = await registerRes.json();
-
-  const loginRes = await request.post(`${API_BASE}/api/auth/login`, {
-    data: { email, password },
-  });
-  expect(loginRes.status(), `Login failed for ${email}`).toBe(200);
-  const loginBody = await loginRes.json();
-
-  return {
-    id: registerBody.id ?? loginBody.user?.id,
-    email,
-    fullName,
-    password,
-    token: loginBody.token,
-  };
-}
-
-async function createProjectViaApi(
-  request: APIRequestContext,
-  token: string,
-  data: { name: string; description?: string },
-): Promise<{ id: number; name: string }> {
-  const res = await request.post(`${API_BASE}/api/projects`, {
-    headers: { Authorization: `Bearer ${token}` },
-    data: { name: data.name, description: data.description ?? "" },
-  });
-  expect(res.status(), "Create project should return 201").toBe(201);
-  return res.json();
-}
-
-async function createTaskViaApi(
-  request: APIRequestContext,
-  token: string,
-  projectId: number,
-  data: {
-    title: string;
-    description?: string;
-    priority?: string | number;
-    dueDate?: string | null;
-    assigneeId?: number | null;
-  },
-): Promise<TaskDto> {
-  const priorityNum =
-    typeof data.priority === "number"
-      ? data.priority
-      : data.priority === "High"
-        ? 2
-        : data.priority === "Medium"
-          ? 1
-          : 0;
-
-  const res = await request.post(
-    `${API_BASE}/api/projects/${projectId}/tasks`,
-    {
-      headers: { Authorization: `Bearer ${token}` },
-      data: {
-        title: data.title,
-        description: data.description ?? "",
-        priority: priorityNum,
-        ...(data.dueDate !== undefined ? { dueDate: data.dueDate } : {}),
-        ...(data.assigneeId !== undefined ? { assigneeId: data.assigneeId } : {}),
-      },
-    },
-  );
-  expect(res.status(), `Create task failed: ${data.title}`).toBe(201);
-  return res.json();
-}
-
-async function addMemberViaApi(
-  request: APIRequestContext,
-  ownerToken: string,
-  projectId: number,
-  memberEmail: string,
-): Promise<void> {
-  const res = await request.post(
-    `${API_BASE}/api/projects/${projectId}/members`,
-    {
-      headers: { Authorization: `Bearer ${ownerToken}` },
-      data: { email: memberEmail },
-    },
-  );
-  expect(res.status(), `Add member failed: ${memberEmail}`).toBe(201);
 }
 
 // ─── Shared Test State ────────────────────────────────────────────────────────
@@ -165,7 +55,7 @@ test.describe("API: GET /api/tasks/{id} — Task Detail", () => {
     const task = await createTaskViaApi(request, owner.token, project.id, {
       title: "Detail Test Task",
       description: "Detailed description",
-      priority: "High",
+      priority: PRIORITY.High,
     });
 
     const res = await request.get(`${API_BASE}/api/tasks/${task.id}`, {
@@ -368,7 +258,7 @@ test.describe("API: PUT /api/tasks/{id} — Update Task", () => {
     });
     const task = await createTaskViaApi(request, owner.token, project.id, {
       title: "Original Title",
-      priority: "Low",
+      priority: PRIORITY.Low,
     });
 
     const res = await request.put(`${API_BASE}/api/tasks/${task.id}`, {

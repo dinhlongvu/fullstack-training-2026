@@ -1,6 +1,6 @@
 import { test, expect, type APIRequestContext } from "@playwright/test";
 
-import { API_BASE, uniqueEmail, registerAndLogin, createProjectViaApi, createTaskViaApi, addMemberViaApi, getProjectDetailViaApi, getProjectsViaApi, futureDateISO, type RegisteredUser, type ProjectDto, type TaskDto } from "../utils/api-helpers";
+import { API_BASE, uniqueEmail } from "../utils/api-helpers";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 

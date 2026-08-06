@@ -26,7 +26,7 @@ export default defineConfig({
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
     /* slowMo only for local debugging — skip on CI to keep tests fast */
-    ...(process.env.CI ? {} : { launchOptions: { slowMo: 1000 } }),
+    ...(process.env.CI ? {} : { launchOptions: { slowMo: 200 } }),
   },
 
   /* Configure projects for major browsers */

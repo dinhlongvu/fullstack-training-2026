@@ -154,7 +154,6 @@ export async function createProjectViaDialog(
 }
 export async function createProjectViaUIContext(page: import('@playwright/test').Page, name: string, description: string = "") {
   const token = await getPersistedToken(page);
-  const { expect } = require('@playwright/test');
   const res = await page.request.post(`http://localhost:5000/api/projects`, {
     headers: { Authorization: `Bearer ${token}` },
     data: { name, description },

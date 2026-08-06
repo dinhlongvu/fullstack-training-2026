@@ -1,6 +1,14 @@
 import { test, expect, type APIRequestContext } from "@playwright/test";
 
-import { API_BASE, uniqueEmail, registerAndLogin, registerUser, createProjectViaApi, createTaskViaApi, addMemberViaApi, getProjectDetailViaApi, getProjectsViaApi, futureDateISO, type RegisteredUser, type ProjectDto, type TaskDto } from "../utils/api-helpers";
+import { API_BASE, uniqueEmail } from "../utils/api-helpers";
+
+// Local helper — registers a user without login (only used in this file)
+async function registerUser(request: APIRequestContext, email: string, fullName: string, password: string) {
+  const res = await request.post(`${API_BASE}/api/auth/register`, {
+    data: { email, fullName, password },
+  });
+  expect(res.status(), `Register failed for ${email}`).toBe(201);
+}
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
