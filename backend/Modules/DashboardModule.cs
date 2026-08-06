@@ -5,9 +5,6 @@ using Backend.Queries.Dashboard;
 using Backend.Services.Auth;
 using Carter;
 using MediatR;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Routing;
 
 namespace Backend.Modules;
 
@@ -19,14 +16,14 @@ public class DashboardModule : ICarterModule
             .WithTags("Dashboard")
             .RequireAuthorization();
 
-        //======== 1. GET /api/dashboard/my-stats ========
+        // ======== 1. GET /api/dashboard/my-stats ========
         group.MapGet("/my-stats", async (
             HttpContext context,
             IMediator mediator,
             CancellationToken ct) =>
         {
-            var CurrentUserId = context.User.GetUserId();
-            var result = await mediator.Send(new GetMyStatsQuery(CurrentUserId), ct);
+            var currentUserId = context.User.GetUserId();
+            var result = await mediator.Send(new GetMyStatsQuery(currentUserId), ct);
 
             return Results.Ok(result);
         })
@@ -34,7 +31,7 @@ public class DashboardModule : ICarterModule
         .WithSummary("Get current user task statistics")
         .WithDescription("Returns task count by status, total assigned tasks, and upcoming deadlines (due within 3 days).")
         .Produces<DashboardStatsDto>(StatusCodes.Status200OK)
-        .Produces(StatusCodes.Status401Unauthorized);
+        .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized);
 
         // ======== 2. GET /api/dashboard/my-tasks ========  
         group.MapGet("/my-tasks", async (
@@ -45,8 +42,8 @@ public class DashboardModule : ICarterModule
             bool isUrgentOnly = false,
             CancellationToken ct = default) =>
         {
-            var CurrentUserId = context.User.GetUserId();
-            var query = new GetMyTasksQuery(CurrentUserId, page, pageSize, isUrgentOnly);
+            var currentUserId = context.User.GetUserId();
+            var query = new GetMyTasksQuery(currentUserId, page, pageSize, isUrgentOnly);
 
             var result = await mediator.Send(query, ct);
 
@@ -56,6 +53,7 @@ public class DashboardModule : ICarterModule
         .WithSummary("Get a paginated list of tasks assigned to the current user")
         .WithDescription("Returns all tasks assigned to the authenticated user, across all projects. Supports filtering by urgency.")
         .Produces<PaginatedList<MyTaskDto>>(StatusCodes.Status200OK)
-        .Produces(StatusCodes.Status401Unauthorized);
+        .Produces<ValidationErrorResponse>(StatusCodes.Status400BadRequest)
+        .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized);
     }
 }

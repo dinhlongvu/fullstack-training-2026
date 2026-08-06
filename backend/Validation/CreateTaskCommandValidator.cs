@@ -18,9 +18,6 @@ public class CreateTaskCommandValidator : AbstractValidator<CreateTaskCommand>
         RuleFor(x => x.Description)
             .MaximumLength(2000).WithMessage("Description is too long.");
 
-        RuleFor(x => x.Priority)
-            .IsInEnum().WithMessage("Priority must be Low, Medium, or High.");
-
         RuleFor(x => x.DueDate)
             .Must(d => d!.Value.Date >= DateTime.UtcNow.Date)
             .When(x => x.DueDate.HasValue)

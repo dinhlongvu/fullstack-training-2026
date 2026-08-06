@@ -2,10 +2,10 @@
 // Catches ALL unhandled exceptions and returns consistent JSON error responses.
 // Prevents leaking stack traces to the client in production.
 
-using System.Diagnostics;
 using System.Net;
 using System.Text.Json;
-using Backend.Exceptions; // Custom exceptions can be defined here for more specific error handling.
+using Backend.DTOs;
+using Backend.Exceptions;
 using FluentValidation;
 
 namespace Backend.Middleware;
@@ -32,42 +32,68 @@ public class ExceptionHandlingMiddleware
         {
             await _next(context);
 
-            // Getting 404 error from ASP.NET Core when calling Endpoint/URL does not exist (Route not found)
-            if (context.Response.StatusCode == StatusCodes.Status404NotFound && !context.Response.HasStarted)
+            // Framework can emit 404 (no route match), 405 (wrong method), or 415 (wrong Content-Type)
+            // without throwing an exception, so these statuses bypass the catch blocks below.
+            // Backfill the error envelope for any error response that has not yet written a body.
+            if (context.Response.StatusCode >= 400 && !context.Response.HasStarted)
             {
-                var traceId = Activity.Current?.Id ?? context.TraceIdentifier;
+                var traceId = context.GetTraceId();
                 context.Response.ContentType = "application/json";
-                var response = new
+
+                var message = context.Response.StatusCode switch
                 {
-                    error = "Resource not found",
-                    traceId
+                    StatusCodes.Status404NotFound => "Resource not found.",
+                    StatusCodes.Status405MethodNotAllowed => "HTTP method not allowed for this route.",
+                    StatusCodes.Status415UnsupportedMediaType => "Content-Type must be application/json.",
+                    _ => "The request could not be processed."
                 };
-                await context.Response.WriteAsync(JsonSerializer.Serialize(response, _jsonOptions));
+
+                var fallbackResponse = new ErrorResponse { Error = message, TraceId = traceId };
+                await context.Response.WriteAsync(JsonSerializer.Serialize(fallbackResponse, _jsonOptions));
             }
         }
-        catch (Exception ex)
+        catch (BadHttpRequestException ex)
         {
-            _logger.LogError(ex, "Unhandled exception for {Method} {Path}", context.Request.Method, context.Request.Path);
+            // Client-side error: malformed JSON body, wrong data type, missing required body.
+            // Log as Warning (not Error) because this is the client's fault, not the server's.
+            _logger.LogWarning(ex, "Malformed request for {Method} {Path}",
+                context.Request.Method, context.Request.Path);
 
             if (context.Response.HasStarted)
             {
-                // Log warnings and disconnect safely
-                _logger.LogWarning("Response has already started. Skipping global error formatting");
                 context.Abort();
                 return;
             }
+
+            await HandleExceptionAsync(context, ex);
+        }
+        catch (Exception ex)
+        {
+            // Unexpected server-side error — log as Error for investigation.
+            _logger.LogError(ex, "Unhandled exception for {Method} {Path}",
+                context.Request.Method, context.Request.Path);
+
+            if (context.Response.HasStarted)
+            {
+                _logger.LogWarning("Response has already started. Skipping global error formatting.");
+                context.Abort();
+                return;
+            }
+
             await HandleExceptionAsync(context, ex);
         }
     }
 
     private static async Task HandleExceptionAsync(HttpContext context, Exception exception)
     {
-        // 1. Determine HTTP Status Code
+        // Map each exception type to the appropriate HTTP status code.
         var statusCode = exception switch
         {
             ValidationException => HttpStatusCode.BadRequest,
+            // Use the status code embedded in the exception (usually 400).
+            BadHttpRequestException bad => (HttpStatusCode)bad.StatusCode,
             ConflictException => HttpStatusCode.Conflict,
-            UnauthorizedException => HttpStatusCode.Unauthorized, // Map login errors to 401
+            UnauthorizedException => HttpStatusCode.Unauthorized,
             UnauthorizedAccessException => HttpStatusCode.Unauthorized,
             KeyNotFoundException => HttpStatusCode.NotFound,
             _ => HttpStatusCode.InternalServerError
@@ -76,25 +102,37 @@ public class ExceptionHandlingMiddleware
         context.Response.ContentType = "application/json";
         context.Response.StatusCode = (int)statusCode;
 
-        // Get traceId from the system
-        var traceId = Activity.Current?.Id ?? context.TraceIdentifier;
+        var traceId = context.GetTraceId();
 
-        // 2. Format Body returns (Validation returns array 'errors', otherwise returns 'error')
+        // Build the response body.
+        // Convention: 400 → { "errors": [...], "traceId": "..." }
+        //             all other errors → { "error": "...", "traceId": "..." }
         object response = exception switch
         {
-            ValidationException ve => new
+            // 400 - validation failures return an array of message
+            ValidationException ve => new ValidationErrorResponse
             {
-                errors = ve.Errors.Select(e => e.ErrorMessage),
-                traceId
+                Errors = ve.Errors.Select(e => e.ErrorMessage),
+                TraceId = traceId
             },
-            ConflictException ce => new { error = ce.Message, traceId },
-            UnauthorizedException ue => new { error = ue.Message, traceId }, // Returns the error message from the LoginCommand handler
-            UnauthorizedAccessException => new { error = "Unauthorized.", traceId },
-            KeyNotFoundException ke => new { error = ke.Message, traceId },
 
-            // Error 500 (Unexpected errors)
-            _ => new { error = "Internal server error", traceId }
+            // 400 - malformed body: return a safe generic message, never echo internal .NER paths
+            BadHttpRequestException bad when bad.StatusCode == StatusCodes.Status400BadRequest => new ValidationErrorResponse()
+            {
+                Errors = new[] { "The request body or a query parameter is malformed or has an invalid value." },
+                TraceId = traceId
+            },
+
+            // Other BadHttpRequestException status codes (e.g 411, 413)
+            BadHttpRequestException => new ErrorResponse { Error = "The request could not be processed.", TraceId = traceId },
+
+            ConflictException ce => new ErrorResponse { Error = ce.Message, TraceId = traceId },
+            UnauthorizedException ue => new ErrorResponse { Error = ue.Message, TraceId = traceId },
+            UnauthorizedAccessException => new ErrorResponse { Error = "Unauthorized.", TraceId = traceId },
+            KeyNotFoundException ke => new ErrorResponse { Error = ke.Message, TraceId = traceId },
+            _ => new ErrorResponse { Error = "Internal server error.", TraceId = traceId }
         };
+
         await context.Response.WriteAsync(JsonSerializer.Serialize(response, _jsonOptions));
     }
 }

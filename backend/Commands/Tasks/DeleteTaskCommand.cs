@@ -9,6 +9,6 @@ public record DeleteTaskCommand(
 ) : IRequest<DeleteTaskResult>;
 
 public record DeleteTaskResult(
-    bool IsFound,
+    bool IsTaskFound,
     bool IsAuthorized
 );

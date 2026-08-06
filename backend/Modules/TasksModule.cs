@@ -6,12 +6,11 @@
 using Backend.Commands.Tasks;
 using Backend.Domain;
 using Backend.DTOs;
+using Backend.Middleware;
 using Backend.Queries.Tasks;
 using Backend.Services.Auth;
 using Carter;
 using MediatR;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 // Alias to avoid collision with System.Threading.Tasks.Task
@@ -24,13 +23,14 @@ public class TasksModule : ICarterModule
     public void AddRoutes(IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/projects/{projectId:int}/tasks")
+            .WithTags("Tasks")
             .RequireAuthorization();
 
         // ======== 1. GET /api/projects/{projectId}/tasks ========
         // Returns all tasks in a project, with optional filters
         group.MapGet("/", async (
             int projectId,
-            [FromQuery] DomainTaskStatus? status,   // ?status=Todo|InProgress|Done
+            [FromQuery] string? status,   // ?status=Todo|InProgress|Done
             [FromQuery] string? priority,         // ?priority=Low|Medium|High
             [FromQuery] int? assigneeId,            // ?assigneeId=id
             HttpContext context,
@@ -39,40 +39,53 @@ public class TasksModule : ICarterModule
         {
             var currentUserId = context.User.GetUserId();
 
-            Priority? parsedPriority = null;
-
-            if (!string.IsNullOrWhiteSpace(priority))
+            DomainTaskStatus? parsedStatus = null;
+            if (status != null)
             {
-                // Block transmission of multiple values ​​(contains commas)
-                if (priority.Contains(','))
-                    return Results.BadRequest(new { error = "Priority must be a single value" });
-
-                // Block garbage or numeric values
-                if (int.TryParse(priority, out _)
-                    || !Enum.TryParse<Priority>(priority, ignoreCase: true, out var p)
-                    || !Enum.IsDefined(p))
+                if (!TryParseStatus(status, out var s))
                 {
-                    return Results.BadRequest(new { error = "Priority must be 'Low', 'Medium', or 'High'." });
+                    return Results.BadRequest(new ValidationErrorResponse
+                    {
+                        Errors = new[] { "Status must be 'Todo', 'InProgress', or 'Done'." },
+                        TraceId = context.GetTraceId()
+                    });
+                }
+                parsedStatus = s;
+            }
+
+            Priority? parsedPriority = null;
+            if (priority != null)
+            {
+                // Block garbage or numeric values
+                if (!TryParsePriority(priority, out var p))
+                {
+                    return Results.BadRequest(new ValidationErrorResponse
+                    {
+                        Errors = new[] { "Priority must be 'Low', 'Medium', or 'High'." },
+                        TraceId = context.GetTraceId()
+                    });
                 }
                 parsedPriority = p;
             }
 
+
             var result = await mediator.Send(
-                new GetTasksQuery(projectId, currentUserId, status, parsedPriority, assigneeId), ct);
+                new GetTasksQuery(projectId, currentUserId, parsedStatus, parsedPriority, assigneeId), ct);
 
             if (!result.IsProjectFound || !result.IsAuthorized)
             {
-                return Results.NotFound(new { error = "Project not found" });
+                return ErrorResults.NotFound(context, "Project not found");
             }
 
             return Results.Ok(result.Data);
         })
         .WithName("GetProjectTasks")
         .WithSummary("Get tasks in a project")
-        .WithDescription("Returns a list of tasks for a project. Supports filtering by status, priority, and assigneeId. Must be project owner or member.")
+        .WithDescription("Get the list of project tasks. Optional filter: status (Todo | InProgress | Done), priority (Low | Medium | High), assigneeId.")
         .Produces<List<TaskDto>>(StatusCodes.Status200OK)
-        .Produces(StatusCodes.Status404NotFound)
-        .Produces(StatusCodes.Status401Unauthorized);
+        .Produces<ValidationErrorResponse>(StatusCodes.Status400BadRequest)
+        .Produces<ErrorResponse>(StatusCodes.Status404NotFound)
+        .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized);
 
         // ======== 2. POST /api/projects/{projectId}/tasks ========
         group.MapPost("/", async (
@@ -83,11 +96,25 @@ public class TasksModule : ICarterModule
         {
             var currentUserId = context.User.GetUserId();
 
+            Priority parsedPriority = Priority.Medium;
+            if (req.Priority != null)
+            {
+                if (!TryParsePriority(req.Priority, out var p))
+                {
+                    return Results.BadRequest(new ValidationErrorResponse
+                    {
+                        Errors = new[] { "Priority must be 'Low', 'Medium', or 'High'." },
+                        TraceId = context.GetTraceId()
+                    });
+                }
+                parsedPriority = p;
+            }
+
             var command = new CreateTaskCommand(
                 projectId,
                 req.Title,
                 req.Description,
-                req.Priority,
+                parsedPriority,
                 req.DueDate,
                 currentUserId,
                 req.AssigneeId
@@ -96,10 +123,14 @@ public class TasksModule : ICarterModule
             var result = await mediator.Send(command);
 
             if (!result.IsProjectFound || !result.IsAuthorized)
-                return Results.NotFound(new { error = "Project not found" });
+                return ErrorResults.NotFound(context, "Project not found");
 
             if (!result.IsAssigneeValid)
-                return Results.BadRequest(new { error = "Assignee must be a project member" });
+                return Results.BadRequest(new ValidationErrorResponse
+                {
+                    Errors = new[] { "Assignee must be a project member." },
+                    TraceId = context.GetTraceId()
+                });
 
             // Points the new task to GET Task Detail endpoint
             return Results.Created($"/api/tasks/{result.Data?.Id}", result.Data);
@@ -108,10 +139,9 @@ public class TasksModule : ICarterModule
         .WithSummary("Create a new task")
         .WithDescription("Creates a new task in the specified project. Requires project member access.")
         .Produces<TaskDto>(StatusCodes.Status201Created)
-        .ProducesValidationProblem()
-        .Produces(StatusCodes.Status400BadRequest)
-        .Produces(StatusCodes.Status404NotFound)
-        .Produces(StatusCodes.Status401Unauthorized);
+        .Produces<ValidationErrorResponse>(StatusCodes.Status400BadRequest)
+        .Produces<ErrorResponse>(StatusCodes.Status404NotFound)
+        .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized);
 
         // ======== 3. GET /api/tasks/{taskId} ========
         // Define a separate group for tasks to avoid the project/{projectId} prefix
@@ -123,17 +153,16 @@ public class TasksModule : ICarterModule
             int taskId,
             HttpContext context,
             IMediator mediator,
-            CancellationToken ct
-        ) =>
+            CancellationToken ct) =>
         {
             var currentUserId = context.User.GetUserId();
 
             var result = await mediator.Send(
                 new GetTaskDetailQuery(taskId, currentUserId), ct);
 
-            if (!result.IsFound || !result.IsAuthorized)
+            if (!result.IsTaskFound || !result.IsAuthorized)
             {
-                return Results.NotFound(new { error = "Task not found" });
+                return ErrorResults.NotFound(context, "Task not found");
             }
 
             return Results.Ok(result.Data);
@@ -142,8 +171,8 @@ public class TasksModule : ICarterModule
         .WithSummary("Get task detail")
         .WithDescription("Returns detailed information about a specific task. Requires project member access.")
         .Produces<TaskDto>(StatusCodes.Status200OK)
-        .Produces(StatusCodes.Status404NotFound)
-        .Produces(StatusCodes.Status401Unauthorized);
+        .Produces<ErrorResponse>(StatusCodes.Status404NotFound)
+        .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized);
 
         // ======== 4. PUT /api/tasks/{taskId} ========
         // Updates task fields only. Status excluded — use PATCH /status.
@@ -160,11 +189,13 @@ public class TasksModule : ICarterModule
             if (req.Priority is not null)
             {
                 // Block numeric input with int.TryParse
-                if (int.TryParse(req.Priority, out _)
-                    || !Enum.TryParse<Priority>(req.Priority, ignoreCase: true, out var p)
-                    || !Enum.IsDefined(p))
+                if (!TryParsePriority(req.Priority, out var p))
                 {
-                    return Results.BadRequest(new { error = "Priority must be 'Low', 'Medium', or 'High'." });
+                    return Results.BadRequest(new ValidationErrorResponse
+                    {
+                        Errors = new[] { "Priority must be 'Low', 'Medium', or 'High'." },
+                        TraceId = context.GetTraceId()
+                    });
                 }
                 parsedPriority = p;
             }
@@ -183,11 +214,15 @@ public class TasksModule : ICarterModule
 
             var result = await mediator.Send(command, ct);
 
-            if (!result.IsFound || !result.IsAuthorized)
-                return Results.NotFound(new { error = "Task not found" });
+            if (!result.IsTaskFound || !result.IsAuthorized)
+                return ErrorResults.NotFound(context, "Task not found");
 
             if (!result.IsAssigneeValid)
-                return Results.BadRequest(new { error = "Assignee must be a project member" });
+                return Results.BadRequest(new ValidationErrorResponse
+                {
+                    Errors = new[] { "Assignee must be a project member." },
+                    TraceId = context.GetTraceId()
+                });
 
             return Results.Ok(result.Data);
         })
@@ -195,9 +230,9 @@ public class TasksModule : ICarterModule
         .WithSummary("Update a task")
         .WithDescription("Updates task fields (title, description, priority, dueDate, assigneeId). Status is managed via PATCH /status. Requires project member access.")
         .Produces<TaskDto>(StatusCodes.Status200OK)
-        .Produces(StatusCodes.Status400BadRequest)
-        .Produces(StatusCodes.Status404NotFound)
-        .Produces(StatusCodes.Status401Unauthorized);
+        .Produces<ValidationErrorResponse>(StatusCodes.Status400BadRequest)
+        .Produces<ErrorResponse>(StatusCodes.Status404NotFound)
+        .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized);
 
         // ======== 5. PATCH /api/tasks/{taskId}/status ========
         taskRootGroup.MapPatch("/{taskId:int}/status", async (
@@ -209,22 +244,30 @@ public class TasksModule : ICarterModule
         {
             var currentUserId = context.User.GetUserId();
 
-            if (req.Status == null)
-                return Results.BadRequest(new { error = "Status is required." });
-
-            if (int.TryParse(req.Status, out _)
-                || !Enum.TryParse<DomainTaskStatus>(req.Status, ignoreCase: true, out var parsedStatus)
-                || !Enum.IsDefined(parsedStatus))
+            if (string.IsNullOrWhiteSpace(req.Status))
             {
-                return Results.BadRequest(new { error = "Status must be 'Todo', 'InProgress', or 'Done'." });
+                return Results.BadRequest(new ValidationErrorResponse
+                {
+                    Errors = new[] { "Status is required." },
+                    TraceId = context.GetTraceId()
+                });
+            }
+
+            if (!TryParseStatus(req.Status, out var parsedStatus))
+            {
+                return Results.BadRequest(new ValidationErrorResponse
+                {
+                    Errors = new[] { "Status must be 'Todo', 'InProgress', or 'Done'." },
+                    TraceId = context.GetTraceId()
+                });
             }
 
             var command = new UpdateTaskStatusCommand(taskId, currentUserId, parsedStatus);
 
             var result = await mediator.Send(command, ct);
 
-            if (!result.IsFound || !result.IsAuthorized)
-                return Results.NotFound(new { error = "Task not found" });
+            if (!result.IsTaskFound || !result.IsAuthorized)
+                return ErrorResults.NotFound(context, "Task not found");
 
             return Results.Ok(result.Data);
         })
@@ -232,9 +275,9 @@ public class TasksModule : ICarterModule
         .WithSummary("Move task to a new status")
         .WithDescription("Updates the status of a task (Todo/InProgress/Done). Requires project member access.")
         .Produces<TaskDto>(StatusCodes.Status200OK)
-        .Produces(StatusCodes.Status400BadRequest)
-        .Produces(StatusCodes.Status404NotFound)
-        .Produces(StatusCodes.Status401Unauthorized);
+        .Produces<ValidationErrorResponse>(StatusCodes.Status400BadRequest)
+        .Produces<ErrorResponse>(StatusCodes.Status404NotFound)
+        .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized);
 
         // ======== 6. PATCH /api/tasks/{taskId}/assign ========
         // Assign OR unassign task to a project member
@@ -255,11 +298,15 @@ public class TasksModule : ICarterModule
 
             var result = await mediator.Send(command, ct);
 
-            if (!result.IsFound || !result.IsAuthorized)
-                return Results.NotFound(new { error = "Task not found" });
+            if (!result.IsTaskFound || !result.IsAuthorized)
+                return ErrorResults.NotFound(context, "Task not found");
 
             if (!result.IsAssigneeValid)
-                return Results.BadRequest(new { error = "Assignee must be a project member or project owner" });
+                return Results.BadRequest(new ValidationErrorResponse
+                {
+                    Errors = new[] { "Assignee must be a project member or project owner." },
+                    TraceId = context.GetTraceId()
+                });
 
             return Results.Ok(result.Data);
         })
@@ -267,9 +314,9 @@ public class TasksModule : ICarterModule
         .WithSummary("Assign or unassign a task")
         .WithDescription("Assigns a task to a project member. Pass null to unassign. Requires project member access.")
         .Produces<TaskDto>(StatusCodes.Status200OK)
-        .Produces(StatusCodes.Status400BadRequest)
-        .Produces(StatusCodes.Status404NotFound)
-        .Produces(StatusCodes.Status401Unauthorized);
+        .Produces<ValidationErrorResponse>(StatusCodes.Status400BadRequest)
+        .Produces<ErrorResponse>(StatusCodes.Status404NotFound)
+        .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized);
 
         // ======== 7. DELETE /api/tasks/{taskId} ========
         taskRootGroup.MapDelete("/{taskId:int}", async (
@@ -282,8 +329,8 @@ public class TasksModule : ICarterModule
 
             var result = await mediator.Send(new DeleteTaskCommand(taskId, currentUserId), ct);
 
-            if (!result.IsFound || !result.IsAuthorized)
-                return Results.NotFound(new { error = "Task not found" });
+            if (!result.IsTaskFound || !result.IsAuthorized)
+                return ErrorResults.NotFound(context, "Task not found");
 
             return Results.NoContent();
         })
@@ -291,8 +338,8 @@ public class TasksModule : ICarterModule
         .WithSummary("Delete a task")
         .WithDescription("Deletes a task and utilizes DB cascade for comments. Requires project member access.")
         .Produces(StatusCodes.Status204NoContent)
-        .Produces(StatusCodes.Status404NotFound)
-        .Produces(StatusCodes.Status401Unauthorized);
+        .Produces<ErrorResponse>(StatusCodes.Status404NotFound)
+        .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized);
 
         // ======== 8. GET /api/tasks/{taskId}/comments ========
         taskRootGroup.MapGet("/{taskId:int}/comments", async (
@@ -305,7 +352,7 @@ public class TasksModule : ICarterModule
             var result = await mediator.Send(new GetTaskCommentsQuery(taskId, currentUserId), ct);
 
             if (!result.IsTaskFound || !result.IsAuthorized)
-                return Results.NotFound(new { error = "Task not found" });
+                return ErrorResults.NotFound(context, "Task not found");
 
             return Results.Ok(result.Data);
         })
@@ -313,8 +360,8 @@ public class TasksModule : ICarterModule
         .WithSummary("Get all comments for a task")
         .WithDescription("Returns a chronological list of comments for a task, embedded with author names.")
         .Produces<List<CommentDto>>(StatusCodes.Status200OK)
-        .Produces(StatusCodes.Status404NotFound)
-        .Produces(StatusCodes.Status401Unauthorized);
+        .Produces<ErrorResponse>(StatusCodes.Status404NotFound)
+        .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized);
 
         // ======== 9. POST /api/tasks/{taskId}/comments ========
         taskRootGroup.MapPost("/{taskId:int}/comments", async (
@@ -330,17 +377,17 @@ public class TasksModule : ICarterModule
             var result = await mediator.Send(command, ct);
 
             if (!result.IsTaskFound || !result.IsAuthorized)
-                return Results.NotFound(new { error = "Task not found" });
+                return ErrorResults.NotFound(context, "Task not found");
 
-            return Results.Json(result.Data, statusCode: StatusCodes.Status201Created);
+            return Results.Created($"/api/tasks/{taskId}/comments/{result.Data?.Id}", result.Data);
         })
         .WithName("CreateComment")
         .WithSummary("Add a comment to a task")
         .WithDescription("Creates a new comment. Validates content length and ensures project member authorization.")
         .Produces<CommentDto>(StatusCodes.Status201Created)
-        .ProducesValidationProblem()
-        .Produces(StatusCodes.Status404NotFound)
-        .Produces(StatusCodes.Status401Unauthorized);
+        .Produces<ValidationErrorResponse>(StatusCodes.Status400BadRequest)
+        .Produces<ErrorResponse>(StatusCodes.Status404NotFound)
+        .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized);
 
         // ======== 10. DELETE /api/tasks/{taskId}/comments/{commentId} ========
         taskRootGroup.MapDelete("/{taskId:int}/comments/{commentId:int}", async (
@@ -355,8 +402,8 @@ public class TasksModule : ICarterModule
 
             var result = await mediator.Send(command, ct);
 
-            if (!result.IsFound || !result.IsAuthorized)
-                return Results.NotFound(new { error = "Comment not found" });
+            if (!result.IsCommentFound || !result.IsAuthorized)
+                return ErrorResults.NotFound(context, "Comment not found");
 
             return Results.NoContent();
         })
@@ -364,7 +411,32 @@ public class TasksModule : ICarterModule
         .WithSummary("Delete a comment within a task")
         .WithDescription("Allows users to delete their own comments, and Project Managers to delete any comment within their projects.")
         .Produces(StatusCodes.Status204NoContent)
-        .Produces(StatusCodes.Status404NotFound)
-        .Produces(StatusCodes.Status401Unauthorized);
+        .Produces<ErrorResponse>(StatusCodes.Status404NotFound)
+        .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized);
+    }
+    private static bool TryParsePriority(string? input, out Priority priority)
+    {
+        priority = default;
+
+        // Block empty strings and multi-value lists ("Low,High")
+        if (string.IsNullOrWhiteSpace(input) || input.Contains(','))
+            return false;
+
+        return !int.TryParse(input, out _)
+            && Enum.TryParse<Priority>(input, ignoreCase: true, out priority)
+            && Enum.IsDefined(priority);
+    }
+
+    private static bool TryParseStatus(string? input, out DomainTaskStatus status)
+    {
+        status = default;
+
+        // Block empty strings and multi-value lists ("Todo,Done")
+        if (string.IsNullOrWhiteSpace(input) || input.Contains(','))
+            return false;
+
+        return !int.TryParse(input, out _)
+            && Enum.TryParse<DomainTaskStatus>(input, ignoreCase: true, out status)
+            && Enum.IsDefined(status);
     }
 }

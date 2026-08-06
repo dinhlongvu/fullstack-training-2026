@@ -16,7 +16,7 @@ public record GetTaskDetailQuery(
 ) : IRequest<GetTaskDetailResult>;
 
 public record GetTaskDetailResult(
-    bool IsFound,
+    bool IsTaskFound,
     bool IsAuthorized,
     TaskDto? Data
 );

@@ -3,6 +3,12 @@
 
 namespace Backend.DTOs;
 
-public record AddProjectMemberDto(
-    string Email
-);
+/// <summary>
+/// Request payload for adding a user to a project by email.
+/// </summary>
+public record AddProjectMemberDto
+{
+    /// <summary>The email address of the user to add as a project member.</summary>
+    /// <example>teammate@gmail.com</example>
+    public string Email { get; init; } = string.Empty;
+}

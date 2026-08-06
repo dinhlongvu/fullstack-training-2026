@@ -15,8 +15,8 @@ export interface TaskDto {
   projectId: number;
   title: string;
   description: string;
-  status: number;
-  priority: number;
+  status: string;
+  priority: string;
   dueDate: string | null;
   assigneeId: number | null;
   assigneeName: string | null;
@@ -96,11 +96,11 @@ export async function createTaskViaApi(
   request: APIRequestContext,
   token: string,
   projectId: number,
-  title: string | { title: string; description?: string; priority?: number; assigneeId?: number; dueDate?: string; status?: number }
+  title: string | { title: string; description?: string; priority?: string; assigneeId?: number; dueDate?: string; status?: string }
 ): Promise<TaskDto> {
-  const data = typeof title === "string" 
-    ? { title, description: "", priority: 0 } 
-    : { description: "", priority: 0, ...title };
+  const data = typeof title === "string"
+    ? { title, description: "", priority: "Low" }
+    : { description: "", priority: "Low", ...title };
   const res = await request.post(
     `${API_BASE}/api/projects/${projectId}/tasks`,
     {
@@ -136,14 +136,14 @@ export async function getProjectDetailViaApi(
   const res = await request.get(`${API_BASE}/api/projects/${projectId}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
-  
+
   let body;
   try {
     body = await res.json();
   } catch (e) {
     // some responses might not have JSON body if not 200
   }
-  
+
   return { status: res.status(), body };
 }
 
@@ -175,7 +175,7 @@ export async function updateTaskViaApi(
     data,
   });
   let body;
-  try { body = await res.json(); } catch (e) {}
+  try { body = await res.json(); } catch (e) { }
   return { status: res.status(), body };
 }
 
@@ -190,7 +190,7 @@ export async function updateTaskStatusViaApi(
     data: { status },
   });
   let body;
-  try { body = await res.json(); } catch (e) {}
+  try { body = await res.json(); } catch (e) { }
   return { status: res.status(), body };
 }
 
@@ -205,7 +205,7 @@ export async function assignTaskViaApi(
     data: { assigneeId },
   });
   let body;
-  try { body = await res.json(); } catch (e) {}
+  try { body = await res.json(); } catch (e) { }
   return { status: res.status(), body };
 }
 export async function registerUser(request: import('@playwright/test').APIRequestContext, email: string, fullName: string, password: string) {

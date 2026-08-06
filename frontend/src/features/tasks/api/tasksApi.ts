@@ -43,14 +43,6 @@ export function getProjectTasks(projectId: number, filters: TaskFilters = {}) {
   return apiClient<Task[]>(path);
 }
 
-// Map priority string to backend enum number
-// Backend enum: Low=0, Medium=1, High=2
-const PRIORITY_TO_NUMBER: Record<TaskPriority, number> = {
-  Low: 0,
-  Medium: 1,
-  High: 2,
-};
-
 // Shape of the request body for POST /api/projects/{id}/tasks
 export interface CreateTaskRequest {
   title: string;
@@ -68,7 +60,7 @@ export function createTask(projectId: number, request: CreateTaskRequest) {
     body: JSON.stringify({
       title: request.title,
       description: request.description,
-      priority: PRIORITY_TO_NUMBER[request.priority],
+      priority: request.priority,
       dueDate: request.dueDate,
       assigneeId: request.assigneeId,
     }),
@@ -79,7 +71,7 @@ export function createTask(projectId: number, request: CreateTaskRequest) {
 export interface UpdateTaskRequest {
   title?: string;
   description?: string;
-  priority?: TaskPriority; // IMPORTANT: PUT expects the STRING "Low"/"Medium"/"High" and REJECTS numbers (unlike POST)
+  priority?: TaskPriority; // IMPORTANT: Endpoint expects the STRING "Low"/"Medium"/"High" and rejects numbers.
   dueDate?: string | null;
   assigneeId?: number | null;
   clearAssignee?: boolean;
@@ -91,8 +83,7 @@ export interface UpdateTaskRequest {
 export function updateTask(taskId: number, request: UpdateTaskRequest) {
   return apiClient<Task>(`/api/tasks/${taskId}`, {
     method: "PUT",
-    // Send priority as-is (string). Do NOT use PRIORITY_TO_NUMBER here —
-    // the PUT endpoint parses a string and 400s on numeric input.
+    // Both POST and PUT endpoints parse the string and return 400 on numeric input.
     body: JSON.stringify(request),
   });
 }

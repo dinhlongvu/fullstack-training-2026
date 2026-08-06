@@ -5,7 +5,15 @@ using MediatR;
 
 namespace Backend.Commands.Tasks;
 
-public record CreateCommentRequest(string Content);
+/// <summary>
+/// Request payload to add a comment to a task.
+/// </summary>
+public record CreateCommentRequest
+{
+    /// <summary>The text content of the comment (max 2000 characters).</summary>
+    /// <example>This task is currently blocked by the API design review.</example>
+    public string Content { get; init; } = string.Empty;
+}
 
 public record CreateCommentCommand(
     int TaskId,

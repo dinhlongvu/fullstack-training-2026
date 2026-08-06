@@ -7,7 +7,15 @@ using DomainTaskStatus = Backend.Domain.TaskStatus;
 
 namespace Backend.Commands.Tasks;
 
-public record UpdateTaskStatusRequest(string? Status);
+/// <summary>
+/// Request payload to update the status of a task.
+/// </summary>
+public record UpdateTaskStatusRequest
+{
+    /// <summary>The new status of the task. Accepted values: Todo, InProgress, Done.</summary>
+    /// <example>InProgress</example>
+    public string? Status { get; init; }
+}
 
 public record UpdateTaskStatusCommand(
     int TaskId,
@@ -16,7 +24,7 @@ public record UpdateTaskStatusCommand(
 ) : IRequest<UpdateTaskStatusResult>;
 
 public record UpdateTaskStatusResult(
-    bool IsFound,
+    bool IsTaskFound,
     bool IsAuthorized,
     TaskDto? Data
 );
