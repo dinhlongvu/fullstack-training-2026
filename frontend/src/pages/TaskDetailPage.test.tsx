@@ -195,3 +195,33 @@ describe("TaskDetailPage comments section", () => {
     expect(screen.getByText(/you seem to be offline/i)).toBeInTheDocument();
   });
 });
+
+function mockTaskDescription(description: string) {
+  vi.mocked(useTaskQuery).mockReturnValue({
+    data: { ...task, description },
+    isPending: false,
+    error: null,
+    refetch: vi.fn(),
+    isFetching: false,
+  } as unknown as ReturnType<typeof useTaskQuery>);
+}
+
+describe("TaskDetailPage description", () => {
+  it("collapses the blank lines a description was saved with", () => {
+    mockTaskDescription("First\n\n\n\n\n\nLast");
+    renderWithState();
+
+    // The default matcher collapses whitespace, so it would pass with or
+    // without the fix. Compare raw.
+    expect(
+      screen.getByText("First\n\nLast", { normalizer: (s) => s }),
+    ).toBeInTheDocument();
+  });
+
+  it("shows the placeholder when a description is only blank lines", () => {
+    mockTaskDescription("\n\n\n");
+    renderWithState();
+
+    expect(screen.getByText("No description")).toBeInTheDocument();
+  });
+});
