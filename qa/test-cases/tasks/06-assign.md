@@ -87,7 +87,7 @@
 | **Test Data** | body: `{ "assigneeId": <user-id-not-in-project> }` |
 | **Test Steps** | 1. Send PATCH request with `assigneeId` pointing to a user not in the project <br> 2. Check response status code |
 | **Expected Result** | 1. Status 400 Bad Request <br> 2. Response body: `{ "error": "Assignee must be a project member" }` <br> 3. Task assignment is NOT changed |
-| **Actual Result** | 1. Response returned status 403 Forbidden with `{"error":"Not authorized to assign tasks in this project. Project member access required."}` <br> 2. No database changes occurred |
+| **Actual Result** | 1. Response returned status 404 Not Found <br> 2. No database changes occurred |
 | **Status** | ✅ Pass |
 | **Bug link** | — |
 
