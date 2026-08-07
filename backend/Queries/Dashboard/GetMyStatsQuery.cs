@@ -53,7 +53,7 @@ public class GetMyStatsHandler : IRequestHandler<GetMyStatsQuery, DashboardStats
 
         // Upcoming = open tasks due from now up to 3 days out. Overdue is excluded
         // here, so Take(20) only ever trims far-future items, not today's work.
-        var upcomming = await _db.Tasks
+        var upcoming = await _db.Tasks
             .Where(t => t.AssigneeId == req.CurrentUserId
                     && t.Status != DomainTaskStatus.Done
                     && t.DueDate.HasValue
@@ -74,7 +74,7 @@ public class GetMyStatsHandler : IRequestHandler<GetMyStatsQuery, DashboardStats
 
         return new DashboardStatsDto(
             new TaskStatsByStatusDto(todoCount, inProgressCount, doneCount),
-            upcomming,
+            upcoming,
             totalAssigned,
             overdueCount
         );

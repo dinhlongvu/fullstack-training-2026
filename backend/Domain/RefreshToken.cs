@@ -1,5 +1,4 @@
 // Domain/RefreshToken.cs
-using System;
 
 namespace Backend.Domain;
 
