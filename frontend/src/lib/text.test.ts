@@ -19,6 +19,18 @@ describe("normalizeNewlines", () => {
     expect(normalizeNewlines("A\r\n\r\n\r\n\r\nB")).toBe("A\n\nB");
   });
 
+  // A blank line the user left a space on is still a blank line. Without step 2
+  // the newlines are not adjacent, so the collapse in step 3 never fires.
+  it("collapses blank lines that hold spaces or tabs", () => {
+    expect(normalizeNewlines("A\n \n \n \nB")).toBe("A\n\nB");
+    expect(normalizeNewlines("A\n\t\n\t\nB")).toBe("A\n\nB");
+    expect(normalizeNewlines("1\n\n \n\na")).toBe("1\n\na");
+  });
+
+  it("keeps indentation on a line that has text", () => {
+    expect(normalizeNewlines("A\n  B")).toBe("A\n  B");
+  });
+
   it("leaves text without line breaks untouched", () => {
     expect(normalizeNewlines("A B")).toBe("A B");
   });
