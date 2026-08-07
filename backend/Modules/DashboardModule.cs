@@ -1,6 +1,7 @@
 // Modules/DashboardModule.cs
 
 using Backend.DTOs;
+using Backend.Infrastructure;
 using Backend.Queries.Dashboard;
 using Backend.Services.Auth;
 using Carter;
@@ -27,7 +28,7 @@ public class DashboardModule : ICarterModule
 
             return Results.Ok(result);
         })
-        .WithName("GetMyDashboardStats")
+        .WithName(AppConstants.Routes.GetMyDashboardStats)
         .WithSummary("Get current user task statistics")
         .WithDescription("Returns task count by status, total assigned tasks, and upcoming deadlines (due within 3 days).")
         .Produces<DashboardStatsDto>(StatusCodes.Status200OK)
@@ -49,7 +50,7 @@ public class DashboardModule : ICarterModule
 
             return Results.Ok(result);
         })
-        .WithName("GetMyTasks")
+        .WithName(AppConstants.Routes.GetMyTasks)
         .WithSummary("Get a paginated list of tasks assigned to the current user")
         .WithDescription("Returns all tasks assigned to the authenticated user, across all projects. Supports filtering by urgency.")
         .Produces<PaginatedList<MyTaskDto>>(StatusCodes.Status200OK)
