@@ -32,6 +32,7 @@ import { useUpdateProjectMutation } from "../api/useProjects";
 const editProjectSchema = z.object({
   name: z
     .string()
+    .trim()
     .min(1, "Project name is required")
     .max(200, "Project name must be at most 200 characters"),
   description: z
