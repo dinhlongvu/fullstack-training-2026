@@ -14,7 +14,7 @@ public class AppDbContext : DbContext
 
     // Each DbSet = a repository for that entity
     public DbSet<User> Users => Set<User>();
-    public DbSet<RefreshToken> RefreshTokens { get; set; } = null!; // Register RefreshToken DbSet here
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>(); // Register RefreshToken DbSet here
     public DbSet<Project> Projects => Set<Project>();
     public DbSet<ProjectMember> ProjectMembers => Set<ProjectMember>();
     public DbSet<TaskItem> Tasks => Set<TaskItem>();

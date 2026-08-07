@@ -47,7 +47,7 @@ public class ProjectsModule : ICarterModule
             var command = new CreateProjectCommand(req.Name, req.Description ?? string.Empty, userId);
 
             var result = await mediator.Send(command, ct);
-            return Results.Created($"/api/projects/{result.Id}", result); // Return 201 Created with the new project
+            return Results.CreatedAtRoute(AppConstants.Routes.GetProjectDetail, new { id = result.Id }, result);
         })
         .WithName(AppConstants.Routes.CreateProject)
         .WithSummary("Create a new project")

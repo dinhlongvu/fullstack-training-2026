@@ -4,7 +4,6 @@
 
 using AutoMapper;
 using AutoMapper.QueryableExtensions; // Required for ProjectTo extension method
-using Backend.Domain;
 using Backend.DTOs;
 using Backend.Infrastructure.Data;
 using MediatR;

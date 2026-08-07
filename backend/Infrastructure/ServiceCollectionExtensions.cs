@@ -66,7 +66,7 @@ public static class ServiceCollectionExtensions
                     IssuerSigningKey = new SymmetricSecurityKey(
                         Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!)),
                     // Explicitly set the claim type used to resolve User.Identity.Name to stable "sub"
-                    NameClaimType = JwtRegisteredClaimNames.Sub
+                    NameClaimType = AppConstants.Claims.UserId
                 };
 
                 // Intercept JWT authentication and authorization failures to return

@@ -134,7 +134,7 @@ public class TasksModule : ICarterModule
                 });
 
             // Points the new task to GET Task Detail endpoint
-            return Results.Created($"/api/tasks/{result.Data?.Id}", result.Data);
+            return Results.CreatedAtRoute(AppConstants.Routes.GetTaskDetail, new { taskId = result.Data!.Id }, result.Data);
         })
         .WithName(AppConstants.Routes.CreateTask)
         .WithSummary("Create a new task")

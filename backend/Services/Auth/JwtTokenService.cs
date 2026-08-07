@@ -2,13 +2,13 @@
 // Handles the generation of short-lived JWT access tokens and cryptographically secure long-lived refresh tokens.
 // Extracted to a dedicated service to keep CQRS handlers thin, secure, and easily testable.
 
-using Backend.Domain;
-using Microsoft.Extensions.Configuration;
-using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography; // Required for RandomNumberGenerator and SHA256
 using System.Text;
+using Backend.Domain;
+using Backend.Infrastructure;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Backend.Services.Auth;
 
@@ -55,7 +55,7 @@ public class JwtTokenService : ITokenService
             Subject = new ClaimsIdentity(new[]
             {
                 // The "sub" (subject) claim is the standard way to store the unique User ID
-                new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+                new Claim(AppConstants.Claims.UserId, user.Id.ToString()),
                 new Claim(JwtRegisteredClaimNames.Email, user.Email)
             }),
 
