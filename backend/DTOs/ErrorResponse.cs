@@ -9,7 +9,7 @@ namespace Backend.DTOs;
 public record ErrorResponse
 {
     /// <summary>Human-readable description of what went wrong.</summary>
-    /// <example>Task not found</example>
+    /// <example>The requested resource could not be found or processed.</example>
     public string Error { get; init; } = string.Empty;
 
     /// <summary>Correlation id — use this when reporting an issue to support.</summary>
