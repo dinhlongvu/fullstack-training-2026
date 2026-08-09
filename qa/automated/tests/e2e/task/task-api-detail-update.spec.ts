@@ -1,5 +1,5 @@
-import { test, expect, type APIRequestContext, request as playwrightRequest } from "@playwright/test";
-import { API_BASE, registerAndLogin, createProjectViaApi, createTaskViaApi, addMemberViaApi, type RegisteredUser } from "../utils/api-helpers";
+import { test, expect } from "../utils/api-fixtures";
+import { API_BASE, uniqueEmail, registerAndLogin, createProjectViaApi, createTaskViaApi, addMemberViaApi, createCommentViaApi, type RegisteredUser, type TaskDto, type ProjectDto } from "../utils/api-helpers";
 
 // Priority and Status enum values (local to task tests)
 const PRIORITY = { Low: "Low", Medium: "Medium", High: "High" } as const;
@@ -19,25 +19,8 @@ interface TaskDto {
 }
 
 // ─── Shared Test State ────────────────────────────────────────────────────────
-let apiContext: APIRequestContext;
-let owner: RegisteredUser;
-let member: RegisteredUser;
-let nonMember: RegisteredUser;
-let assignee: RegisteredUser;
-let user: RegisteredUser;
 
-test.beforeAll(async () => {
-  apiContext = await playwrightRequest.newContext();
-  owner = await registerAndLogin(apiContext, { fullName: "Shared DetailOwner" });
-  member = await registerAndLogin(apiContext, { fullName: "Shared DetailMember" });
-  nonMember = await registerAndLogin(apiContext, { fullName: "Shared DetailNonMember" });
-  assignee = await registerAndLogin(apiContext, { fullName: "Jane Doe" });
-  user = await registerAndLogin(apiContext, { fullName: "Shared DetailUser" });
-});
 
-test.afterAll(async () => {
-  await apiContext.dispose();
-});
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TEST SUITE: GET /api/tasks/{id} — Task Detail
@@ -45,9 +28,7 @@ test.afterAll(async () => {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 test.describe("API: GET /api/tasks/{id} — Task Detail", () => {
-  test("TC-TASK-DETAIL-001: Get task detail as project owner (happy path) → 200", async ({
-    request,
-  }) => {
+  test("TC-TASK-DETAIL-001: Get task detail as project owner (happy path) → 200", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
     const project = await createProjectViaApi(request, owner.token, {
       name: "Detail Test Project",
     });
@@ -76,9 +57,7 @@ test.describe("API: GET /api/tasks/{id} — Task Detail", () => {
     expect(body).toHaveProperty("createdAt");
   });
 
-  test("TC-TASK-DETAIL-002: Get task detail as project member → 200", async ({
-    request,
-  }) => {
+  test("TC-TASK-DETAIL-002: Get task detail as project member → 200", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
     const project = await createProjectViaApi(request, owner.token, {
       name: "Member Detail Project",
     });
@@ -97,9 +76,7 @@ test.describe("API: GET /api/tasks/{id} — Task Detail", () => {
     expect(body.id).toBe(task.id);
   });
 
-  test("TC-TASK-DETAIL-003: Get task detail without Bearer token → 401", async ({
-    request,
-  }) => {
+  test("TC-TASK-DETAIL-003: Get task detail without Bearer token → 401", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
     const project = await createProjectViaApi(request, owner.token, {
       name: "Unauth Project",
     });
@@ -111,9 +88,7 @@ test.describe("API: GET /api/tasks/{id} — Task Detail", () => {
     expect(res.status()).toBe(401);
   });
 
-  test("TC-TASK-DETAIL-004: Non-member cannot get task detail → 404", async ({
-    request,
-  }) => {
+  test("TC-TASK-DETAIL-004: Non-member cannot get task detail → 404", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
     const project = await createProjectViaApi(request, owner.token, {
       name: "Private Detail Project",
     });
@@ -128,9 +103,7 @@ test.describe("API: GET /api/tasks/{id} — Task Detail", () => {
     expect(res.status()).toBe(404);
   });
 
-  test("TC-TASK-DETAIL-005: Get non-existent task → 404", async ({
-    request,
-  }) => {
+  test("TC-TASK-DETAIL-005: Get non-existent task → 404", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
     const res = await request.get(`${API_BASE}/api/tasks/999999`, {
       headers: { Authorization: `Bearer ${owner.token}` },
     });
@@ -138,9 +111,28 @@ test.describe("API: GET /api/tasks/{id} — Task Detail", () => {
     expect(res.status()).toBe(404);
   });
 
-  test("TC-TASK-DETAIL-007: Task detail with no comments returns commentCount=0", async ({
-    request,
-  }) => {
+  test("TC-TASK-DETAIL-006: Task detail includes correct comment count", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
+    const project = await createProjectViaApi(request, owner.token, {
+      name: "Detail Comments Project",
+    });
+    const task = await createTaskViaApi(request, owner.token, project.id, {
+      title: "Task with Comments",
+    });
+
+    await createCommentViaApi(request, owner.token, task.id, "Comment 1");
+    await createCommentViaApi(request, owner.token, task.id, "Comment 2");
+    await createCommentViaApi(request, owner.token, task.id, "Comment 3");
+
+    const res = await request.get(`${API_BASE}/api/tasks/${task.id}`, {
+      headers: { Authorization: `Bearer ${owner.token}` },
+    });
+
+    expect(res.status()).toBe(200);
+    const body: TaskDto = await res.json();
+    expect(body.commentCount).toBe(3);
+  });
+
+  test("TC-TASK-DETAIL-007: Task detail with no comments returns commentCount=0", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
     const project = await createProjectViaApi(request, owner.token, {
       name: "No Comment Project",
     });
@@ -157,9 +149,7 @@ test.describe("API: GET /api/tasks/{id} — Task Detail", () => {
     expect(body.commentCount).toBe(0);
   });
 
-  test("TC-TASK-DETAIL-008: Task detail with invalid (non-integer) taskId → 400", async ({
-    request,
-  }) => {
+  test("TC-TASK-DETAIL-008: Task detail with invalid (non-integer) taskId → 400", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
     const res = await request.get(`${API_BASE}/api/tasks/abc`, {
       headers: { Authorization: `Bearer ${owner.token}` },
     });
@@ -167,9 +157,7 @@ test.describe("API: GET /api/tasks/{id} — Task Detail", () => {
     expect(res.status()).toBe(404);
   });
 
-  test("TC-TASK-DETAIL-009: Task detail shows correct assigned member name", async ({
-    request,
-  }) => {
+  test("TC-TASK-DETAIL-009: Task detail shows correct assigned member name", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
     const project = await createProjectViaApi(request, owner.token, {
       name: "Assignee Detail Project",
     });
@@ -186,12 +174,10 @@ test.describe("API: GET /api/tasks/{id} — Task Detail", () => {
 
     expect(res.status()).toBe(200);
     const body: TaskDto = await res.json();
-    expect(body.assigneeName).toBe("Jane Doe");
+    expect(body.assigneeName).toBe(assignee.fullName);
   });
 
-  test("TC-TASK-DETAIL-010: Task detail for unassigned task shows null assigneeName", async ({
-    request,
-  }) => {
+  test("TC-TASK-DETAIL-010: Task detail for unassigned task shows null assigneeName", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
     const project = await createProjectViaApi(request, owner.token, {
       name: "Unassigned Detail Project",
     });
@@ -209,9 +195,7 @@ test.describe("API: GET /api/tasks/{id} — Task Detail", () => {
     expect(body.assigneeName).toBeNull();
   });
 
-  test("TC-TASK-DETAIL-012: SQL injection in taskId path parameter → rejected", async ({
-    request,
-  }) => {
+  test("TC-TASK-DETAIL-012: SQL injection in taskId path parameter → rejected", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
     const res = await request.get(
       `${API_BASE}/api/tasks/1%27%20OR%201=1%20--`,
       {
@@ -222,9 +206,7 @@ test.describe("API: GET /api/tasks/{id} — Task Detail", () => {
     expect([400, 404]).toContain(res.status());
   });
 
-  test("TC-TASK-DETAIL-013: XSS stored in title is returned safely in JSON response", async ({
-    request,
-  }) => {
+  test("TC-TASK-DETAIL-013: XSS stored in title is returned safely in JSON response", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
     const project = await createProjectViaApi(request, owner.token, {
       name: "XSS Detail Project",
     });
@@ -250,9 +232,7 @@ test.describe("API: GET /api/tasks/{id} — Task Detail", () => {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 test.describe("API: PUT /api/tasks/{id} — Update Task", () => {
-  test("TC-TASK-UPDATE-001: Owner updates task with valid data → 200", async ({
-    request,
-  }) => {
+  test("TC-TASK-UPDATE-001: Owner updates task with valid data → 200", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
     const project = await createProjectViaApi(request, owner.token, {
       name: "Update Task Project 1",
     });
@@ -275,9 +255,7 @@ test.describe("API: PUT /api/tasks/{id} — Update Task", () => {
     expect(body.title).toBe("Updated Title");
   });
 
-  test("TC-TASK-UPDATE-002: Member updates task with valid data → 200", async ({
-    request,
-  }) => {
+  test("TC-TASK-UPDATE-002: Member updates task with valid data → 200", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
     const project = await createProjectViaApi(request, owner.token, {
       name: "Update Task Project 2",
     });
@@ -295,9 +273,7 @@ test.describe("API: PUT /api/tasks/{id} — Update Task", () => {
     expect(res.status()).toBe(200);
   });
 
-  test("TC-TASK-UPDATE-003: Update task without Bearer token → 401", async ({
-    request,
-  }) => {
+  test("TC-TASK-UPDATE-003: Update task without Bearer token → 401", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
     const project = await createProjectViaApi(request, owner.token, {
       name: "No Token Project",
     });
@@ -312,9 +288,7 @@ test.describe("API: PUT /api/tasks/{id} — Update Task", () => {
     expect(res.status()).toBe(401);
   });
 
-  test("TC-TASK-UPDATE-004: Non-member cannot update task → 404", async ({
-    request,
-  }) => {
+  test("TC-TASK-UPDATE-004: Non-member cannot update task → 404", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
     const project = await createProjectViaApi(request, owner.token, {
       name: "Private Update Project",
     });
@@ -330,9 +304,7 @@ test.describe("API: PUT /api/tasks/{id} — Update Task", () => {
     expect(res.status()).toBe(404);
   });
 
-  test("TC-TASK-UPDATE-005: Update task with empty title → 400", async ({
-    request,
-  }) => {
+  test("TC-TASK-UPDATE-005: Update task with empty title → 400", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
     const project = await createProjectViaApi(request, owner.token, {
       name: "Empty Title Project",
     });
@@ -348,9 +320,7 @@ test.describe("API: PUT /api/tasks/{id} — Update Task", () => {
     expect(res.status()).toBe(400);
   });
 
-  test("TC-TASK-UPDATE-006: Update task with title exceeding 200 characters → 400", async ({
-    request,
-  }) => {
+  test("TC-TASK-UPDATE-006: Update task with title exceeding 200 characters → 400", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
     const project = await createProjectViaApi(request, owner.token, {
       name: "Long Title Project",
     });
@@ -366,9 +336,7 @@ test.describe("API: PUT /api/tasks/{id} — Update Task", () => {
     expect(res.status()).toBe(400);
   });
 
-  test("TC-TASK-UPDATE-007: Update task with past dueDate → 400", async ({
-    request,
-  }) => {
+  test("TC-TASK-UPDATE-007: Update task with past dueDate → 400", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
     const project = await createProjectViaApi(request, owner.token, {
       name: "Past Due Project",
     });
@@ -384,9 +352,7 @@ test.describe("API: PUT /api/tasks/{id} — Update Task", () => {
     expect(res.status()).toBe(400);
   });
 
-  test("TC-TASK-UPDATE-008: Update task to remove dueDate (set clearDueDate) → 200", async ({
-    request,
-  }) => {
+  test("TC-TASK-UPDATE-008: Update task to remove dueDate (set clearDueDate) → 200", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
     const project = await createProjectViaApi(request, owner.token, {
       name: "Clear DueDate Project",
     });
@@ -405,9 +371,7 @@ test.describe("API: PUT /api/tasks/{id} — Update Task", () => {
     expect(body.dueDate).toBeNull();
   });
 
-  test("TC-TASK-UPDATE-009: Re-assign task to another project member → 200", async ({
-    request,
-  }) => {
+  test("TC-TASK-UPDATE-009: Re-assign task to another project member → 200", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
     const project = await createProjectViaApi(request, owner.token, {
       name: "Reassign Project",
     });
@@ -427,9 +391,7 @@ test.describe("API: PUT /api/tasks/{id} — Update Task", () => {
     expect(body.assigneeName).toBe(member.fullName);
   });
 
-  test("TC-TASK-UPDATE-010: Update task assignee to non-member → 400", async ({
-    request,
-  }) => {
+  test("TC-TASK-UPDATE-010: Update task assignee to non-member → 400", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
     const project = await createProjectViaApi(request, owner.token, {
       name: "Invalid Assignee Project",
     });
@@ -445,9 +407,7 @@ test.describe("API: PUT /api/tasks/{id} — Update Task", () => {
     expect(res.status()).toBe(400);
   });
 
-  test("TC-TASK-UPDATE-011: Update non-existent task → 404", async ({
-    request,
-  }) => {
+  test("TC-TASK-UPDATE-011: Update non-existent task → 404", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
     const res = await request.put(`${API_BASE}/api/tasks/999999`, {
       headers: { Authorization: `Bearer ${owner.token}` },
       data: { title: "Ghost Task" },
@@ -456,9 +416,7 @@ test.describe("API: PUT /api/tasks/{id} — Update Task", () => {
     expect(res.status()).toBe(404);
   });
 
-  test("TC-TASK-UPDATE-012: Update task with invalid priority value → 400", async ({
-    request,
-  }) => {
+  test("TC-TASK-UPDATE-012: Update task with invalid priority value → 400", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
     const project = await createProjectViaApi(request, owner.token, {
       name: "Invalid Priority Project",
     });
@@ -474,9 +432,7 @@ test.describe("API: PUT /api/tasks/{id} — Update Task", () => {
     expect(res.status()).toBe(400);
   });
 
-  test("TC-TASK-UPDATE-013: XSS injection in update title → stored as literal", async ({
-    request,
-  }) => {
+  test("TC-TASK-UPDATE-013: XSS injection in update title → stored as literal", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
     const project = await createProjectViaApi(request, owner.token, {
       name: "XSS Update Project",
     });
@@ -495,9 +451,7 @@ test.describe("API: PUT /api/tasks/{id} — Update Task", () => {
     expect(body.title).toBe(xssTitle);
   });
 
-  test("TC-TASK-UPDATE-014: SQL injection in update description → stored as literal", async ({
-    request,
-  }) => {
+  test("TC-TASK-UPDATE-014: SQL injection in update description → stored as literal", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
     const project = await createProjectViaApi(request, owner.token, {
       name: "SQLi Update Project",
     });
@@ -522,9 +476,7 @@ test.describe("API: PUT /api/tasks/{id} — Update Task", () => {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 test.describe("API: PATCH /api/tasks/{id}/status — Update Task Status", () => {
-  test("TC-TASK-STATUS-001: Update task status to InProgress → 200", async ({
-    request,
-  }) => {
+  test("TC-TASK-STATUS-001: Update task status to InProgress → 200", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
     const project = await createProjectViaApi(request, owner.token, {
       name: "Status Update Project",
     });
@@ -551,9 +503,7 @@ test.describe("API: PATCH /api/tasks/{id}/status — Update Task Status", () => 
     expect(detail.status).toBe("InProgress");
   });
 
-  test("TC-TASK-STATUS-002: Update task status to Done → 200", async ({
-    request,
-  }) => {
+  test("TC-TASK-STATUS-002: Update task status to Done → 200", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
     const project = await createProjectViaApi(request, owner.token, {
       name: "Done Status Project",
     });
@@ -579,9 +529,7 @@ test.describe("API: PATCH /api/tasks/{id}/status — Update Task Status", () => 
     expect(detail.status).toBe("Done");
   });
 
-  test("TC-TASK-STATUS-003: Update task status back to Todo → 200", async ({
-    request,
-  }) => {
+  test("TC-TASK-STATUS-003: Update task status back to Todo → 200", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
     const project = await createProjectViaApi(request, owner.token, {
       name: "Back to Todo Project",
     });
@@ -613,28 +561,83 @@ test.describe("API: PATCH /api/tasks/{id}/status — Update Task Status", () => 
     expect(detail.status).toBe("Todo");
   });
 
-  test("TC-TASK-DETAIL-011: Task detail reflects correct status (InProgress) after update", async ({
-    request,
-  }) => {
-    const project = await createProjectViaApi(request, owner.token, {
-      name: "Status Reflect Project",
-    });
-    const task = await createTaskViaApi(request, owner.token, project.id, {
-      title: "Status Verify Task",
-    });
-
-    // Update status
+  test("TC-TASK-DETAIL-011: Task detail reflects correct status (InProgress) after update", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
+    const project = await createProjectViaApi(request, owner.token, { name: "Status Reflect Project" });
+    const task = await createTaskViaApi(request, owner.token, project.id, { title: "Reflect Status Task" });
     await request.patch(`${API_BASE}/api/tasks/${task.id}/status`, {
       headers: { Authorization: `Bearer ${owner.token}` },
       data: { status: "InProgress" },
     });
-
-    // Get detail and verify
-    const res = await request.get(`${API_BASE}/api/tasks/${task.id}`, {
-      headers: { Authorization: `Bearer ${owner.token}` },
-    });
+    const res = await request.get(`${API_BASE}/api/tasks/${task.id}`, { headers: { Authorization: `Bearer ${owner.token}` } });
     expect(res.status()).toBe(200);
     const body: TaskDto = await res.json();
     expect(body.status).toBe("InProgress");
+  });
+
+  test("TC-TASK-STATUS-004: Update status without Bearer token → 401", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
+    const project = await createProjectViaApi(request, owner.token, { name: "Status Proj 4" });
+    const task = await createTaskViaApi(request, owner.token, project.id, { title: "Task 4" });
+    const res = await request.patch(`${API_BASE}/api/tasks/${task.id}/status`, {
+      data: { status: "InProgress" }
+    });
+    expect(res.status()).toBe(401);
+  });
+
+  test("TC-TASK-STATUS-005: Non-member cannot update task status → 404 Not Found", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
+    const project = await createProjectViaApi(request, owner.token, { name: "Status Proj 5" });
+    const task = await createTaskViaApi(request, owner.token, project.id, { title: "Task 5" });
+    const res = await request.patch(`${API_BASE}/api/tasks/${task.id}/status`, {
+      headers: { Authorization: `Bearer ${nonMember.token}` },
+      data: { status: "InProgress" }
+    });
+    expect(res.status()).toBe(404);
+  });
+
+  test("TC-TASK-STATUS-006: Update status with invalid status value → 400 Bad Request", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
+    const project = await createProjectViaApi(request, owner.token, { name: "Status Proj 6" });
+    const task = await createTaskViaApi(request, owner.token, project.id, { title: "Task 6" });
+    const res = await request.patch(`${API_BASE}/api/tasks/${task.id}/status`, {
+      headers: { Authorization: `Bearer ${owner.token}` },
+      data: { status: "Archived" } // Invalid value
+    });
+    expect(res.status()).toBe(400);
+  });
+
+  test("TC-TASK-STATUS-007: Update status on non-existent task → 404 Not Found", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
+    const res = await request.patch(`${API_BASE}/api/tasks/999999/status`, {
+      headers: { Authorization: `Bearer ${owner.token}` },
+      data: { status: "Done" }
+    });
+    expect(res.status()).toBe(404);
+  });
+
+  test("TC-TASK-STATUS-008: Update status with missing status field in body → 400 Bad Request", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
+    const project = await createProjectViaApi(request, owner.token, { name: "Status Proj 8" });
+    const task = await createTaskViaApi(request, owner.token, project.id, { title: "Task 8" });
+    const res = await request.patch(`${API_BASE}/api/tasks/${task.id}/status`, {
+      headers: { Authorization: `Bearer ${owner.token}` },
+      data: {} // Missing status
+    });
+    expect(res.status()).toBe(400);
+  });
+
+  test("TC-TASK-STATUS-009: Set task status to same value (idempotent) → 204 or 200", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
+    const project = await createProjectViaApi(request, owner.token, { name: "Status Proj 9" });
+    const task = await createTaskViaApi(request, owner.token, project.id, { title: "Task 9" });
+    const res = await request.patch(`${API_BASE}/api/tasks/${task.id}/status`, {
+      headers: { Authorization: `Bearer ${owner.token}` },
+      data: { status: "Todo" } // Current status is already Todo
+    });
+    expect([200, 204]).toContain(res.status());
+  });
+
+  test("TC-TASK-STATUS-010: XSS injection in status value → 400 Bad Request", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
+    const project = await createProjectViaApi(request, owner.token, { name: "Status Proj 10" });
+    const task = await createTaskViaApi(request, owner.token, project.id, { title: "Task 10" });
+    const res = await request.patch(`${API_BASE}/api/tasks/${task.id}/status`, {
+      headers: { Authorization: `Bearer ${owner.token}` },
+      data: { status: "<script>alert('XSS')</script>" }
+    });
+    expect(res.status()).toBe(400);
   });
 });

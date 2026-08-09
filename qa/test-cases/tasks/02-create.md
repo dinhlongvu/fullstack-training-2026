@@ -51,7 +51,7 @@
 | **Test Data** | No Authorization header; body: `{ "title": "Unauthorized Task", "description": "", "priority": "Low" }` |
 | **Test Steps** | 1. Send POST request without any Authorization header <br> 2. Check response status code |
 | **Expected Result** | 1. Status 401 Unauthorized <br> 2. Task is NOT created in database |
-| **Actual Result** | 1 . Status 401 Unauthorized contains body: `{ "error": "Unauthorized. Please provide a valid Bearer token."}` <br> 2. Task is NOT created in database |
+| **Actual Result** | 1 . Status 401 Unauthorized contains body: `{"error":"Unauthorized. Please provide a valid Bearer token.","traceId":"..."}` <br> 2. Task is NOT created in database |
 | **Status** | ✅ Passed |
 | **Bug link** | — |
 
@@ -68,7 +68,7 @@
 | **Test Data** | Authorization: `Bearer <non-member-token>`; valid projectId belonging to another user |
 | **Test Steps** | 1. Login as a user who does not belong to the project <br> 2. Send POST request to `/api/projects/{projectId}/tasks` <br> 3. Check response status code and body |
 | **Expected Result** | 1. Status 404 Not Found (không lộ sự tồn tại của project cho người ngoài) <br> 2. Task is NOT saved to database |
-| **Actual Result** | 1. Status 404 Not Found với body `{"error": "Project not found"}` <br> 2. Task is NOT saved to database |
+| **Actual Result** | 1. Status 404 Not Found với body `{"error":"Project not found","traceId":"..."}` <br> 2. Task is NOT saved to database |
 | **Status** | ✅ Passed |
 | **Bug link** | — |
 
@@ -84,8 +84,8 @@
 | **Precondition** | User is project member |
 | **Test Data** | `{ "title": "", "description": "Some description", "priority": "Medium" }` |
 | **Test Steps** | 1. Send POST request with empty `title` field <br> 2. Check response status code <br> 3. Check response body for validation error |
-| **Expected Result** | 1. Status 400 Bad Request <br> 2. Response contains validation error: `"Title is required."` <br> 3. Task is NOT created |
-| **Actual Result** | 1. Status 400 Bad Request contains body: `{ "errors": ["Title is required."]}` <br> 2. Task is NOT created |
+| **Expected Result** | 1. Status 400 Bad Request <br> 2. Response body: `{"errors":["Title is required."],"traceId":"..."}` <br> 3. Task is NOT created |
+| **Actual Result** | 1. Status 400 Bad Request contains body: `{"errors":["Title is required."],"traceId":"..."}` <br> 2. Task is NOT created |
 | **Status** | ✅ Passed |
 | **Bug link** | — |
 
@@ -101,8 +101,8 @@
 | **Precondition** | User is project member |
 | **Test Data** | `{ "title": "<201-character-string>", "description": "", "priority": "Low" }` |
 | **Test Steps** | 1. Send POST request with `title` of 201 characters <br> 2. Check response status code <br> 3. Check response body for validation error |
-| **Expected Result** | 1. Status 400 Bad Request <br> 2. Response contains validation error: `"Title must be 200 characters or less."` <br> 3. Task is NOT created |
-| **Actual Result** | 1. Status 400 Bad Request contains body: `{ "errors": ["Title must be 200 characters or less."]}` <br> 2. Task is NOT created |
+| **Expected Result** | 1. Status 400 Bad Request <br> 2. Response body: `{"errors":["Title must be 200 characters or less."],"traceId":"..."}` <br> 3. Task is NOT created |
+| **Actual Result** | 1. Status 400 Bad Request contains body: `{"errors":["Title must be 200 characters or less."],"traceId":"..."}` <br> 2. Task is NOT created |
 | **Status** | ✅ Passed |
 | **Bug link** | — |
 
@@ -135,8 +135,8 @@
 | **Precondition** | User is project member |
 | **Test Data** | `{ "title": "Valid Title", "description": "<2001-character-string>", "priority": "Low" }` |
 | **Test Steps** | 1. Send POST request with `description` of 2001 characters <br> 2. Check response status code |
-| **Expected Result** | 1. Status 400 Bad Request <br> 2. Response contains validation error: `"Description is too long."` <br> 3. Task is NOT created |
-| **Actual Result** | 1. Status 400 Bad Request contains body: `{ "errors": ["Description must be 2000 characters or less."]}` <br> 2. Task is NOT created |
+| **Expected Result** | 1. Status 400 Bad Request <br> 2. Response body: `{"errors":["Description is too long."],"traceId":"..."}` <br> 3. Task is NOT created |
+| **Actual Result** | 1. Status 400 Bad Request contains body: `{"errors":["Description must be 2000 characters or less."],"traceId":"..."}` <br> 2. Task is NOT created |
 | **Status** | ✅ Passed |
 | **Bug link** | — |
 
@@ -152,7 +152,7 @@
 | **Precondition** | User is project member |
 | **Test Data** | `{ "title": "Valid Title", "description": "", "priority": "Critical" }` |
 | **Test Steps** | 1. Send POST request with `priority` set to an invalid enum value `"Critical"` <br> 2. Check response status code |
-| **Expected Result** | 1. Status 400 Bad Request <br> 2. Response contains validation error: `"Priority must be Low, Medium, or High."` <br> 3. Task is NOT created |
+| **Expected Result** | 1. Status 400 Bad Request <br> 2. Response body: `{"errors":["Priority must be Low, Medium, or High."],"traceId":"..."}` <br> 3. Task is NOT created |
 | **Actual Result** | 1. Status 400 Bad Request contains body: `{ "errors": ["Priority must be 'Low', 'Medium', or 'High'."], "traceId": "..." }` <br> 2. Task is NOT created |
 | **Status** | ✅ Passed |
 | **Bug link** | — |
@@ -169,8 +169,8 @@
 | **Precondition** | User is project member |
 | **Test Data** | `{ "title": "Past Due Task", "description": "", "priority": "Low", "dueDate": "2020-01-01T00:00:00Z" }` |
 | **Test Steps** | 1. Send POST request with `dueDate` set to a date in the past <br> 2. Check response status code <br> 3. Check response body for validation error |
-| **Expected Result** | 1. Status 400 Bad Request <br> 2. Response contains validation error: `"Due date must be in the future."` <br> 3. Task is NOT created |
-| **Actual Result** | 1. Status 400 Bad Request contains body: `{ "errors": ["Due date must be in the future."]}` <br> 2. Task is NOT created |
+| **Expected Result** | 1. Status 400 Bad Request <br> 2. Response body: `{"errors":["Due date must be in the future."],"traceId":"..."}` <br> 3. Task is NOT created |
+| **Actual Result** | 1. Status 400 Bad Request contains body: `{"errors":["Due date must be in the future."],"traceId":"..."}` <br> 2. Task is NOT created |
 | **Status** | ✅ Passed |
 | **Bug link** | — |
 
@@ -237,8 +237,8 @@
 | **Precondition** | User has valid token |
 | **Test Data** | projectId: `999999`; body: `{ "title": "Ghost Task", "description": "", "priority": "Low" }` |
 | **Test Steps** | 1. Send POST request to `/api/projects/999999/tasks` <br> 2. Check response status code |
-| **Expected Result** | 1. Status 404 Not Found <br> 2. Response body: `{ "error": "Project not found" }` <br> 3. No task is created |
-| **Actual Result** | 1. Status 404 Not Found contains body: `{ "errors": ["Project not found."]}` <br> 2. No task is created |
+| **Expected Result** | 1. Status 404 Not Found <br> 2. Response body: `{"error":"Project not found","traceId":"..."}` <br> 3. No task is created |
+| **Actual Result** | 1. Status 404 Not Found contains body: `{"errors":["Project not found."],"traceId":"..."}` <br> 2. No task is created |
 | **Status** | ✅ Passed |
 | **Bug link** | — |
 

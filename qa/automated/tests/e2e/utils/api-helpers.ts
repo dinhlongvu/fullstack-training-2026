@@ -61,13 +61,19 @@ export async function registerAndLogin(
   const registerRes = await request.post(`${API_BASE}/api/auth/register`, {
     data: { email, fullName, password },
   });
-  expect(registerRes.status(), `Register failed for ${email}`).toBe(201);
+  if (registerRes.status() !== 201) {
+    const errorBody = await registerRes.text();
+    throw new Error(`Register failed for ${email}: ${registerRes.status()} ${errorBody}`);
+  }
   const registerBody = await registerRes.json();
 
   const loginRes = await request.post(`${API_BASE}/api/auth/login`, {
     data: { email, password },
   });
-  expect(loginRes.status(), `Login failed for ${email}`).toBe(200);
+  if (loginRes.status() !== 200) {
+    const errorBody = await loginRes.text();
+    throw new Error(`Login failed for ${email}: ${loginRes.status()} ${errorBody}`);
+  }
   const loginBody = await loginRes.json();
 
   return {
@@ -88,7 +94,10 @@ export async function createProjectViaApi(
     headers: { Authorization: `Bearer ${token}` },
     data: { name: data.name, description: data.description ?? "" },
   });
-  expect(res.status(), "Create project should return 201").toBe(201);
+  if (res.status() !== 201) {
+    const errorBody = await res.text();
+    throw new Error(`Create project failed: ${res.status()} ${errorBody}`);
+  }
   return res.json();
 }
 
@@ -108,7 +117,10 @@ export async function createTaskViaApi(
       data,
     },
   );
-  expect(res.status(), `Create task failed`).toBe(201);
+  if (res.status() !== 201) {
+    const errorBody = await res.text();
+    throw new Error(`Create task failed: ${res.status()} ${errorBody}`);
+  }
   return res.json();
 }
 
@@ -125,7 +137,10 @@ export async function addMemberViaApi(
       data: { email: memberEmail },
     },
   );
-  expect(res.status(), `Add member failed: ${memberEmail}`).toBe(201);
+  if (res.status() !== 201) {
+    const errorBody = await res.text();
+    throw new Error(`Add member failed: ${memberEmail}: ${res.status()} ${errorBody}`);
+  }
 }
 
 export async function getProjectDetailViaApi(
@@ -154,7 +169,10 @@ export async function getProjectsViaApi(
   const res = await request.get(`${API_BASE}/api/projects`, {
     headers: { Authorization: `Bearer ${token}` },
   });
-  expect(res.status()).toBe(200);
+  if (res.status() !== 200) {
+    const errorBody = await res.text();
+    throw new Error(`Get projects failed: ${res.status()} ${errorBody}`);
+  }
   return res.json();
 }
 
@@ -209,3 +227,49 @@ export async function assignTaskViaApi(
   return { status: res.status(), body };
 }
 
+export async function createCommentViaApi(
+  request: APIRequestContext,
+  token: string,
+  taskId: number,
+  content: string
+): Promise<CommentDto> {
+  const res = await request.post(`${API_BASE}/api/tasks/${taskId}/comments`, {
+    headers: { Authorization: `Bearer ${token}` },
+    data: { content },
+  });
+  if (res.status() !== 201) {
+    const errorBody = await res.text();
+    throw new Error(`Create comment failed: ${res.status()} ${errorBody}`);
+  }
+  return res.json();
+}
+
+export async function updateCommentViaApi(
+  request: APIRequestContext,
+  token: string,
+  taskId: number,
+  commentId: number,
+  content: string
+): Promise<{ status: number; body?: any }> {
+  const res = await request.put(`${API_BASE}/api/tasks/${taskId}/comments/${commentId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+    data: { content },
+  });
+  let body;
+  try { body = await res.json(); } catch (e) { }
+  return { status: res.status(), body };
+}
+
+export async function deleteCommentViaApi(
+  request: APIRequestContext,
+  token: string,
+  taskId: number,
+  commentId: number
+): Promise<{ status: number; body?: any }> {
+  const res = await request.delete(`${API_BASE}/api/tasks/${taskId}/comments/${commentId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  let body;
+  try { body = await res.json(); } catch (e) { }
+  return { status: res.status(), body };
+}

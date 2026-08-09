@@ -72,7 +72,7 @@
 | **Test Data** | Authorization: `Bearer <non-member-token>`, taskId: valid but in a foreign project |
 | **Test Steps** | 1. Send GET request to `/api/tasks/{id}/comments` <br> 2. Check response status code |
 | **Expected Result** | 1. Status 404 Not Found (không lộ sự tồn tại của task cho người ngoài project) <br> 2. Nội dung comment KHÔNG bị lộ cho non-member |
-| **Actual Result** | 1. Status 404 Not Found với body `{"error": "Task not found"}` |
+| **Actual Result** | 1. Status 404 Not Found với body `{"error":"Task not found","traceId":"..."}` |
 | **Status** | ✅Pass |
 | **Bug link** | — |
 
@@ -89,7 +89,7 @@
 | **Test Data** | taskId: `999999` (does not exist) |
 | **Test Steps** | 1. Send GET request to `/api/tasks/999999/comments` <br> 2. Check response status code |
 | **Expected Result** | 1. Status 404 Not Found |
-| **Actual Result** | 1. Response returned status 404 Not Found with `{"error": "Task not found"}` |
+| **Actual Result** | 1. Response returned status 404 Not Found with `{"error":"Task not found","traceId":"..."}` |
 | **Status** | ✅Pass |
 | **Bug link** | — |
 

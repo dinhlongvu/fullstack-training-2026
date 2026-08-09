@@ -83,7 +83,7 @@ export default defineConfig({
       cwd: '../../frontend',
       url: 'http://localhost:5173',
       reuseExistingServer: !process.env.CI,
-      timeout: 15_000,
+      timeout: 60_000,
     },
   ],
 });

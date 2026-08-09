@@ -51,7 +51,7 @@
 | **Test Data** | No Authorization header |
 | **Test Steps** | 1. Send GET request to `/api/projects/{projectId}/tasks` without any token <br> 2. Check response status code |
 | **Expected Result** | 1. Status 401 Unauthorized <br> 2. No task data is returned |
-| **Actual Result** | 1. Status 401 Unauthorized contains body: `{ "error": "Unauthorized. Please provide a valid Bearer token."}` <br> 2. No task data is returned |
+| **Actual Result** | 1. Status 401 Unauthorized contains body: `{"error":"Unauthorized. Please provide a valid Bearer token.","traceId":"..."}` <br> 2. No task data is returned |
 | **Status** | ✅ Passed |
 | **Bug link** | — |
 
@@ -68,7 +68,7 @@
 | **Test Data** | Authorization: `Bearer <non-member-token>`, projectId: valid but foreign project |
 | **Test Steps** | 1. Login as a user who is not a member of the project <br> 2. Send GET request to `/api/projects/{projectId}/tasks` <br> 3. Check response status code and body |
 | **Expected Result** | 1. Status 404 Not Found (không lộ sự tồn tại của project/task cho người ngoài) <br> 2. No task data is leaked |
-| **Actual Result** | 1. Status 404 Not Found với body `{"error": "Project not found"}` <br> 2. No task data is leaked |
+| **Actual Result** | 1. Status 404 Not Found với body `{"error":"Project not found","traceId":"..."}` <br> 2. No task data is leaked |
 | **Status** | ✅ Passed |
 | **Bug link** | — |
 
@@ -84,8 +84,8 @@
 | **Precondition** | User has valid Bearer token |
 | **Test Data** | projectId: `999999` (does not exist) |
 | **Test Steps** | 1. Send GET request to `/api/projects/999999/tasks` with valid token <br> 2. Check response status code |
-| **Expected Result** | 1. Status 404 Not Found <br> 2. Response body: `{ "error": "Project not found" }` |
-| **Actual Result** | 1. Status 404 Not Found <br> 2. Response body: `{ "error": "Project not found" }` |
+| **Expected Result** | 1. Status 404 Not Found <br> 2. Response body: `{"error":"Project not found","traceId":"..."}` |
+| **Actual Result** | 1. Status 404 Not Found <br> 2. Response body: `{"error":"Project not found","traceId":"..."}` |
 | **Status** | ✅ Passed |
 | **Bug link** | — |
 
@@ -187,7 +187,7 @@
 | **Test Data** | `GET /api/projects/{projectId}/tasks?status=InvalidStatus` |
 | **Test Steps** | 1. Send GET request with `?status=InvalidStatus` <br> 2. Check response status code |
 | **Expected Result** | 1. Status 400 Bad Request <br> 2. Response indicates the status value is invalid <br> 3. No tasks are returned |
-| **Actual Result** | 1. Status 400 Bad Request contains body: `{ "error": "Invalid status value. Allowed values: Todo, InProgress, Done."}` <br> 2. Response indicates the status value is invalid <br> 3. No tasks are returned |
+| **Actual Result** | 1. Status 400 Bad Request contains body: `{"errors":["Invalid status value. Allowed values: Todo, InProgress, Done."],"traceId":"..."}` <br> 2. Response indicates the status value is invalid <br> 3. No tasks are returned |
 | **Status** | ✅ Passed |
 | **Bug link** | — |
 
@@ -204,7 +204,7 @@
 | **Test Data** | `GET /api/projects/{projectId}/tasks?status=<script>alert(1)</script>` |
 | **Test Steps** | 1. Send GET request with XSS payload in `status` query param <br> 2. Check response status code <br> 3. Check that the payload is NOT reflected in response body without encoding |
 | **Expected Result** | 1. Status 400 Bad Request (enum parse failure) <br> 2. The script tag is NOT executed <br> 3. Response does NOT reflect the raw `<script>` string unescaped |
-| **Actual Result** | 1. Status 400 Bad Request contains body: `{ "error": "Invalid status value. Allowed values: Todo, InProgress, Done."}` <br> 2. The script tag is NOT executed <br> 3. Response does NOT reflect the raw `<script>` string unescaped |
+| **Actual Result** | 1. Status 400 Bad Request contains body: `{"errors":["Invalid status value. Allowed values: Todo, InProgress, Done."],"traceId":"..."}` <br> 2. The script tag is NOT executed <br> 3. Response does NOT reflect the raw `<script>` string unescaped |
 | **Status** | ✅ Passed |
 | **Bug link** | — |
 
@@ -221,7 +221,7 @@
 | **Test Data** | `GET /api/projects/{projectId}/tasks?assigneeId=1 OR 1=1` |
 | **Test Steps** | 1. Send GET request with SQL injection payload in `assigneeId` <br> 2. Check response status code <br> 3. Verify that all tasks are NOT dumped from DB |
 | **Expected Result** | 1. Status 400 Bad Request (integer parse failure) or no tasks returned outside of normal filter logic <br> 2. EF Core parameterized queries prevent SQL injection <br> 3. No additional unauthorized data is exposed |
-| **Actual Result** | 1. Status 400 Bad Request contains body: `{ "error": "Invalid assigneeId value. Must be a valid integer."}` <br> 2. EF Core parameterized queries prevent SQL injection <br> 3. No additional unauthorized data is exposed |
+| **Actual Result** | 1. Status 400 Bad Request contains body: `{"errors":["Invalid assigneeId value. Must be a valid integer."],"traceId":"..."}` <br> 2. EF Core parameterized queries prevent SQL injection <br> 3. No additional unauthorized data is exposed |
 | **Status** | ✅ Passed |
 | **Bug link** | — |
 

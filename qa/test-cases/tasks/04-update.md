@@ -53,7 +53,7 @@
 | **Test Data** | No Authorization header; body: `{ "title": "No Auth", "description": "", "priority": "Low" }` |
 | **Test Steps** | 1. Send PUT request to `/api/tasks/{id}` without any token <br> 2. Check response status code |
 | **Expected Result** | 1. Status 401 Unauthorized <br> 2. Task is NOT updated |
-| **Actual Result** | 1. Response returned status 401 Unauthorized with `{"error": "Unauthorized. Please provide a valid Bearer token."}`. |
+| **Actual Result** | 1. Response returned status 401 Unauthorized with `{"error":"Unauthorized. Please provide a valid Bearer token.","traceId":"..."}`. |
 | **Status** | ✅ Pass |
 | **Bug link** | — |
 
@@ -70,7 +70,7 @@
 | **Test Data** | Authorization: `Bearer <non-member-token>`, taskId: valid but in a foreign project |
 | **Test Steps** | 1. Login as a user not in the project <br> 2. Send PUT request to `/api/tasks/{id}` <br> 3. Check response status code |
 | **Expected Result** | 1. Status 404 Not Found (không lộ sự tồn tại của task cho người ngoài project) <br> 2. Task is NOT updated |
-| **Actual Result** | 1. Status 404 Not Found với body `{"error": "Task not found"}` <br> 2. Task is NOT updated |
+| **Actual Result** | 1. Status 404 Not Found với body `{"error":"Task not found","traceId":"..."}` <br> 2. Task is NOT updated |
 | **Status** | ✅ Pass |
 | **Bug link** | — |
 
@@ -86,8 +86,8 @@
 | **Precondition** | User is project member; task exists |
 | **Test Data** | `{ "title": "", "description": "Some desc", "priority": "Low" }` |
 | **Test Steps** | 1. Send PUT request with empty `title` <br> 2. Check response status code and body |
-| **Expected Result** | 1. Status 400 Bad Request <br> 2. Response contains validation error: `"Title is required."` <br> 3. Task is NOT updated |
-| **Actual Result** | 1. Response returned status 400 Bad Request with `{"errors":["Title cannot be empty if provided."],"traceId":"..."}`. |
+| **Expected Result** | 1. Status 400 Bad Request <br> 2. Response body: `{"errors":["Title is required."],"traceId":"..."}` <br> 3. Task is NOT updated |
+| **Actual Result** | 1. Response returned status 400 Bad Request with `{"errors":["Title cannot be empty if provided."],"traceId":"00-ee59dc20551dec38477b2dff0d1d1f64-cd767632df375994-00"}`. |
 | **Status** | ✅ Pass |
 | **Bug link** | — |
 
@@ -103,8 +103,8 @@
 | **Precondition** | User is project member; task exists |
 | **Test Data** | `{ "title": "<201-character-string>", "description": "", "priority": "Low" }` |
 | **Test Steps** | 1. Send PUT request with `title` of 201 characters <br> 2. Check response status code |
-| **Expected Result** | 1. Status 400 Bad Request <br> 2. Response contains validation error: `"Title must be 200 characters or less."` |
-| **Actual Result** | 1. Response returned status 400 Bad Request with `{"errors":["Title must be 200 characters or less."],"traceId":"..."}`. |
+| **Expected Result** | 1. Status 400 Bad Request <br> 2. Response body: `{"errors":["Title must be 200 characters or less."],"traceId":"..."}` |
+| **Actual Result** | 1. Response returned status 400 Bad Request with `{"errors":["Title must be 200 characters or less."],"traceId":"00-113a907dfa7dfc23e6791961bf1209ab-9e5b664e85210a6a-00"}`. |
 | **Status** | ✅ Pass |
 | **Bug link** | — |
 
@@ -120,8 +120,8 @@
 | **Precondition** | User is project member; task exists |
 | **Test Data** | `{ "title": "Old Due", "description": "", "priority": "Low", "dueDate": "2019-06-15T00:00:00Z" }` |
 | **Test Steps** | 1. Send PUT request with `dueDate` set to a date in the past <br> 2. Check response status code |
-| **Expected Result** | 1. Status 400 Bad Request <br> 2. Response contains validation error: `"Due date must be in the future."` <br> 3. Task's due date is NOT updated |
-| **Actual Result** | 1. Response returned status 400 Bad Request with `{"errors":["Due date must be in the future."],"traceId":"..."}` |
+| **Expected Result** | 1. Status 400 Bad Request <br> 2. Response body: `{"errors":["Due date must be in the future."],"traceId":"..."}` <br> 3. Task's due date is NOT updated |
+| **Actual Result** | 1. Response returned status 400 Bad Request with `{"errors":["Due date must be in the future."],"traceId":"00-319d289a23d95eacf83e7245bb8d91c7-181293a2daa3c223-00"}` |
 | **Status** | ✅ Pass |
 | **Bug link** | — |
 
@@ -205,8 +205,8 @@
 | **Precondition** | User is project member; task exists |
 | **Test Data** | `{ "title": "Priority Test", "description": "", "priority": "Critical" }` |
 | **Test Steps** | 1. Send PUT request with invalid `priority` value `"Critical"` <br> 2. Check response status code |
-| **Expected Result** | 1. Status 400 Bad Request <br> 2. Response contains validation error: `"Priority must be 'Low', 'Medium', or 'High'."` |
-| **Actual Result** | 1. Response returned status 400 Bad Request with `{"errors":["Priority must be 'Low', 'Medium', or 'High'."],"traceId":"..."}`. |
+| **Expected Result** | 1. Status 400 Bad Request <br> 2. Response body: `{"errors":["Priority must be 'Low', 'Medium', or 'High'."],"traceId":"..."}` |
+| **Actual Result** | 1. Response returned status 400 Bad Request with `{"errors":["Priority must be 'Low', 'Medium', or 'High'."],"traceId":"00-07329a480f00404525be4626ff81e939-7f3f79b079965e4b-00"}`. |
 | **Status** | ✅ Pass |
 | **Bug link** | — |
 

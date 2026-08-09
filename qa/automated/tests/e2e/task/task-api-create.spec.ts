@@ -1,4 +1,4 @@
-import { test, expect, type APIRequestContext, request as playwrightRequest } from "@playwright/test";
+import { test, expect } from "../utils/api-fixtures";
 import { API_BASE, uniqueEmail, registerAndLogin, createProjectViaApi, createTaskViaApi, addMemberViaApi, futureDateISO, type RegisteredUser, type TaskDto } from "../utils/api-helpers";
 
 // Priority and Status enum values (local to task tests)
@@ -11,24 +11,9 @@ const TASK_STATUS = { Todo: "Todo", InProgress: "InProgress", Done: "Done" } as 
 // ═══════════════════════════════════════════════════════════════════════════════
 
 test.describe("API: POST /api/projects/{projectId}/tasks — Create Task", () => {
-  let apiContext: APIRequestContext;
-  let owner: RegisteredUser;
-  let member: RegisteredUser;
-  let nonMember: RegisteredUser;
 
-  test.beforeAll(async () => {
-    apiContext = await playwrightRequest.newContext();
-    owner = await registerAndLogin(apiContext, { fullName: "Shared Owner" });
-    member = await registerAndLogin(apiContext, { fullName: "Shared Member" });
-    nonMember = await registerAndLogin(apiContext, { fullName: "Shared NonMember" });
-  });
 
-  test.afterAll(async () => {
-    await apiContext.dispose();
-  });
-  test("TC-TASK-CREATE-001: Create task with all valid fields (happy path) → 201", async ({
-    request,
-  }) => {
+  test("TC-TASK-CREATE-001: Create task with all valid fields (happy path) → 201", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
 
 
     const project = await createProjectViaApi(request, owner.token, {
@@ -66,9 +51,7 @@ test.describe("API: POST /api/projects/{projectId}/tasks — Create Task", () =>
     expect(typeof body.id).toBe("number");
   });
 
-  test("TC-TASK-CREATE-002: Create task with minimum required fields only → 201", async ({
-    request,
-  }) => {
+  test("TC-TASK-CREATE-002: Create task with minimum required fields only → 201", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
 
     const project = await createProjectViaApi(request, owner.token, {
       name: "Minimal Task Project",
@@ -93,9 +76,7 @@ test.describe("API: POST /api/projects/{projectId}/tasks — Create Task", () =>
     expect(body.assigneeName).toBeNull();
   });
 
-  test("TC-TASK-CREATE-003: Create task without Bearer token → 401", async ({
-    request,
-  }) => {
+  test("TC-TASK-CREATE-003: Create task without Bearer token → 401", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
 
     const project = await createProjectViaApi(request, owner.token, {
       name: "No Auth Task Create",
@@ -115,9 +96,7 @@ test.describe("API: POST /api/projects/{projectId}/tasks — Create Task", () =>
     expect(res.status()).toBe(401);
   });
 
-  test("TC-TASK-CREATE-004: Non-member cannot create task → 404", async ({
-    request,
-  }) => {
+  test("TC-TASK-CREATE-004: Non-member cannot create task → 404", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
     const project = await createProjectViaApi(request, owner.token, {
       name: "Non-Member Task Create",
     });
@@ -137,9 +116,7 @@ test.describe("API: POST /api/projects/{projectId}/tasks — Create Task", () =>
     expect(res.status()).toBe(404);
   });
 
-  test("TC-TASK-CREATE-005: Create task with missing title → 400", async ({
-    request,
-  }) => {
+  test("TC-TASK-CREATE-005: Create task with missing title → 400", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
 
     const project = await createProjectViaApi(request, owner.token, {
       name: "Empty Title Project",
@@ -160,9 +137,7 @@ test.describe("API: POST /api/projects/{projectId}/tasks — Create Task", () =>
     expect(res.status()).toBe(400);
   });
 
-  test("TC-TASK-CREATE-006: Create task with title exceeding 200 characters → 400", async ({
-    request,
-  }) => {
+  test("TC-TASK-CREATE-006: Create task with title exceeding 200 characters → 400", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
 
     const project = await createProjectViaApi(request, owner.token, {
       name: "Long Title Project",
@@ -184,9 +159,7 @@ test.describe("API: POST /api/projects/{projectId}/tasks — Create Task", () =>
     expect(res.status()).toBe(400);
   });
 
-  test("TC-TASK-CREATE-007: Create task with title exactly 200 characters → 201", async ({
-    request,
-  }) => {
+  test("TC-TASK-CREATE-007: Create task with title exactly 200 characters → 201", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
 
     const project = await createProjectViaApi(request, owner.token, {
       name: "Boundary Title Project",
@@ -211,9 +184,7 @@ test.describe("API: POST /api/projects/{projectId}/tasks — Create Task", () =>
     expect(body.title.length).toBe(200);
   });
 
-  test("TC-TASK-CREATE-008: Create task with description exceeding 2000 characters → 400", async ({
-    request,
-  }) => {
+  test("TC-TASK-CREATE-008: Create task with description exceeding 2000 characters → 400", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
 
     const project = await createProjectViaApi(request, owner.token, {
       name: "Long Desc Project",
@@ -235,9 +206,7 @@ test.describe("API: POST /api/projects/{projectId}/tasks — Create Task", () =>
     expect(res.status()).toBe(400);
   });
 
-  test("TC-TASK-CREATE-009: Create task with invalid priority value → 400", async ({
-    request,
-  }) => {
+  test("TC-TASK-CREATE-009: Create task with invalid priority value → 400", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
 
     const project = await createProjectViaApi(request, owner.token, {
       name: "Invalid Priority Project",
@@ -258,9 +227,7 @@ test.describe("API: POST /api/projects/{projectId}/tasks — Create Task", () =>
     expect(res.status()).toBe(400);
   });
 
-  test("TC-TASK-CREATE-010: Create task with past dueDate → 400", async ({
-    request,
-  }) => {
+  test("TC-TASK-CREATE-010: Create task with past dueDate → 400", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
 
     const project = await createProjectViaApi(request, owner.token, {
       name: "Past DueDate Project",
@@ -282,9 +249,7 @@ test.describe("API: POST /api/projects/{projectId}/tasks — Create Task", () =>
     expect(res.status()).toBe(400);
   });
 
-  test("TC-TASK-CREATE-011: Create task with future dueDate → 201", async ({
-    request,
-  }) => {
+  test("TC-TASK-CREATE-011: Create task with future dueDate → 201", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
 
     const project = await createProjectViaApi(request, owner.token, {
       name: "Future DueDate Project",
@@ -309,9 +274,7 @@ test.describe("API: POST /api/projects/{projectId}/tasks — Create Task", () =>
     expect(body.dueDate).not.toBeNull();
   });
 
-  test("TC-TASK-CREATE-018: Create task with today's dueDate → 201", async ({
-    request,
-  }) => {
+  test("TC-TASK-CREATE-018: Create task with today's dueDate → 201", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
     const project = await createProjectViaApi(request, owner.token, {
       name: "Today DueDate Project",
     });
@@ -335,9 +298,7 @@ test.describe("API: POST /api/projects/{projectId}/tasks — Create Task", () =>
     expect(body.dueDate).not.toBeNull();
   });
 
-  test("TC-TASK-CREATE-012: Assign task to non-member → 400", async ({
-    request,
-  }) => {
+  test("TC-TASK-CREATE-012: Assign task to non-member → 400", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
 
 
 
@@ -362,9 +323,7 @@ test.describe("API: POST /api/projects/{projectId}/tasks — Create Task", () =>
     expect(res.status()).toBe(400);
   });
 
-  test("TC-TASK-CREATE-013: Assign task to project owner (owner is valid assignee) → 201", async ({
-    request,
-  }) => {
+  test("TC-TASK-CREATE-013: Assign task to project owner (owner is valid assignee) → 201", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
 
     const project = await createProjectViaApi(request, owner.token, {
       name: "Owner Assign Project",
@@ -388,9 +347,7 @@ test.describe("API: POST /api/projects/{projectId}/tasks — Create Task", () =>
     expect(body.assigneeName).toBe(owner.fullName);
   });
 
-  test("TC-TASK-CREATE-014: Create task for non-existent project → 404", async ({
-    request,
-  }) => {
+  test("TC-TASK-CREATE-014: Create task for non-existent project → 404", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
 
 
     const res = await request.post(
@@ -408,9 +365,7 @@ test.describe("API: POST /api/projects/{projectId}/tasks — Create Task", () =>
     expect(res.status()).toBe(404);
   });
 
-  test("TC-TASK-CREATE-015: Default status is Todo on creation", async ({
-    request,
-  }) => {
+  test("TC-TASK-CREATE-015: Default status is Todo on creation", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
 
     const project = await createProjectViaApi(request, owner.token, {
       name: "Default Status Project",
@@ -433,9 +388,7 @@ test.describe("API: POST /api/projects/{projectId}/tasks — Create Task", () =>
     expect(body.status).toBe("Todo");
   });
 
-  test("TC-TASK-CREATE-016: XSS injection in task title → 201 (stored as raw string)", async ({
-    request,
-  }) => {
+  test("TC-TASK-CREATE-016: XSS injection in task title → 201 (stored as raw string)", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
 
     const project = await createProjectViaApi(request, owner.token, {
       name: "XSS Title Project",
@@ -464,9 +417,7 @@ test.describe("API: POST /api/projects/{projectId}/tasks — Create Task", () =>
     expect(contentType).toContain("application/json");
   });
 
-  test("TC-TASK-CREATE-017: SQL injection in task description → 201 (stored as literal)", async ({
-    request,
-  }) => {
+  test("TC-TASK-CREATE-017: SQL injection in task description → 201 (stored as literal)", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
 
     const project = await createProjectViaApi(request, owner.token, {
       name: "SQLi Desc Project",

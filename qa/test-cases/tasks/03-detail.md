@@ -53,7 +53,7 @@
 | **Test Data** | No Authorization header, taskId: valid |
 | **Test Steps** | 1. Send GET request to `/api/tasks/{id}` without any token <br> 2. Check response status code |
 | **Expected Result** | 1. Status 401 Unauthorized <br> 2. Task detail is NOT returned |
-| **Actual Result** | 1. Status 401 Unauthorized <br> 2. No task data is returned |
+| **Actual Result** | 1. Status 401 Unauthorized `{"error": "Unauthorized. Please provide a valid Bearer token.","traceId": "00-b13a1b12f9ff23cdec999229f20ec1d2-caf440d6573cd4e4-00"}` <br> 2. No task data is returned |
 | **Status** | ✅ Passed |
 | **Bug link** | — |
 
@@ -70,7 +70,7 @@
 | **Test Data** | Authorization: `Bearer <non-member-token>`, taskId: valid but in a foreign project |
 | **Test Steps** | 1. Login as a user not in the project <br> 2. Send GET request to `/api/tasks/{id}` <br> 3. Check response status code |
 | **Expected Result** | 1. Status 404 Not Found (không lộ sự tồn tại của task cho người ngoài project) <br> 2. Task detail is NOT exposed to non-member |
-| **Actual Result** | 1. Status 404 Not Found với body `{"error": "Task not found"}` <br> 2. Task detail is NOT exposed to non-member |
+| **Actual Result** | 1. Status 404 Not Found với body `{"error":"Task not found","traceId":"..."}` <br> 2. Task detail is NOT exposed to non-member |
 | **Status** | ✅ Passed |
 | **Bug link** | — |
 
@@ -87,7 +87,7 @@
 | **Test Data** | taskId: `999999` (does not exist) |
 | **Test Steps** | 1. Send GET request to `/api/tasks/999999` with valid token <br> 2. Check response status code |
 | **Expected Result** | 1. Status 404 Not Found <br> 2. No task data is returned |
-| **Actual Result** | Status 404 Not Found with response message: <br> `{"error": "Task not found."}` <br> 2. No task data is returned |
+| **Actual Result** | Status 404 Not Found with response message: <br> `{"error":"Task not found.","traceId":"..."}` <br> 2. No task data is returned |
 | **Status** | ✅ Passed |
 | **Bug link** | — |
 
@@ -138,7 +138,7 @@
 | **Test Data** | taskId: `"abc"` (non-numeric) |
 | **Test Steps** | 1. Send GET request to `/api/tasks/abc` with valid token <br> 2. Check response status code |
 | **Expected Result** | 1. Status 400 Bad Request <br> 2. Response indicates route parameter type mismatch |
-| **Actual Result** | 1. Response returned status 400 Bad Request with `{"error": "Not found", "message": "Task not found."}`. |
+| **Actual Result** | 1. Response returned status 400 Bad Request with `{"errors":["Task not found."],"traceId":"..."}`. |
 | **Status** | ✅ Pass |
 | **Bug link** | — |
 
@@ -206,7 +206,7 @@
 | **Test Data** | taskId: `1; DROP TABLE Tasks; --` in URL path |
 | **Test Steps** | 1. Send GET /api/tasks/1; DROP TABLE Tasks; -- <br> 2. Verify the response status code. <br> 3. Verify the request does not expose SQL errors. <br> 4. Verify existing Tasks can still be retrieved normally. |
 | **Expected Result** | 1. The request is rejected (typically 400 Bad Request or 404 Not Found, depending on route/model binding). <br> 2. The SQL injection payload is treated as plain input and is never executed. <br> 3. The response does not expose database or SQL error details. <br> 4. Existing Task data remains intact and subsequent requests continue to work normally. |
-| **Actual Result** | 1. Status 400 Bad Request with response message: <br> `{"message": "Task not found."}` <br> 2. SQL injection payload is never executed <br> 3. Database and Tasks table remain unaffected |
+| **Actual Result** | 1. Status 400 Bad Request with response message: <br> `{"errors":["Task not found."],"traceId":"..."}` <br> 2. SQL injection payload is never executed <br> 3. Database and Tasks table remain unaffected |
 | **Status** | ✅ Passed |
 | **Bug link** | — |
 
