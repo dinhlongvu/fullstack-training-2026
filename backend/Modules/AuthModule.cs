@@ -25,6 +25,8 @@ public class AuthModule : ICarterModule
             IMediator mediator) =>
         {
             var userDto = await mediator.Send(command);
+            // Use relative URL because there is no GET /api/users/{id} route.
+            // CreatedAtRoute is not applicable here — this is intentional, not an omission.
             return Results.Created($"/api/users/{userDto.Id}", userDto);
         })
         .WithName(AppConstants.Routes.RegisterUser)

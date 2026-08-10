@@ -150,6 +150,8 @@ public class ProjectsModule : ICarterModule
             }
 
             // Handle 201 Created
+            // Use relative URL because there is no GET /api/projects/{id}/members/{memberId} route.
+            // CreatedAtRoute is not applicable here — this is intentional, not an omission.
             return Results.Created($"/api/projects/{id}/members/{result.Data?.UserId}", result.Data);
         })
         .WithName(AppConstants.Routes.AddProjectMember)

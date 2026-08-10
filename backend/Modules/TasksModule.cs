@@ -380,6 +380,8 @@ public class TasksModule : ICarterModule
             if (!result.IsTaskFound || !result.IsAuthorized)
                 return ErrorResults.NotFound(context, "Task not found");
 
+            // Use relative URL because there is no GET /api/tasks/{taskId}/comments/{commentId} route.
+            // CreatedAtRoute is not applicable here — this is intentional, not an omission.
             return Results.Created($"/api/tasks/{taskId}/comments/{result.Data?.Id}", result.Data);
         })
         .WithName(AppConstants.Routes.CreateComment)
