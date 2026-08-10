@@ -53,14 +53,20 @@ export function UpcomingDeadlines({
         />
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Overdue summary — count only, so a large backlog can't crowd out the list. */}
+        {/* Overdue summary — count only, so a large backlog can't crowd out the
+            list. Links to the wider urgent list: the endpoint behind it has no
+            overdue-only mode. */}
         {overdueCount > 0 && (
-          <div className="flex items-center gap-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">
+          <Link
+            to="/my-tasks?urgent=true"
+            className="flex items-center gap-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive transition-colors hover:bg-destructive/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          >
             <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
             <span>
               {overdueCount} overdue {overdueCount === 1 ? "task" : "tasks"}
             </span>
-          </div>
+            <span className="ml-auto shrink-0 underline">View all</span>
+          </Link>
         )}
 
         {/* Always render the upcoming block so the widget never looks half-empty
@@ -105,6 +111,15 @@ export function UpcomingDeadlines({
             ))}
           </ul>
         )}
+
+        {/* The endpoint has no "upcoming only" mode, so the label says what the
+            page actually shows. */}
+        <Link
+          to="/my-tasks"
+          className="inline-block rounded-sm text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        >
+          View all my tasks
+        </Link>
       </CardContent>
     </Card>
   );

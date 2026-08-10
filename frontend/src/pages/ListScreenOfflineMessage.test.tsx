@@ -7,12 +7,16 @@ import { screen } from "@testing-library/react";
 import { NetworkError } from "@/lib/api";
 import { ProjectsPage } from "./ProjectsPage";
 import { DashboardPage } from "./DashboardPage";
+import { MyTasksPage } from "./MyTasksPage";
 import { KanbanBoard } from "@/features/tasks/components/KanbanBoard";
 import {
   useProjectsQuery,
   useCreateProjectMutation,
 } from "@/features/projects/api/useProjects";
-import { useMyStatsQuery } from "@/features/dashboard/api/useDashboard";
+import {
+  useMyStatsQuery,
+  useMyTasksQuery,
+} from "@/features/dashboard/api/useDashboard";
 import {
   useProjectTasksQuery,
   useCreateTaskMutation,
@@ -50,6 +54,9 @@ beforeEach(() => {
 
   // The dashboard reads this one only to resolve project names.
   vi.mocked(useProjectsQuery).mockReturnValue(settled({ data: [] }));
+
+  // The module mock returns undefined otherwise, and the page destructures it.
+  vi.mocked(useMyTasksQuery).mockReturnValue(settled());
 });
 
 describe("list screens name the right cause when nothing loaded", () => {
@@ -90,6 +97,27 @@ describe("list screens name the right cause when nothing loaded", () => {
     );
 
     renderWithProviders(<DashboardPage />);
+
+    expect(screen.getByText(/try again in a moment/i)).toBeInTheDocument();
+    expect(screen.queryByText(/check your connection/i)).not.toBeInTheDocument();
+  });
+
+  it("my tasks page blames the connection when the request never reached the server", () => {
+    vi.mocked(useMyTasksQuery).mockReturnValue(
+      settled({ error: new NetworkError() }),
+    );
+
+    renderWithProviders(<MyTasksPage />, ["/my-tasks?urgent=true"]);
+
+    expect(screen.getByText(/check your connection/i)).toBeInTheDocument();
+  });
+
+  it("my tasks page does not blame the connection when the server answered", () => {
+    vi.mocked(useMyTasksQuery).mockReturnValue(
+      settled({ error: new Error("HTTP 500") }),
+    );
+
+    renderWithProviders(<MyTasksPage />, ["/my-tasks?urgent=true"]);
 
     expect(screen.getByText(/try again in a moment/i)).toBeInTheDocument();
     expect(screen.queryByText(/check your connection/i)).not.toBeInTheDocument();

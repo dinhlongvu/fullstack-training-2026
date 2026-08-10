@@ -11,6 +11,7 @@ import { ProjectsPage } from "@/pages/ProjectsPage";
 import { ProjectDetailPage } from "@/pages/ProjectDetailPage";
 import { TaskDetailPage } from "@/pages/TaskDetailPage";
 import { DashboardPage } from "@/pages/DashboardPage";
+import { MyTasksPage } from "@/pages/MyTasksPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 import { Toaster } from "@/components/ui/Sonner";
 import { useAxeReporter } from "@/lib/useAxeReporter";
@@ -38,6 +39,7 @@ export default function App() {
           <Route path="/projects/:id" element={<ProjectDetailPage />} />
           <Route path="/tasks/:id" element={<TaskDetailPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/my-tasks" element={<MyTasksPage />} />
         </Route>
 
         {/* 404 */}
