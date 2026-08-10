@@ -19,6 +19,7 @@ import { EditTaskDialog } from "@/features/tasks/components/EditTaskDialog";
 import { TaskDetailSkeleton } from "@/features/tasks/components/TaskDetailSkeleton";
 import { ErrorState } from "@/components/ErrorState";
 import { isNetworkError } from "@/lib/api";
+import { normalizeNewlines } from "@/lib/text";
 import { CommentList } from "@/features/tasks/components/CommentList";
 import { CommentForm } from "@/features/tasks/components/CommentForm";
 import { isThreadUnavailable } from "@/features/tasks/lib/commentThreadState";
@@ -123,6 +124,11 @@ export function TaskDetailPage() {
     );
   }
 
+  // Descriptions are stored raw and never trimmed, so a few dozen Enter presses
+  // reach the page as blank lines. Collapse them for display only — the Edit
+  // dialog still gets the raw text.
+  const description = normalizeNewlines(task.description).trim();
+
   return (
     <div className="space-y-6">
       {/* Back link — go to the parent project's board, not the projects list */}
@@ -163,7 +169,7 @@ export function TaskDetailPage() {
         </div>
 
         <p className="whitespace-pre-wrap break-words text-muted-foreground">
-          {task.description || "No description"}
+          {description || "No description"}
         </p>
 
         <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">

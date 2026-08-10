@@ -8,6 +8,7 @@ import { ArrowLeft, UserPlus, Pencil, Trash2, Users, Calendar } from "lucide-rea
 import { Button } from "@/components/ui/Button";
 import { ErrorState } from "@/components/ErrorState";
 import { isNetworkError } from "@/lib/api";
+import { normalizeNewlines } from "@/lib/text";
 import { ProjectDetailSkeleton } from "@/features/projects/components/ProjectDetailSkeleton";
 import {
   Card,
@@ -90,6 +91,11 @@ export function ProjectDetailPage() {
     );
   }
 
+  // Descriptions are stored raw and never trimmed, so a few dozen Enter presses
+  // reach the page as blank lines. Collapse them for display only — the Edit
+  // dialog still gets the raw text.
+  const description = normalizeNewlines(project.description).trim();
+
   return (
     <div className="space-y-6">
       {/* Back link */}
@@ -106,7 +112,7 @@ export function ProjectDetailPage() {
         <div>
           <h2 className="text-2xl font-bold">{project.name}</h2>
           <p className="mt-1 whitespace-pre-wrap break-words text-muted-foreground">
-            {project.description || "No description"}
+            {description || "No description"}
           </p>
           <div className="mt-3 flex items-center gap-4 text-sm text-muted-foreground">
             <span className="flex items-center gap-1">
