@@ -70,4 +70,4 @@ The following journey tests successfully validated the critical path:
 ## 5. Conclusion & Recommendation to CEO
 Based on the execution results of the 367 test cases across the frontend and backend, the application is highly stable. The API layer handles unauthorized access and malformed data correctly, and the UI correctly reflects validation states and core workflows.
 
-**Recommendation:** The current build on branch `Phuc/test-cases-14-final-regression` is fully certified by QA and meets the quality bar for deployment. We recommend proceeding with the release.
+**Recommendation:** The current build on branch `Phuc/test-cases-14-final-regression` is fully certified by QA and meets the quality bar for deployment
