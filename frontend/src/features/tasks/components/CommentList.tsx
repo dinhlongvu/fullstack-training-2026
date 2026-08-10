@@ -7,6 +7,7 @@ import { MessageSquare } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import { ErrorState } from "@/components/ErrorState";
 import { isNetworkError } from "@/lib/api";
+import { normalizeNewlines } from "@/lib/text";
 import { CommentListSkeleton } from "./CommentListSkeleton";
 import { isThreadUnavailable } from "../lib/commentThreadState";
 import { type Comment } from "../api/tasksApi";
@@ -29,13 +30,6 @@ function formatCreatedAt(dateString: string): string {
     hour: "numeric",
     minute: "2-digit",
   });
-}
-
-// Normalize newlines for display. Two steps:
-//   1. Convert Windows CRLF (and any lone CR) to LF so line endings are uniform.
-//   2. Collapse any run of 3+ consecutive newlines down to 2 — i.e. allow AT MOST one blank line between paragraphs.
-function normalizeNewlines(text: string): string {
-  return text.replace(/\r\n?/g, "\n").replace(/\n{3,}/g, "\n\n");
 }
 
 export function CommentList({
