@@ -1,5 +1,4 @@
 // Commands/Tasks/UpdateTaskStatusCommand.cs
-using Backend.Domain;
 using Backend.DTOs;
 using MediatR;
 

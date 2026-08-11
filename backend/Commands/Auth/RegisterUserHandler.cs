@@ -2,13 +2,11 @@
 // CQRS Handler for registration command
 // Validates email uniqueness, hashes password, saves user, returns DTO.
 
-using Backend.Commands.Auth;
+using AutoMapper;
 using Backend.Domain;
 using Backend.DTOs;
 using Backend.Exceptions;
 using Backend.Infrastructure.Data;
-using AutoMapper;
-using BCrypt.Net;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 

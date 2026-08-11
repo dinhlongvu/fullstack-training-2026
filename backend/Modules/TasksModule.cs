@@ -6,6 +6,7 @@
 using Backend.Commands.Tasks;
 using Backend.Domain;
 using Backend.DTOs;
+using Backend.Infrastructure;
 using Backend.Middleware;
 using Backend.Queries.Tasks;
 using Backend.Services.Auth;
@@ -79,7 +80,7 @@ public class TasksModule : ICarterModule
 
             return Results.Ok(result.Data);
         })
-        .WithName("GetProjectTasks")
+        .WithName(AppConstants.Routes.GetProjectTasks)
         .WithSummary("Get tasks in a project")
         .WithDescription("Get the list of project tasks. Optional filter: status (Todo | InProgress | Done), priority (Low | Medium | High), assigneeId.")
         .Produces<List<TaskDto>>(StatusCodes.Status200OK)
@@ -133,9 +134,9 @@ public class TasksModule : ICarterModule
                 });
 
             // Points the new task to GET Task Detail endpoint
-            return Results.Created($"/api/tasks/{result.Data?.Id}", result.Data);
+            return Results.CreatedAtRoute(AppConstants.Routes.GetTaskDetail, new { taskId = result.Data!.Id }, result.Data);
         })
-        .WithName("CreateTask")
+        .WithName(AppConstants.Routes.CreateTask)
         .WithSummary("Create a new task")
         .WithDescription("Creates a new task in the specified project. Requires project member access.")
         .Produces<TaskDto>(StatusCodes.Status201Created)
@@ -167,7 +168,7 @@ public class TasksModule : ICarterModule
 
             return Results.Ok(result.Data);
         })
-        .WithName("GetTaskDetail")
+        .WithName(AppConstants.Routes.GetTaskDetail)
         .WithSummary("Get task detail")
         .WithDescription("Returns detailed information about a specific task. Requires project member access.")
         .Produces<TaskDto>(StatusCodes.Status200OK)
@@ -226,7 +227,7 @@ public class TasksModule : ICarterModule
 
             return Results.Ok(result.Data);
         })
-        .WithName("UpdateTask")
+        .WithName(AppConstants.Routes.UpdateTask)
         .WithSummary("Update a task")
         .WithDescription("Updates task fields (title, description, priority, dueDate, assigneeId). Status is managed via PATCH /status. Requires project member access.")
         .Produces<TaskDto>(StatusCodes.Status200OK)
@@ -271,7 +272,7 @@ public class TasksModule : ICarterModule
 
             return Results.Ok(result.Data);
         })
-        .WithName("UpdateTaskStatus")
+        .WithName(AppConstants.Routes.UpdateTaskStatus)
         .WithSummary("Move task to a new status")
         .WithDescription("Updates the status of a task (Todo/InProgress/Done). Requires project member access.")
         .Produces<TaskDto>(StatusCodes.Status200OK)
@@ -310,7 +311,7 @@ public class TasksModule : ICarterModule
 
             return Results.Ok(result.Data);
         })
-        .WithName("AssignTask")
+        .WithName(AppConstants.Routes.AssignTask)
         .WithSummary("Assign or unassign a task")
         .WithDescription("Assigns a task to a project member. Pass null to unassign. Requires project member access.")
         .Produces<TaskDto>(StatusCodes.Status200OK)
@@ -334,7 +335,7 @@ public class TasksModule : ICarterModule
 
             return Results.NoContent();
         })
-        .WithName("DeleteTask")
+        .WithName(AppConstants.Routes.DeleteTask)
         .WithSummary("Delete a task")
         .WithDescription("Deletes a task and utilizes DB cascade for comments. Requires project member access.")
         .Produces(StatusCodes.Status204NoContent)
@@ -356,7 +357,7 @@ public class TasksModule : ICarterModule
 
             return Results.Ok(result.Data);
         })
-        .WithName("GetTaskComments")
+        .WithName(AppConstants.Routes.GetTaskComments)
         .WithSummary("Get all comments for a task")
         .WithDescription("Returns a chronological list of comments for a task, embedded with author names.")
         .Produces<List<CommentDto>>(StatusCodes.Status200OK)
@@ -379,9 +380,11 @@ public class TasksModule : ICarterModule
             if (!result.IsTaskFound || !result.IsAuthorized)
                 return ErrorResults.NotFound(context, "Task not found");
 
+            // Use relative URL because there is no GET /api/tasks/{taskId}/comments/{commentId} route.
+            // CreatedAtRoute is not applicable here — this is intentional, not an omission.
             return Results.Created($"/api/tasks/{taskId}/comments/{result.Data?.Id}", result.Data);
         })
-        .WithName("CreateComment")
+        .WithName(AppConstants.Routes.CreateComment)
         .WithSummary("Add a comment to a task")
         .WithDescription("Creates a new comment. Validates content length and ensures project member authorization.")
         .Produces<CommentDto>(StatusCodes.Status201Created)
@@ -407,7 +410,7 @@ public class TasksModule : ICarterModule
 
             return Results.NoContent();
         })
-        .WithName("DeleteComment")
+        .WithName(AppConstants.Routes.DeleteComment)
         .WithSummary("Delete a comment within a task")
         .WithDescription("Allows users to delete their own comments, and Project Managers to delete any comment within their projects.")
         .Produces(StatusCodes.Status204NoContent)

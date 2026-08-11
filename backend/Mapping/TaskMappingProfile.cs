@@ -3,7 +3,6 @@
 // One profile per domain group. Registered globally in Program.cs.
 
 using AutoMapper;
-using Backend.Commands.Tasks;
 using Backend.Domain;
 using Backend.DTOs;
 
@@ -26,8 +25,5 @@ public class TaskMappingProfile : Profile
             .ForMember(d => d.Priority, o => o.MapFrom(s => s.Priority.ToString()))
             .ForMember(d => d.AssigneeName, o => o.MapFrom(s => s.Assignee != null ? s.Assignee.FullName : null));
 
-        // Command → Entity
-        CreateMap<CreateTaskCommand, TaskItem>()
-            .ForMember(d => d.Status, o => o.MapFrom(_ => Domain.TaskStatus.Todo));
     }
 }

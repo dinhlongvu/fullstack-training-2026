@@ -17,6 +17,7 @@ public record TaskDto
     public string? AssigneeName { get; init; } // Flattened from TaskItem.Assignee.FullName
     public int CommentCount { get; init; }
     public DateTime CreatedAt { get; init; }
+    public DateTime UpdatedAt { get; init; }
 }
 
 // Separate DTO for list views (fewer fields = faster queries)

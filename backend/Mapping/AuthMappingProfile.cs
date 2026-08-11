@@ -14,7 +14,6 @@ public class AuthMappingProfile : Profile
     {
         // Map User entity to UserDto for API responses 
         // Never expose PasswordHash to client
-        // Map User → UserDto (for API responses)
         CreateMap<User, UserDto>();
     }
 }

@@ -50,7 +50,7 @@ public class GetTaskCommentsHandler : IRequestHandler<GetTaskCommentsQuery, GetT
         if (!taskInfo.IsAuthorized)
             return new GetTaskCommentsResult(true, false, null);
 
-        var comments = await _db.Set<Backend.Domain.Comment>()
+        var comments = await _db.Comments
             .AsNoTracking()
             .Where(c => c.TaskId == req.TaskId)
             .OrderBy(c => c.CreatedAt)

@@ -60,6 +60,10 @@ public class GetTaskDetailHandler : IRequestHandler<GetTaskDetailQuery, GetTaskD
             .ProjectTo<TaskDto>(_mapper.ConfigurationProvider)
             .FirstOrDefaultAsync(ct);
 
+        // Guard against race condition: task was deleted between the auth check and data fetch
+        if (taskDto == null)
+            return new GetTaskDetailResult(false, false, null);
+
         return new GetTaskDetailResult(true, true, taskDto);
     }
 }

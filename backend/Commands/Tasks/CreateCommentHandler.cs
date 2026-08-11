@@ -46,10 +46,10 @@ public class CreateCommentHandler : IRequestHandler<CreateCommentCommand, Create
             Content = req.Content.Trim()
         };
 
-        _db.Set<Comment>().Add(comment);
+        _db.Comments.Add(comment);
         await _db.SaveChangesAsync(ct);
 
-        var savedComment = await _db.Set<Comment>()
+        var savedComment = await _db.Comments
             .Include(c => c.Author)
             .FirstAsync(c => c.Id == comment.Id, ct);
 

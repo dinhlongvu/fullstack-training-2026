@@ -4,7 +4,7 @@
 
 using Backend.Commands.Projects;
 using Backend.DTOs;
-using Backend.Middleware;
+using Backend.Infrastructure;
 using Backend.Queries.Projects;
 using Backend.Services.Auth;
 using Carter;
@@ -30,7 +30,7 @@ public class ProjectsModule : ICarterModule
             var result = await mediator.Send(new GetProjectsQuery(userId), ct);
             return Results.Ok(result); // Return 200 OK with the list of projects
         })
-        .WithName("GetProjects")
+        .WithName(AppConstants.Routes.GetProjects)
         .WithSummary("List user's projects")
         .WithDescription("Returns all projects where the current user is owner OR member, sorted by CreatedAt descending.")
         .Produces<List<ProjectListDto>>(StatusCodes.Status200OK)
@@ -47,9 +47,9 @@ public class ProjectsModule : ICarterModule
             var command = new CreateProjectCommand(req.Name, req.Description ?? string.Empty, userId);
 
             var result = await mediator.Send(command, ct);
-            return Results.Created($"/api/projects/{result.Id}", result); // Return 201 Created with the new project
+            return Results.CreatedAtRoute(AppConstants.Routes.GetProjectDetail, new { id = result.Id }, result);
         })
-        .WithName("CreateProject")
+        .WithName(AppConstants.Routes.CreateProject)
         .WithSummary("Create a new project")
         .WithDescription("Create a new project owned by the current user.")
         .Produces<ProjectDto>(StatusCodes.Status201Created) // 201 Created if successful
@@ -72,7 +72,7 @@ public class ProjectsModule : ICarterModule
             // Handle 200 OK
             return Results.Ok(result.Data);
         })
-        .WithName("GetProjectDetail")
+        .WithName(AppConstants.Routes.GetProjectDetail)
         .WithSummary("Get project details")
         .WithDescription("Returns detailed information about a specific project if the current user is the owner or a member.")
         .Produces<ProjectDetailDto>(StatusCodes.Status200OK)
@@ -99,7 +99,7 @@ public class ProjectsModule : ICarterModule
             // Handle 200 OK
             return Results.Ok(result.Data);
         })
-        .WithName("UpdateProject")
+        .WithName(AppConstants.Routes.UpdateProject)
         .WithSummary("Update project details")
         .WithDescription("Updates the name and description of a project. Can only be performed by the project creator.")
         .Produces<ProjectDto>(StatusCodes.Status200OK)
@@ -122,7 +122,7 @@ public class ProjectsModule : ICarterModule
 
             return Results.NoContent();
         })
-        .WithName("DeleteProject")
+        .WithName(AppConstants.Routes.DeleteProject)
         .WithSummary("Delete a project")
         .WithDescription("Deletes a project. Only the project owner can delete it. Cascade deletes all related ProjectMembers, Tasks, and Comments.")
         .Produces(StatusCodes.Status204NoContent)
@@ -150,9 +150,11 @@ public class ProjectsModule : ICarterModule
             }
 
             // Handle 201 Created
+            // Use relative URL because there is no GET /api/projects/{id}/members/{memberId} route.
+            // CreatedAtRoute is not applicable here — this is intentional, not an omission.
             return Results.Created($"/api/projects/{id}/members/{result.Data?.UserId}", result.Data);
         })
-        .WithName("AddProjectMember")
+        .WithName(AppConstants.Routes.AddProjectMember)
         .WithSummary("Add user to project")
         .WithDescription("Add user to project. Owner-only. Validates user exists, validates user not already a member.")
         .Produces<ProjectMemberDto>(StatusCodes.Status201Created)

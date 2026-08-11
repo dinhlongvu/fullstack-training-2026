@@ -2,9 +2,9 @@
 // Extension methods for ClaimsPrincipal to easily extract user information from JWT claims.
 // Centralizes token parsing logic for reusability across all protected endpoints.
 
-using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Backend.Exceptions;
+using Backend.Infrastructure;
 
 namespace Backend.Services.Auth;
 
@@ -14,7 +14,7 @@ public static class ClaimsPrincipalExtensions
     // Throws a consistent 401 UnauthorizedException if the token is missing or the sub claim is invalid.
     public static int GetUserId(this ClaimsPrincipal user)
     {
-        var sub = user.FindFirstValue(JwtRegisteredClaimNames.Sub);
+        var sub = user.FindFirstValue(AppConstants.Claims.UserId);
 
         if (string.IsNullOrEmpty(sub) || !int.TryParse(sub, out var userId))
         {

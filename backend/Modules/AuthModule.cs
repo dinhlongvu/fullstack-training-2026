@@ -4,6 +4,7 @@
 
 using Backend.Commands.Auth;
 using Backend.DTOs;
+using Backend.Infrastructure;
 using Backend.Queries.Auth;
 using Backend.Services.Auth;
 using Carter;
@@ -24,9 +25,11 @@ public class AuthModule : ICarterModule
             IMediator mediator) =>
         {
             var userDto = await mediator.Send(command);
+            // Use relative URL because there is no GET /api/users/{id} route.
+            // CreatedAtRoute is not applicable here — this is intentional, not an omission.
             return Results.Created($"/api/users/{userDto.Id}", userDto);
         })
-        .WithName("RegisterUser")
+        .WithName(AppConstants.Routes.RegisterUser)
         .WithSummary("Register a new user account")
         .WithDescription("Creates a new user account and returns the created user details.")
         .Produces<UserDto>(StatusCodes.Status201Created)
@@ -41,7 +44,7 @@ public class AuthModule : ICarterModule
             var response = await mediator.Send(command);
             return Results.Ok(response);
         })
-        .WithName("LoginUser")
+        .WithName(AppConstants.Routes.LoginUser)
         .WithSummary("User login")
         .WithDescription("Authenticates a user and returns a JWT Bearer token along with user info.")
         .Produces<LoginResponseDto>(StatusCodes.Status200OK)
@@ -57,7 +60,7 @@ public class AuthModule : ICarterModule
             return Results.Ok(userProfile);
         })
         .RequireAuthorization()
-        .WithName("GetCurrentUser")
+        .WithName(AppConstants.Routes.GetCurrentUser)
         .WithSummary("Get current user profile")
         .WithDescription("Retrieves the profile information of the currently authenticated user based on the JWT token.")
         .Produces<UserDto>(StatusCodes.Status200OK)
@@ -69,7 +72,7 @@ public class AuthModule : ICarterModule
             var result = await mediator.Send(command);
             return Results.Ok(result);
         })
-        .WithName("RefreshToken")
+        .WithName(AppConstants.Routes.RefreshToken)
         .WithSummary("Refresh access token")
         .WithDescription("Exchanges a valid, non-expired refresh token for a new set of JWT access and refresh tokens.")
         .Produces<RefreshTokenResponseDto>(StatusCodes.Status200OK)
