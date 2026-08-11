@@ -8,10 +8,10 @@
 The application has successfully completed a full end-to-end regression test covering all core features (Auth, Projects, Tasks, Comments, Dashboard). Both Postman API tests and Playwright E2E tests are passing consistently.
 
 ### 1.1 Test Execution Summary
-- **Total Test Cases Executed**: 367
+- **Total Test Cases Executed**: 371
   - **Postman API Tests**: 102
-  - **Playwright E2E & Automated API Tests**: 265
-- **Passed**: 367 (100%)
+  - **Playwright E2E & Automated API Tests**: 269
+- **Passed**: 371 (100%)
 - **Failed**: 0 (0%)
 - **Pending/Skipped**: 0 (0%) *(4 out-of-scope test cases were removed as requested)*
 
@@ -55,19 +55,23 @@ The following journey tests successfully validated the critical path:
 7. **Comment** on the active task (API).
 8. **Check Dashboard** to ensure the project and task status aggregate correctly (UI).
 
-### 4.2 100% UI Flow - `TC-JOURNEY-002`
-*End-to-end validation simulating a real user entirely through the browser.*
-1. **Register** and **Login** Owner via UI.
-2. **Create Project** via UI dialogs.
-3. **Add Member** via UI dialog.
-4. **Create Task** via UI form and assign priority.
-5. **Move Task** status via UI Kanban board actions.
-6. **Comment** on the task via UI Task Detail dialog.
-7. **Check Dashboard** via UI.
+### 4.2 100% UI Flows - Comprehensive User Journeys (`TC-JOURNEY-002` to `TC-JOURNEY-006`)
+*End-to-end validation simulating real user scenarios entirely through the browser UI.*
+
+1. **TC-JOURNEY-002 (Owner Full Lifecycle):**
+   - Register & Login Owner → Create Project → Add Member → Create Task (with Priority & Assignee) → Move Status (Todo → InProgress) → Comment on Task → Set Upcoming Due Date via Calendar → Verify Dashboard stats & Upcoming Deadlines.
+2. **TC-JOURNEY-003 (Member Perspective & Dashboard Widget Interaction):**
+   - Login as Member → View assigned tasks on Dashboard → Click "View" from Upcoming Deadlines widget to open Task Detail → Add Comment → Return to Project Board → Update Task Status → Verify Dashboard stats update.
+3. **TC-JOURNEY-004 (Assign & Unassign Flow):**
+   - Assign member directly via Kanban card select picker → Verify on Task Detail → Unassign via Edit Task dialog → Re-assign via Edit Task dialog.
+4. **TC-JOURNEY-005 (Edit Project & Task Details):**
+   - Edit project name & description via UI → Edit task title, description, priority, and due date via UI → Verify updates persist on detail pages.
+5. **TC-JOURNEY-006 (Full Kanban Lifecycle):**
+   - Move task through all status columns: `Todo` → `InProgress` → `Done` → Verify Dashboard "Done" count increments.
 
 ---
 
 ## 5. Conclusion & Recommendation to CEO
-Based on the execution results of the 367 test cases across the frontend and backend, the application is highly stable. The API layer handles unauthorized access and malformed data correctly, and the UI correctly reflects validation states and core workflows.
+Based on the execution results of the 371 test cases across the frontend and backend, the application is highly stable. The API layer handles unauthorized access and malformed data correctly, and the UI correctly reflects validation states and core workflows.
 
-**Recommendation:** The current build on branch `Phuc/test-cases-14-final-regression` is fully certified by QA and meets the quality bar for deployment
+**Recommendation:** The current build on branch `Phuc/test-cases-14-final-regression` is fully certified by QA and meets the quality bar for deployment.
