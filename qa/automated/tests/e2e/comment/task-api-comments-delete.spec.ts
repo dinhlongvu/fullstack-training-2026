@@ -2,8 +2,7 @@ import { test, expect } from "../utils/api-fixtures";
 import { API_BASE, registerAndLogin, createProjectViaApi, createTaskViaApi, createCommentViaApi, addMemberViaApi, type RegisteredUser } from "../utils/api-helpers";
 
 test.describe("API: DELETE /api/tasks/{taskId}/comments/{commentId} — Delete Comment", () => {
-
-test("TC-TASK-COMMENTS-DELETE-001: Author deletes their own comment → 204 No Content", async ({ request, owner, member, nonMember }) => {
+  test("TC-TASK-COMMENTS-DELETE-001: Author deletes their own comment → 204 No Content", async ({ request, owner }) => {
     const project = await createProjectViaApi(request, owner.token, { name: "Delete Comment Proj 1" });
     const task = await createTaskViaApi(request, owner.token, project.id, "Task 1");
     const comment = await createCommentViaApi(request, owner.token, task.id, "Comment to delete");
@@ -15,7 +14,7 @@ test("TC-TASK-COMMENTS-DELETE-001: Author deletes their own comment → 204 No C
     expect([200, 204]).toContain(res.status());
   });
 
-  test("TC-TASK-COMMENTS-DELETE-002: Project owner deletes member's comment → 204 No Content", async ({ request, owner, member, nonMember }) => {
+  test("TC-TASK-COMMENTS-DELETE-002: Project owner deletes member's comment → 204 No Content", async ({ request, owner, member }) => {
     const project = await createProjectViaApi(request, owner.token, { name: "Delete Comment Proj 2" });
     await addMemberViaApi(request, owner.token, project.id, member.email);
     const task = await createTaskViaApi(request, owner.token, project.id, "Task 2");
@@ -31,7 +30,7 @@ test("TC-TASK-COMMENTS-DELETE-001: Author deletes their own comment → 204 No C
     expect([200, 204]).toContain(res.status());
   });
 
-  test("TC-TASK-COMMENTS-DELETE-003: Member tries to delete another's comment → 403 Forbidden / 404", async ({ request, owner, member, nonMember }) => {
+  test("TC-TASK-COMMENTS-DELETE-003: Member tries to delete another's comment → 403 Forbidden / 404", async ({ request, owner, member }) => {
     const project = await createProjectViaApi(request, owner.token, { name: "Delete Comment Proj 3" });
     await addMemberViaApi(request, owner.token, project.id, member.email);
     const task = await createTaskViaApi(request, owner.token, project.id, "Task 3");
@@ -47,7 +46,7 @@ test("TC-TASK-COMMENTS-DELETE-001: Author deletes their own comment → 204 No C
     expect([403, 404]).toContain(res.status());
   });
 
-  test("TC-TASK-COMMENTS-DELETE-004: Delete non-existent comment → 404 Not Found", async ({ request, owner, member, nonMember }) => {
+  test("TC-TASK-COMMENTS-DELETE-004: Delete non-existent comment → 404 Not Found", async ({ request, owner }) => {
     const project = await createProjectViaApi(request, owner.token, { name: "Delete Comment Proj 4" });
     const task = await createTaskViaApi(request, owner.token, project.id, "Task 4");
 

@@ -11,10 +11,7 @@ const TASK_STATUS = { Todo: "Todo", InProgress: "InProgress", Done: "Done" } as 
 // ═══════════════════════════════════════════════════════════════════════════════
 
 test.describe("API: GET /api/projects/{projectId}/tasks — List Tasks", () => {
-
-
-  test("TC-TASK-LIST-001: List tasks as project owner (happy path) → 200 + correct shape", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
-
+  test("TC-TASK-LIST-001: List tasks as project owner (happy path) → 200 + correct shape", async ({ request, user }) => {
     const project = await createProjectViaApi(request, user.token, {
       name: "Task List Test",
     });
@@ -50,10 +47,7 @@ test.describe("API: GET /api/projects/{projectId}/tasks — List Tasks", () => {
     expect(task).toHaveProperty("createdAt");
   });
 
-  test("TC-TASK-LIST-002: List tasks as project member (non-owner) → 200", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
-
-
-
+  test("TC-TASK-LIST-002: List tasks as project member (non-owner) → 200", async ({ request, owner, member }) => {
     const project = await createProjectViaApi(request, owner.token, {
       name: "Member Task List",
     });
@@ -75,8 +69,7 @@ test.describe("API: GET /api/projects/{projectId}/tasks — List Tasks", () => {
     expect(tasks.length).toBeGreaterThanOrEqual(1);
   });
 
-  test("TC-TASK-LIST-003: List tasks without Bearer token → 401", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
-
+  test("TC-TASK-LIST-003: List tasks without Bearer token → 401", async ({ request, user }) => {
     const project = await createProjectViaApi(request, user.token, {
       name: "No Auth Task List",
     });
@@ -88,7 +81,7 @@ test.describe("API: GET /api/projects/{projectId}/tasks — List Tasks", () => {
     expect(res.status()).toBe(401);
   });
 
-  test("TC-TASK-LIST-004: Non-member cannot list tasks → 404", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
+  test("TC-TASK-LIST-004: Non-member cannot list tasks → 404", async ({ request, owner, nonMember }) => {
     const project = await createProjectViaApi(request, owner.token, {
       name: "Non-Member Task List",
     });
@@ -101,9 +94,7 @@ test.describe("API: GET /api/projects/{projectId}/tasks — List Tasks", () => {
     expect(res.status()).toBe(404);
   });
 
-  test("TC-TASK-LIST-005: List tasks for non-existent project → 404", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
-
-
+  test("TC-TASK-LIST-005: List tasks for non-existent project → 404", async ({ request, user }) => {
     const res = await request.get(
       `${API_BASE}/api/projects/999999/tasks`,
       { headers: { Authorization: `Bearer ${user.token}` } },
@@ -112,8 +103,7 @@ test.describe("API: GET /api/projects/{projectId}/tasks — List Tasks", () => {
     expect(res.status()).toBe(404);
   });
 
-  test("TC-TASK-LIST-006: Filter tasks by status=Todo → only Todo tasks", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
-
+  test("TC-TASK-LIST-006: Filter tasks by status=Todo → only Todo tasks", async ({ request, user }) => {
     const project = await createProjectViaApi(request, user.token, {
       name: "Filter Status Test",
     });
@@ -140,8 +130,7 @@ test.describe("API: GET /api/projects/{projectId}/tasks — List Tasks", () => {
     }
   });
 
-  test("TC-TASK-LIST-007: Filter tasks by priority=High → only High tasks", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
-
+  test("TC-TASK-LIST-007: Filter tasks by priority=High → only High tasks", async ({ request, user }) => {
     const project = await createProjectViaApi(request, user.token, {
       name: "Filter Priority Test",
     });
@@ -168,10 +157,7 @@ test.describe("API: GET /api/projects/{projectId}/tasks — List Tasks", () => {
     }
   });
 
-  test("TC-TASK-LIST-008: Filter tasks by assigneeId → only assigned tasks", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
-
-
-
+  test("TC-TASK-LIST-008: Filter tasks by assigneeId → only assigned tasks", async ({ request, owner, member }) => {
     const project = await createProjectViaApi(request, owner.token, {
       name: "Filter Assignee Test",
     });
@@ -199,8 +185,7 @@ test.describe("API: GET /api/projects/{projectId}/tasks — List Tasks", () => {
     expect(tasks[0].assigneeName).toBe(member.fullName);
   });
 
-  test("TC-TASK-LIST-009: Filter tasks by combined status + priority", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
-
+  test("TC-TASK-LIST-009: Filter tasks by combined status + priority", async ({ request, user }) => {
     const project = await createProjectViaApi(request, user.token, {
       name: "Combined Filter Test",
     });
@@ -228,8 +213,7 @@ test.describe("API: GET /api/projects/{projectId}/tasks — List Tasks", () => {
     expect(tasks[0].priority).toBe("High");
   });
 
-  test("TC-TASK-LIST-010: Filter with status=Done returns empty list when no done tasks", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
-
+  test("TC-TASK-LIST-010: Filter with status=Done returns empty list when no done tasks", async ({ request, user }) => {
     const project = await createProjectViaApi(request, user.token, {
       name: "Empty Done Filter",
     });
@@ -249,8 +233,7 @@ test.describe("API: GET /api/projects/{projectId}/tasks — List Tasks", () => {
     expect(tasks).toHaveLength(0);
   });
 
-  test("TC-TASK-LIST-011: Filter with invalid status value → 400", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
-
+  test("TC-TASK-LIST-011: Filter with invalid status value → 400", async ({ request, user }) => {
     const project = await createProjectViaApi(request, user.token, {
       name: "Invalid Status Filter",
     });
@@ -263,8 +246,7 @@ test.describe("API: GET /api/projects/{projectId}/tasks — List Tasks", () => {
     expect(res.status()).toBe(400);
   });
 
-  test("TC-TASK-LIST-012: XSS injection in query parameter → 400 + not reflected", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
-
+  test("TC-TASK-LIST-012: XSS injection in query parameter → 400 + not reflected", async ({ request, user }) => {
     const project = await createProjectViaApi(request, user.token, {
       name: "XSS Filter Test",
     });
@@ -281,8 +263,7 @@ test.describe("API: GET /api/projects/{projectId}/tasks — List Tasks", () => {
     expect(text).not.toContain("<script>alert(1)</script>");
   });
 
-  test("TC-TASK-LIST-013: SQL injection in assigneeId query parameter → 400", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
-
+  test("TC-TASK-LIST-013: SQL injection in assigneeId query parameter → 400", async ({ request, user }) => {
     const project = await createProjectViaApi(request, user.token, {
       name: "SQLi Filter Test",
     });
@@ -296,8 +277,7 @@ test.describe("API: GET /api/projects/{projectId}/tasks — List Tasks", () => {
     expect(res.status()).toBe(400);
   });
 
-  test("TC-TASK-LIST-014: Tasks ordered by createdAt descending (newest first)", async ({ request, owner, member, nonMember, member2, assignee, user }) => {
-
+  test("TC-TASK-LIST-014: Tasks ordered by createdAt descending (newest first)", async ({ request, user }) => {
     const project = await createProjectViaApi(request, user.token, {
       name: "Sort Order Test",
     });
