@@ -13,7 +13,11 @@ import { defineConfig, devices } from '@playwright/test';
  */
 export default defineConfig({
   testDir: './tests/e2e',
-  /* Run tests sequentially to avoid SQLite DB lock contention in local API tests */
+  /* Fail the run if a stray test.only is left in the source */
+  forbidOnly: !!process.env.CI,
+  /* Retry on CI only */
+  retries: process.env.CI ? 2 : 0,
+  /* Run tests sequentially with 1 worker to prevent SQLite database lock contention during concurrent API writes */
   fullyParallel: false,
   workers: 1,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */

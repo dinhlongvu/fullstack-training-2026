@@ -17,7 +17,7 @@ test.describe("API: Tasks Assign & Delete", () => {
     let project: ProjectDto;
     let task: TaskDto;
 
-    test.beforeEach(async ({ request, owner, member, member2 }) => {
+    test.beforeAll(async ({ request, owner, member, member2 }) => {
       // Create a shared project and task for the assign tests
       project = await createProjectViaApi(request, owner.token, { name: "Assign Test Project" });
       await addMemberViaApi(request, owner.token, project.id, member.email);
@@ -153,7 +153,7 @@ test.describe("API: Tasks Assign & Delete", () => {
     let project: ProjectDto;
     let task: TaskDto;
 
-    test.beforeEach(async ({ request, owner, member }) => {
+    test.beforeAll(async ({ request, owner, member }) => {
       // Create a shared project
       project = await createProjectViaApi(request, owner.token, { name: "Delete Test Project" });
       await addMemberViaApi(request, owner.token, project.id, member.email);
