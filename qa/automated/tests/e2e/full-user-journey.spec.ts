@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { API_BASE, uniqueEmail, registerAndLogin, createProjectViaApi, createTaskViaApi, addMemberViaApi, createCommentViaApi, updateTaskStatusViaApi } from "./utils/api-helpers";
+import { API_BASE, uniqueEmail, registerAndLogin, createProjectViaApi, createTaskViaApi, addMemberViaApi, createCommentViaApi, updateTaskStatusViaApi, futureDateISO } from "./utils/api-helpers";
 
 test.describe("Full E2E User Journey", () => {
   test("TC-JOURNEY-001: Complete User Flow (Register → Login → Create Project → Add Member → Create Task → Update Status → Comment → Check Dashboard)", async ({ page, request }) => {
@@ -44,11 +44,14 @@ test.describe("Full E2E User Journey", () => {
     // Add member
     await addMemberViaApi(request, token, project.id, memberUser.email);
 
-    // 4. Create Task
+    // 4. Create Task (assigned to owner with upcoming due date so it appears on Dashboard)
+    const dueDate = futureDateISO(1);
     const task1 = await createTaskViaApi(request, token, project.id, {
       title: "Journey Task 1",
       description: "First task in journey",
-      priority: "High"
+      priority: "High",
+      assigneeId: project.createdById,
+      dueDate,
     });
 
     // 5. Move Task Status (Todo → InProgress)
@@ -61,7 +64,8 @@ test.describe("Full E2E User Journey", () => {
 
     // 7. Check Dashboard via UI
     await page.goto("/dashboard");
-    await expect(page.locator("body")).toBeVisible();
-    await expect(page.getByText("Full Journey Project").or(page.getByText("Dashboard")).first()).toBeVisible();
+    await expect(page.getByText("Full Journey Project")).toBeVisible();
+    const ipCard = page.locator("text=In Progress").locator("xpath=ancestor::div[contains(@class,'rounded')]");
+    await expect(ipCard.locator("p.text-3xl")).toHaveText("1");
   });
 });
