@@ -180,7 +180,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"title\": \"Task for comment tests\",\n  \"description\": \"Testing comments CRUD\",\n  \"priority\": 2\n}"
+							"raw": "{\n  \"title\": \"Task for comment tests\",\n  \"description\": \"Testing comments CRUD\",\n  \"priority\": \"Medium\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/projects/{{projectId}}/tasks",

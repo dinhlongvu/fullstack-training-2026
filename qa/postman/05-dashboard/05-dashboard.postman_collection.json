@@ -180,7 +180,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"title\": \"Dashboard Test Task\",\n  \"description\": \"Task assigned for dashboard verification\",\n  \"priority\": 2\n}"
+							"raw": "{\n  \"title\": \"Dashboard Test Task\",\n  \"description\": \"Task assigned for dashboard verification\",\n  \"priority\": \"Medium\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/projects/{{projectId}}/tasks",
