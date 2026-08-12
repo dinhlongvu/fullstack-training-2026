@@ -53,7 +53,7 @@
 | **Test Data** | No Authorization header; body: `{ "assigneeId": 2 }` |
 | **Test Steps** | 1. Send PATCH request to `/api/tasks/{id}/assign` without any token <br> 2. Check response status code |
 | **Expected Result** | 1. Status 401 Unauthorized <br> 2. Task assignment is NOT changed |
-| **Actual Result** | 1. Response returned status 401 Unauthorized with `{"error":"Unauthorized."}` <br> 2. No database changes occurred |
+| **Actual Result** | 1. Response returned status 401 Unauthorized with `{"error":"Unauthorized.","traceId":"..."}` <br> 2. No database changes occurred |
 | **Status** | ✅ Pass |
 | **Bug link** | — |
 
@@ -70,7 +70,7 @@
 | **Test Data** | Authorization: `Bearer <non-member-token>`; body: `{ "assigneeId": 2 }` |
 | **Test Steps** | 1. Login as a user not in the project <br> 2. Send PATCH request to `/api/tasks/{id}/assign` <br> 3. Check response status code |
 | **Expected Result** | 1. Status 404 Not Found (không lộ sự tồn tại của task cho người ngoài project) <br> 2. Task assignment is NOT changed |
-| **Actual Result** | 1. Status 404 Not Found với body `{"error": "Task not found"}` <br> 2. No database changes occurred |
+| **Actual Result** | 1. Status 404 Not Found với body `{"error":"Task not found","traceId":"..."}` <br> 2. No database changes occurred |
 | **Status** | ✅ Pass |
 | **Bug link** | — |
 
@@ -86,8 +86,8 @@
 | **Precondition** | User is project member; target assignee exists in the system but is NOT a project member |
 | **Test Data** | body: `{ "assigneeId": <user-id-not-in-project> }` |
 | **Test Steps** | 1. Send PATCH request with `assigneeId` pointing to a user not in the project <br> 2. Check response status code |
-| **Expected Result** | 1. Status 400 Bad Request <br> 2. Response body: `{"errors":["Assignee must be a project member or project owner"],"traceId":"..."}` <br> 3. Task assignment is NOT changed |
-| **Actual Result** | 1. Status 400 Bad Request <br> 2. Response body: `{"errors":["Assignee must be a project member or project owner"],"traceId":"..."}` <br> 3. Task assignment is NOT changed |
+| **Expected Result** | 1. Status 400 Bad Request <br> 2. Response body: `{"errors":["Assignee must be a project member"],"traceId":"..."}` <br> 3. Task assignment is NOT changed |
+| **Actual Result** | 1. Status 400 Bad Request <br> 2. Response body: `{"errors":["Assignee must be a project member"],"traceId":"..."}` <br> 3. Task assignment is NOT changed |
 | **Status** | ✅ Pass |
 | **Bug link** | — |
 
@@ -155,7 +155,7 @@
 | **Test Data** | taskId: `999999`; body: `{ "assigneeId": 2 }` |
 | **Test Steps** | 1. Send PATCH request to `/api/tasks/999999/assign` <br> 2. Check response status code |
 | **Expected Result** | 1. Status 404 Not Found <br> 2. No task is modified |
-| **Actual Result** | 1. Response returned status 404 Not Found with `{"error":"Task not found"}` <br> 2. No task was modified |
+| **Actual Result** | 1. Response returned status 404 Not Found with `{"error":"Task not found","traceId":"..."}` <br> 2. No task was modified |
 | **Status** | ✅ Pass |
 | **Bug link** | — |
 

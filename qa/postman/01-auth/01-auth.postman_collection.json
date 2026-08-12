@@ -1,7 +1,7 @@
 {
   "info": {
-    "_postman_id": "69ce7d10-05c5-4c12-afd6-a73d7f124afc",
-    "name": "MiniProject",
+    "_postman_id": "a1b2c3d4-01au-4c12-afd6-a73d7f124001",
+    "name": "01-auth",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "_exporter_id": "55453258",
     "_collection_link": "https://go.postman.co/collection/55453258-69ce7d10-05c5-4c12-afd6-a73d7f124afc?source=collection_link"
@@ -109,6 +109,7 @@
               "const payload = JSON.parse(\r",
               "    atob(jsonData.token.split(\".\")[1])\r",
               ");\r",
+              "\r",
               "// 1. Kiểm tra status\r",
               "pm.test(\"Status code is 200 - Login successful\", () => {\r",
               "    pm.response.to.have.status(200);\r",
@@ -121,25 +122,20 @@
               "    pm.expect(jsonData.token).to.not.be.empty;\r",
               "});\r",
               "\r",
-              "// 3. Lưu token vào environment (QUAN TRỌNG!)\r",
-              "pm.test(\"Save token to environment\", () => {\r",
-              "    pm.environment.set(\"token\", jsonData.token);\r",
-              "    console.log(\"✅ Token saved:\", jsonData.token.substring(0, 20) + \"...\");\r",
-              "});\r",
+              "// 3. Lưu token + refreshToken + userId vào environment (side-effect, KHÔNG dùng pm.test)\r",
+              "pm.environment.set(\"token\", jsonData.token);\r",
+              "if (jsonData.refreshToken) {\r",
+              "    pm.environment.set(\"refreshToken\", jsonData.refreshToken);\r",
+              "}\r",
+              "pm.environment.set(\"userId\", jsonData.user.id);\r",
+              "console.log(\"✅ Token saved:\", jsonData.token.substring(0, 20) + \"...\");\r",
+              "console.log(\"✅ Refresh Token saved:\", jsonData.refreshToken ? jsonData.refreshToken.substring(0, 10) + \"...\" : \"none\");\r",
+              "console.log(\"✅ User ID saved:\", jsonData.user.id);\r",
               "\r",
               "// 4. Kiểm tra có user object\r",
               "pm.test(\"Response has user object\", () => {\r",
               "    pm.expect(jsonData).to.have.property(\"user\");\r",
               "});\r",
-              "\r",
-              "\r",
-              "\r",
-              "// 6. Lưu userId\r",
-              "pm.test(\"Save user id\", () => {\r",
-              "    pm.environment.set(\"userId\", jsonData.user.id);\r",
-              "    console.log(\"✅ User ID saved:\", jsonData.user.id);\r",
-              "});\r",
-              "\r",
               "\r",
               "pm.test(\"JWT contains exp claim\", () => {\r",
               "    pm.expect(payload.exp).to.exist;\r",
@@ -196,21 +192,10 @@
           "listen": "test",
           "script": {
             "exec": [
-              "// ============================================\r",
-              "// 1. KIỂM TRA RESPONSE CÓ BODY KHÔNG\r",
-              "// ============================================\r",
-              "const hasBody = pm.response.text() && pm.response.text().length > 0;\r",
-              "\r",
-              "// ============================================\r",
-              "// 2. LUÔN KIỂM TRA STATUS CODE\r",
-              "// ============================================\r",
               "pm.test(\"Status code is 200 - Get user info\", () => {\r",
               "    pm.response.to.have.status(200);\r",
               "});\r",
               "\r",
-              "// ============================================\r",
-              "// 3. KIỂM TRA RESPONSE CÓ BODY (KHÔNG RỖNG)\r",
-              "// ============================================\r",
               "pm.test(\"Response has body (not empty)\", () => {\r",
               "    pm.expect(pm.response.text()).to.not.be.empty;\r",
               "});\r",
@@ -225,31 +210,7 @@
               "\r",
               "pm.test(\"Does not expose passwordHash\", () => {\r",
               "    pm.expect(pm.response.text()).to.not.include(\"passwordHash\");\r",
-              "});\r",
-              "\r",
-              "// ============================================\r",
-              "// 4. NẾU CÓ BODY THÌ MỚI PARSE JSON\r",
-              "// ============================================\r",
-              "if (hasBody) {\r",
-              "    try {\r",
-              "        const jsonData = pm.response.json();\r",
-              "        \r",
-              "       \r",
-              "        \r",
-              "        \r",
-              "    } catch (e) {\r",
-              "        console.log(\"⚠️ Response body is not valid JSON\");\r",
-              "    }\r",
-              "} else {\r",
-              "    console.log(\"❌ Response body is empty. Status:\", pm.response.code);\r",
-              "    console.log(\"🔍 Token used:\", pm.environment.get(\"token\"));\r",
-              "}\r",
-              "\r",
-              "// ============================================\r",
-              "// 5. LOG ĐỂ DEBUG\r",
-              "// ============================================\r",
-              "console.log(\"Status code:\", pm.response.code);\r",
-              "console.log(\"Has body:\", hasBody);"
+              "});"
             ],
             "type": "text/javascript",
             "packages": {},
@@ -321,6 +282,239 @@
             "api",
             "auth",
             "me"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Register Duplicate Email",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 409 - Conflict\", () => {\r",
+              "    pm.response.to.have.status(409);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Error message indicates duplicate\", () => {\r",
+              "    const body = pm.response.json();\r",
+              "    pm.expect(body).to.have.property(\"error\");\r",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"email\": \"{{email}}\",\r\n  \"password\": \"Test@1234\",\r\n  \"fullName\": \"Duplicate User\"\r\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/auth/register",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "register"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Login Wrong Password",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 401 - Unauthorized\", () => {\r",
+              "    pm.response.to.have.status(401);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Error message present\", () => {\r",
+              "    const body = pm.response.json();\r",
+              "    pm.expect(body).to.have.property(\"error\");\r",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"email\": \"{{email}}\",\r\n  \"password\": \"WrongPassword123!\"\r\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/auth/login",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "login"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get Me Without Token",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 401 - Unauthorized\", () => {\r",
+              "    pm.response.to.have.status(401);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Error message present\", () => {\r",
+              "    const body = pm.response.json();\r",
+              "    pm.expect(body).to.have.property(\"error\");\r",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/auth/me",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "me"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Refresh Token Success",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200 - OK\", () => {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "const jsonData = pm.response.json();\r",
+              "pm.test(\"Response contains new token and refreshToken\", () => {\r",
+              "    pm.expect(jsonData).to.have.property(\"token\");\r",
+              "    pm.expect(jsonData).to.have.property(\"refreshToken\");\r",
+              "});\r",
+              "\r",
+              "if (jsonData.token) {\r",
+              "    pm.environment.set(\"token\", jsonData.token);\r",
+              "}\r",
+              "if (jsonData.refreshToken) {\r",
+              "    pm.environment.set(\"refreshToken\", jsonData.refreshToken);\r",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"refreshToken\": \"{{refreshToken}}\"\r\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/auth/refresh",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "refresh"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Refresh Token Invalid",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 401 - Unauthorized\", () => {\r",
+              "    pm.response.to.have.status(401);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Error message present\", () => {\r",
+              "    const body = pm.response.json();\r",
+              "    pm.expect(body).to.have.property(\"error\");\r",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"refreshToken\": \"invalid_refresh_token_string_xyz\"\r\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/auth/refresh",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "refresh"
           ]
         }
       },

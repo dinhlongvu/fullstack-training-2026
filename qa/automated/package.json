@@ -6,7 +6,13 @@
   "directories": {
     "doc": "docs"
   },
-  "scripts": {},
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui",
+    "test:report": "playwright show-report",
+    "test:postman": "npx newman run ../postman/01-auth/01-auth.postman_collection.json -e ../postman/01-auth/Dev.postman_environment.json && npx newman run ../postman/02-projects/02-projects.postman_collection.json -e ../postman/02-projects/Dev.postman_environment.json && npx newman run ../postman/03-tasks/03-tasks.postman_collection.json -e ../postman/03-tasks/Dev.postman_environment.json && npx newman run ../postman/04-comments/04-comments.postman_collection.json -e ../postman/04-comments/Dev.postman_environment.json && npx newman run ../postman/05-dashboard/05-dashboard.postman_collection.json -e ../postman/05-dashboard/Dev.postman_environment.json"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/dinhlongvu/fullstack-training-2026.git"

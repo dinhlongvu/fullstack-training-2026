@@ -72,7 +72,7 @@
 | **Test Data** | Authorization: `Bearer <non-member-token>`, taskId: valid but in a foreign project |
 | **Test Steps** | 1. Login as a user not in the project <br> 2. Send DELETE request to `/api/tasks/{id}` <br> 3. Check response status code |
 | **Expected Result** | 1. Status 404 Not Found (không lộ sự tồn tại của task cho người ngoài project) <br> 2. Task is NOT deleted |
-| **Actual Result** | 1. Status 404 Not Found với body `{"error": "Task not found"}` <br> 2. Task remains intact |
+| **Actual Result** | 1. Status 404 Not Found với body `{"error":"Task not found","traceId":"..."}` <br> 2. Task remains intact |
 | **Status** | Pass |
 | **Bug link** | — |
 
@@ -89,7 +89,7 @@
 | **Test Data** | taskId: `999999` (does not exist) |
 | **Test Steps** | 1. Send DELETE request to `/api/tasks/999999` with valid token <br> 2. Check response status code |
 | **Expected Result** | 1. Status 404 Not Found <br> 2. No task is modified |
-| **Actual Result** | 1. Response returned status 404 Not Found with `{"error": "Task not found"}` <br> 2. No database changes occurred |
+| **Actual Result** | 1. Response returned status 404 Not Found with `{"error":"Task not found","traceId":"..."}` <br> 2. No database changes occurred |
 | **Status** | Pass |
 | **Bug link** | — |
 
@@ -123,7 +123,7 @@
 | **Test Data** | taskId: id of a task that was successfully deleted |
 | **Test Steps** | 1. Delete a task successfully (first request) <br> 2. Send another DELETE request to the same `/api/tasks/{id}` (second request) <br> 3. Check response status code |
 | **Expected Result** | 1. Status 404 Not Found on the second request <br> 2. No server error (5xx) is thrown <br> 3. Consistent error response |
-| **Actual Result** | 1. First DELETE returned 204 <br> 2. Second DELETE returned 404 Not Found with `{"error": "Task not found"}` <br> 3. No 5xx server error — handler gracefully handles the case |
+| **Actual Result** | 1. First DELETE returned 204 <br> 2. Second DELETE returned 404 Not Found with `{"error":"Task not found","traceId":"..."}` <br> 3. No 5xx server error — handler gracefully handles the case |
 | **Status** | Pass |
 | **Bug link** | — |
 

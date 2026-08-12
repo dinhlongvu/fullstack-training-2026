@@ -76,7 +76,7 @@
 | **Test Data** | No Authorization header; body: `{ "status": "InProgress" }` |
 | **Test Steps** | 1. Send PATCH request to `/api/tasks/{id}/status` without Bearer token <br> 2. Check response status code |
 | **Expected Result** | 1. Status 401 Unauthorized <br> 2. Task status is NOT changed |
-| **Actual Result** | 1. Response returned status 401 Unauthorized with `{"error": "Unauthorized. Please provide a valid Bearer token."}`. |
+| **Actual Result** | 1. Response returned status 401 Unauthorized with `{"error":"Unauthorized. Please provide a valid Bearer token.","traceId":"..."}`. |
 | **Status** | ✅ Pass |
 | **Bug link** | — |
 
@@ -93,7 +93,7 @@
 | **Test Data** | Authorization: `Bearer <non-member-token>`; taskId in a foreign project; body: `{ "status": "Done" }` |
 | **Test Steps** | 1. Login as non-member <br> 2. Send PATCH request to `/api/tasks/{id}/status` <br> 3. Check response status code |
 | **Expected Result** | 1. Status 404 Not Found (không lộ sự tồn tại của task cho người ngoài project) <br> 2. Task status is NOT changed |
-| **Actual Result** | 1. Status 404 Not Found với body `{"error": "Task not found"}` <br> 2. Task status is NOT changed |
+| **Actual Result** | 1. Status 404 Not Found với body `{"error":"Task not found","traceId":"..."}` <br> 2. Task status is NOT changed |
 | **Status** | ✅ Pass |
 | **Bug link** | — |
 
@@ -110,7 +110,7 @@
 | **Test Data** | body: `{ "status": "Archived" }` |
 | **Test Steps** | 1. Send PATCH request with invalid `status` value `"Archived"` <br> 2. Check response status code |
 | **Expected Result** | 1. Status 400 Bad Request <br> 2. Response indicates `"Archived"` is not a valid status value <br> 3. Task status is NOT changed |
-| **Actual Result** | 1. Response returned status 400 Bad Request with `{"error": "Invalid status value. Must be one of: Todo, InProgress, Done."}`. |
+| **Actual Result** | 1. Response returned status 400 Bad Request with `{"errors":["Invalid status value. Must be one of: Todo, InProgress, Done."],"traceId":"..."}`. |
 | **Status** | ✅ Pass |
 | **Bug link** | — |
 
@@ -127,7 +127,7 @@
 | **Test Data** | taskId: `999999`; body: `{ "status": "Done" }` |
 | **Test Steps** | 1. Send PATCH request to `/api/tasks/999999/status` <br> 2. Check response status code |
 | **Expected Result** | 1. Status 404 Not Found <br> 2. No task is modified |
-| **Actual Result** | 1. Response returned status 404 Not Found with `{"error": "Task not found"}`. |
+| **Actual Result** | 1. Response returned status 404 Not Found with `{"error":"Task not found","traceId":"..."}`. |
 | **Status** | ✅ Pass |
 | **Bug link** | — |
 
@@ -178,7 +178,7 @@
 | **Test Data** | body: `{ "status": "<script>alert('XSS')</script>" }` |
 | **Test Steps** | 1. Send PATCH request with XSS payload as `status` value <br> 2. Check response status code |
 | **Expected Result** | 1. Status 400 Bad Request (enum parse failure; XSS string is not a valid TaskStatus) <br> 2. Payload is never stored or reflected unencoded <br> 3. Task status is NOT changed |
-| **Actual Result** | 1. Response returned status 400 Bad Request with `{"errors":["Invalid status value. Must be one of: Todo, InProgress, Done."]}`. |
+| **Actual Result** | 1. Response returned status 400 Bad Request with `{"errors":["Invalid status value. Must be one of: Todo, InProgress, Done."],"traceId":"..."}`. |
 | **Status** | ✅ Pass |
 | **Bug link** | — |
 

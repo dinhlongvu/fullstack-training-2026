@@ -40,7 +40,7 @@ test.describe("UI: Projects List Page", () => {
 
     // Verify "Create Project" button exists
     await expect(
-      page.getByRole("button", { name: /Create Project/i }),
+      page.getByRole("button", { name: /Create Project/i }).first(),
     ).toBeVisible();
   });
 
@@ -115,7 +115,7 @@ test.describe("UI: Create Project Dialog", () => {
     await registerAndLoginViaUI(page);
 
     // Click Create Project button
-    await page.getByRole("button", { name: /Create Project/i }).click();
+    await page.getByRole("button", { name: /Create Project/i }).first().click();
 
     // Verify dialog is visible
     await expect(
@@ -155,7 +155,7 @@ test.describe("UI: Create Project Dialog", () => {
     });
 
     // Open dialog
-    await page.getByRole("button", { name: /Create Project/i }).click();
+    await page.getByRole("button", { name: /Create Project/i }).first().click();
 
     // Leave name empty and submit
     await page.locator('input[name="name"]').fill("");
@@ -187,7 +187,7 @@ test.describe("UI: Create Project Dialog", () => {
     });
 
     // Open dialog
-    await page.getByRole("button", { name: /Create Project/i }).click();
+    await page.getByRole("button", { name: /Create Project/i }).first().click();
 
     // Fill name with 201 characters (boundary + 1)
     const nameOver = "A".repeat(201);
@@ -208,7 +208,7 @@ test.describe("UI: Create Project Dialog", () => {
     await registerAndLoginViaUI(page);
 
     // Open dialog
-    await page.getByRole("button", { name: /Create Project/i }).click();
+    await page.getByRole("button", { name: /Create Project/i }).first().click();
 
     // Fill name with exactly 200 characters (boundary value — should pass)
     const nameExact = "B".repeat(200);
@@ -240,7 +240,7 @@ test.describe("UI: Create Project Dialog", () => {
     });
 
     // Open dialog
-    await page.getByRole("button", { name: /Create Project/i }).click();
+    await page.getByRole("button", { name: /Create Project/i }).first().click();
 
     // Fill valid name + description with 2001 chars (boundary + 1)
     await page.locator('input[name="name"]').fill("Boundary Desc Test");
@@ -262,7 +262,7 @@ test.describe("UI: Create Project Dialog", () => {
     await registerAndLoginViaUI(page);
 
     // Open dialog
-    await page.getByRole("button", { name: /Create Project/i }).click();
+    await page.getByRole("button", { name: /Create Project/i }).first().click();
 
     // Fill valid name + description with exactly 2000 chars (boundary value — should pass)
     await page.locator('input[name="name"]').fill("Boundary Desc Pass");
@@ -313,7 +313,7 @@ test.describe("UI: Create Project Dialog", () => {
     });
 
     // Open dialog
-    await page.getByRole("button", { name: /Create Project/i }).click();
+    await page.getByRole("button", { name: /Create Project/i }).first().click();
     await page.locator('input[name="name"]').fill("Loading State Test");
 
     // Click submit
@@ -502,10 +502,9 @@ test.describe("UI: Project Detail Page", () => {
     await page.goto("/projects/999999");
 
     // Should show error message
-    await expect(page.getByText(/Project not found/i)).toBeVisible();
     await expect(
       page.getByText(
-        /This project doesn't exist or you don't have access/i,
+        /Couldn't load this project. It may have been deleted, or you may not have access/i,
       ),
     ).toBeVisible();
 

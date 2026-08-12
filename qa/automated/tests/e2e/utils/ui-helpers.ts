@@ -142,7 +142,7 @@ export async function createProjectViaDialog(
   name: string,
   description: string = "",
 ) {
-  await page.getByRole("button", { name: /Create Project/i }).click();
+  await page.getByRole("button", { name: /Create Project/i }).first().click();
   await expect(page.getByRole("dialog")).toBeVisible();
   
   await page.getByLabel(/^Name$/i).fill(name);
@@ -154,7 +154,6 @@ export async function createProjectViaDialog(
 }
 export async function createProjectViaUIContext(page: import('@playwright/test').Page, name: string, description: string = "") {
   const token = await getPersistedToken(page);
-  const { expect } = require('@playwright/test');
   const res = await page.request.post(`http://localhost:5000/api/projects`, {
     headers: { Authorization: `Bearer ${token}` },
     data: { name, description },

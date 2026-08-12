@@ -72,7 +72,7 @@
 | **Test Data** | Authorization: `Bearer <non-member-token>`, taskId: valid but in a foreign project |
 | **Test Steps** | 1. Send POST request with non-member token <br> 2. Check response status code |
 | **Expected Result** | 1. Status 404 Not Found (không lộ sự tồn tại của task cho người ngoài project) <br> 2. Nội dung comment KHÔNG bị lộ cho non-member |
-| **Actual Result** | 1. Status 404 Not Found với body `{"error": "Task not found"}` |
+| **Actual Result** | 1. Status 404 Not Found với body `{"error":"Task not found","traceId":"..."}` |
 | **Status** | Pass |
 | **Bug link** | — |
 
@@ -88,8 +88,8 @@
 | **Precondition** | User has valid Bearer token |
 | **Test Data** | content: `"   "` (spaces only or empty) |
 | **Test Steps** | 1. Send POST request with empty content string <br> 2. Check response status code |
-| **Expected Result** | 1. Status 400 Bad Request <br> 2. Returns validation error for `Content` |
-| **Actual Result** | 1. Response returned status 400 Bad Request <br> 2. FluentValidation caught the error and returned RFC-compliant Validation Problem format. |
+| **Expected Result** | 1. Status 400 Bad Request <br> 2. Response body: `{"errors":["Content is required."],"traceId":"..."}` |
+| **Actual Result** | 1. Response returned status 400 Bad Request <br> 2. Response body: `{"errors":["Content is required."],"traceId":"..."}` |
 | **Status** | Pass |
 | **Bug link** | — |
 
@@ -105,7 +105,7 @@
 | **Precondition** | User has valid Bearer token |
 | **Test Data** | content: String with 2001 characters |
 | **Test Steps** | 1. Send POST request with content > 2000 chars <br> 2. Check response status code |
-| **Expected Result** | 1. Status 400 Bad Request <br> 2. Returns validation error |
+| **Expected Result** | 1. Status 400 Bad Request <br> 2. Response body: `{"errors":["Content must be 2000 characters or less."],"traceId":"..."}` |
 | **Actual Result** | 1. Response returned status 400 Bad Request (rejected by `MaximumLength(2000)` rule) |
 | **Status** | Pass |
 | **Bug link** | — |
@@ -123,7 +123,7 @@
 | **Test Data** | taskId: `999999` (does not exist) |
 | **Test Steps** | 1. Send POST request to `/api/tasks/999999/comments` <br> 2. Check response status code |
 | **Expected Result** | 1. Status 404 Not Found |
-| **Actual Result** | 1. Response returned status 404 Not Found with `{"error": "Task not found"}` |
+| **Actual Result** | 1. Response returned status 404 Not Found with `{"error":"Task not found","traceId":"..."}` |
 | **Status** | Pass |
 | **Bug link** | — |
 
