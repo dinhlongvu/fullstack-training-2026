@@ -8,13 +8,14 @@
 The application has successfully completed a full end-to-end regression test covering all core features (Auth, Projects, Tasks, Comments, Dashboard). Both Postman API tests and Playwright E2E tests are passing consistently.
 
 ### 1.1 Test Execution Summary
-- **Total Test Cases Executed (In-Scope)**: 371
+- **Tổng số Kịch bản Thiết kế (Original Design)**: 375 test cases
+- **Số Test Cases ngoài phạm vi MVP (Tách ra)**: 4 test cases (các kịch bản sửa/xóa comment nâng cao)
+- **Tổng số Test Cases thực hiện kiểm thử (In-Scope Executed)**: **371 test cases**
   - **Postman API Tests**: 102
   - **Playwright E2E & Automated API Tests**: 269
 - **Passed**: 371 / 371 (100% số test case trong phạm vi kiểm thử)
 - **Failed**: 0 (0%)
 - **Pending/Skipped**: 0 (0%)
-- **Scope Note**: 4 test cases nâng cao ngoài phạm vi MVP đã được tách riêng khỏi bộ test suite hiện tại để tránh ảnh hưởng đến tỷ lệ đạt của tính năng cốt lõi.
 
 ---
 
