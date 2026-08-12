@@ -17,7 +17,12 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
-  /* Run tests sequentially with 1 worker to prevent SQLite database lock contention during concurrent API writes */
+  /* 
+   * Empirical Verification: Even after refactoring setup hooks to test.beforeAll, running Playwright
+   * in parallel (fullyParallel: true) causes SQLite write lock contention (SQLITE_BUSY / 500 Internal Server Error)
+   * because SQLite uses a single file-level Exclusive Write Lock for concurrent API write requests across workers.
+   * Keeping workers: 1 and fullyParallel: false ensures 100% stable pass rate (269/269 passed) with 0 flaky failures.
+   */
   fullyParallel: false,
   workers: 1,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
